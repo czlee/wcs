@@ -26,11 +26,13 @@ Three data sources already have parsers and discovery code:
 
 **Approach:** Write `scripts/collect.py`, adapting the discovery functions from `check_new_scoresheets.py`:
 - Accepts a `--site` argument (scoring.dance / eepro / danceconvention); defaults to all three. In practice, run one process per site in parallel.
-- Sweep a date range (start: ~2020-01-01, end: today) for all three sites
+- Sweep a date range (default: calendar year 2025; extend later as needed) for all three sites
 - For each discovered final, download raw content and save to `data/raw/`; skip if already cached
 - Add polite rate limiting (e.g. 0.5–1 s between requests per host) to avoid being blocked
-- Save a manifest at `data/manifest.jsonl` with one record per downloaded file:
-  - `url`, `site`, `event_name`, `division_raw`, `event_date`, `local_path`
+- Save a manifest at `data/manifest.jsonl` with **one record per downloaded file** (keyed by URL):
+  - `url`, `site`, `event_name`, `event_start`, `event_end`, `local_path`
+  - `event_start` / `event_end` are raw dates from the discovery source. A normalised `event_date` is intentionally not computed here — that logic (e.g. use the Saturday of a weekend event) belongs in Phase 2.
+  - No division fields — division extraction is Phase 2's responsibility. For eepro.com pages that contain multiple divisions, Phase 2 produces multiple parsed outputs from one manifest entry (1:M).
 
 **Filtering:** Only keep finals (already handled by discovery code). Skip prelims, semis, quarters.
 
@@ -53,7 +55,8 @@ Three data sources already have parsers and discovery code:
 - Skip if a parsed file for this entry already exists (`data/parsed/{id}.json`) — re-run is incremental
 - Assign each scoresheet a **unique ID**: a human-readable slug (`{site}_{event_slug}_{division_slug}`) with a numeric suffix added if there is a collision
 - Write to `data/parsed/{id}.json`; the slug/ID is for convenience only — all critical information must be in the file contents:
-  - `id`, `url`, `site`, `event_name`, `division_raw`, `event_date`, `division_level`, `dance_format`, `num_judges`, `num_competitors`, `competitors` (list), `judges` (list), `rankings` (judge → competitor → rank)
+  - `id`, `url`, `site`, `event_name`, `division_raw`, `event_start`, `event_end`, `event_date`, `division_level`, `dance_format`, `num_judges`, `num_competitors`, `competitors` (list), `judges` (list), `rankings` (judge → competitor → rank)
+  - `event_start` / `event_end` carried through from the manifest; `event_date` is the normalised canonical date derived here (the Saturday of a weekend event, or the actual competition day for non-weekend events)
 - **Data quality checks** — these run after parsing; raise an exception and crash if any fail (a violation here indicates a parser bug, not bad source data):
   - Each judge's ranking is a permutation of the competitors (no missing entries, no duplicate ranks, no rank collisions)
   - Number of judges ≥ 2; number of competitors ≥ 3
@@ -153,7 +156,7 @@ wcs-judge-divergence/
 
 ## Implementation Notes
 
-- All Python scripts should use `poetry` from the `~/who-woulda-won` directory for imports (or set up a `pyproject.toml` here that depends on the same packages: `httpx`, `beautifulsoup4`, `pdfplumber`, `scipy`, `pandas`, `matplotlib`)
+- Python environment: plain `venv` (named `venv/`, not `.venv/`) with `requirements.txt`. Create with `python -m venv venv && pip install -r requirements.txt`. Packages needed across all phases: `httpx`, `beautifulsoup4`, `lxml`, `pdfplumber`, `pandas`, `scipy`, `matplotlib`, `seaborn`, `jupyter`.
 - The parsers live in `~/who-woulda-won/core/parsers/`; the simplest approach is to `sys.path.insert` the parent and import them directly, as `check_new_scoresheets.py` already does
 - Rate limiting: use `httpx` with a custom transport or just `time.sleep(0.5)` between requests
 - Caching: save raw bytes to `data/raw/` with a filename derived from the URL (e.g. MD5 hash or slugified URL); skip download if file exists
@@ -163,7 +166,7 @@ wcs-judge-divergence/
 
 ## Open Questions / Decisions
 
-1. **How far back should data collection go?** danceconvention.net has data from at least 2020; scoring.dance and eepro.com may have less history. Start with 2022–present to keep scope manageable.
+1. **How far back should data collection go?** ~~Start with 2022–present.~~ **Decision: start with calendar year 2025, extend to earlier years later once the pipeline is validated.**
 2. **WCS-only filter implementation:** Filtering is necessary but automated keyword matching on event/division names is unreliable. Likely needs a manual or agent-assisted pass over the collected event list.
 3. **Minimum panel/field size?** Scoresheets with very few judges or competitors may not be meaningful. Define inclusion criteria (e.g. ≥ 5 judges, ≥ 6 competitors) when implementing compute_metrics.py.
 4. **Judge identity:** Judges are identified by initials or names; we won't try to track individual judges across events (too complex), so analysis will be at the panel level, not per-judge.
