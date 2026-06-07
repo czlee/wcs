@@ -22,6 +22,8 @@ Three data sources already have parsers and discovery code:
 
 ## Phase 1: Data Collection
 
+**Status:** ✅ Complete — `scripts/download.py` implemented; discovery validated month-by-month against all three sites' list pages for Jan–Jun 2025 (Jul–Dec not yet validated).
+
 **Goal:** Build a local cache of as many final scoresheets as possible, with metadata.
 
 **Approach:** Write `scripts/download.py`, adapting the discovery functions from `check_new_scoresheets.py`:
@@ -47,6 +49,8 @@ Three data sources already have parsers and discovery code:
 ---
 
 ## Phase 2: Extraction and Validation
+
+**Status:** ⬜ Not started.
 
 **Goal:** Parse every raw file into a single standardised format, run data quality checks, and produce a clean dataset ready for metric computation.
 
@@ -74,6 +78,8 @@ This stage acts as the single interface between raw data and all downstream work
 
 ## Phase 3: Divergence Metrics
 
+**Status:** ⬜ Not started.
+
 **Script:** `scripts/compute_metrics.py` — reads files from `data/parsed/`, writes `results/metrics.csv` (one row per scoresheet, metrics + covariates as columns).
 
 **Metrics to be decided in a separate investigation.** Candidates to evaluate:
@@ -87,6 +93,8 @@ The choice of metric(s) warrants its own focused session before implementation.
 ---
 
 ## Phase 4: Covariates / Characteristics to Compare
+
+**Status:** ⬜ Not started.
 
 The normalised covariate fields (`division_level`, `dance_format`, `num_judges`, `num_competitors`) are already assigned in Phase 2. Additional covariates:
 
@@ -111,6 +119,8 @@ The normalised covariate fields (`division_level`, `dance_format`, `num_judges`,
 ---
 
 ## Phase 5: Analysis
+
+**Status:** ⬜ Not started.
 
 **Output:** A written write-up (not a formal paper) summarising findings.
 
@@ -160,7 +170,7 @@ wcs-judge-divergence/
 - The parsers live in `~/who-woulda-won/core/parsers/`; the simplest approach is to `sys.path.insert` the parent and import them directly, as `check_new_scoresheets.py` already does
 - Rate limiting: use `httpx` with a custom transport or just `time.sleep(0.5)` between requests
 - Caching: save raw bytes to `data/raw/` with a filename derived from the URL (e.g. MD5 hash or slugified URL); skip download if file exists
-- Handle `PrelimsError` (raised by parsers for non-finals rounds) gracefully in `collect.py`; the extraction stage should never see prelims data
+- Phase 1 (`download.py`) filters out prelims/semis/quarters at discovery. As a safety net, `extract.py` should still handle `PrelimsError` (raised by parsers for non-finals rounds) gracefully, so the parsed dataset never contains prelims data
 
 ---
 

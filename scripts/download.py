@@ -6,6 +6,7 @@ Discovery logic adapted from who-woulda-won/scripts/check_new_scoresheets.py.
 
 import argparse
 import hashlib
+import html
 import json
 import logging
 import re
@@ -164,19 +165,36 @@ def _nuxt_var_map(raw_script: str) -> dict[str, str]:
 # ---------------------------------------------------------------------------
 
 class RateLimitedClient:
-    def __init__(self, client: httpx.Client, delay: float = 0.5):
+    def __init__(self, client: httpx.Client, delay: float = 0.5, retries: int = 3):
         self._client = client
         self._delay = delay
+        self._retries = retries
         self._last: dict[str, float] = {}
 
     def get(self, url: str, **kwargs):
         host = httpx.URL(url).host
-        elapsed = time.monotonic() - self._last.get(host, 0)
-        if elapsed < self._delay:
-            time.sleep(self._delay - elapsed)
-        result = self._client.get(url, **kwargs)
-        self._last[host] = time.monotonic()
-        return result
+        last_exc = None
+        for attempt in range(self._retries):
+            elapsed = time.monotonic() - self._last.get(host, 0)
+            if elapsed < self._delay:
+                time.sleep(self._delay - elapsed)
+            try:
+                result = self._client.get(url, **kwargs)
+                self._last[host] = time.monotonic()
+                return result
+            except (httpx.TimeoutException, httpx.TransportError) as e:
+                # Transient network failures (e.g. read timeout) can silently drop a
+                # whole event's finals; retry with backoff before giving up.
+                last_exc = e
+                self._last[host] = time.monotonic()
+                if attempt < self._retries - 1:
+                    backoff = self._delay * (2 ** attempt)
+                    logging.info(
+                        f"retrying {url} after {type(e).__name__} "
+                        f"(attempt {attempt + 1}/{self._retries}, waiting {backoff:.1f}s)"
+                    )
+                    time.sleep(backoff)
+        raise last_exc
 
 
 # ---------------------------------------------------------------------------
@@ -321,35 +339,59 @@ def discover_eepro(
         for li in soup.find_all("li"):
             li_text = li.get_text(" ", strip=True)
 
-            dm = re.search(r"([A-Za-z]+)\s+(\d+)[-–](\d+),?\s*(\d{4})", li_text)
-            if dm:
-                try:
-                    ev_start = datetime.strptime(
-                        f"{dm.group(1)} {dm.group(2)} {dm.group(4)}", "%B %d %Y"
-                    ).date()
-                    ev_end = datetime.strptime(
-                        f"{dm.group(1)} {dm.group(3)} {dm.group(4)}", "%B %d %Y"
-                    ).date()
-                except ValueError:
+            def _parse_month_date(month: str, day: str, year: str) -> date | None:
+                s = f"{month} {day} {year}"
+                for fmt in ("%B %d %Y", "%b %d %Y"):
+                    try:
+                        return datetime.strptime(s, fmt).date()
+                    except ValueError:
+                        continue
+                return None
+
+            # Cross-month range: "May 29-June 1, 2025" / "Dec 30-Jan 3, 2026".
+            # The year applies to the end date; if the start month falls after the
+            # end month (Dec→Jan), the start belongs to the previous year.
+            dm_cross = re.search(
+                r"([A-Za-z]+)\s+(\d+)\s*[-–]\s*([A-Za-z]+)\s+(\d+),?\s*(\d{4})", li_text
+            )
+            # Same-month range: "June 26-29, 2025".
+            dm = re.search(r"([A-Za-z]+)\s+(\d+)\s*[-–]\s*(\d+),?\s*(\d{4})", li_text)
+            if dm_cross:
+                year = dm_cross.group(5)
+                ev_start = _parse_month_date(dm_cross.group(1), dm_cross.group(2), year)
+                ev_end = _parse_month_date(dm_cross.group(3), dm_cross.group(4), year)
+                if ev_start is not None and ev_end is not None and ev_start > ev_end:
+                    ev_start = _parse_month_date(
+                        dm_cross.group(1), dm_cross.group(2), str(int(year) - 1)
+                    )
+                if ev_start is None or ev_end is None:
+                    continue
+            elif dm:
+                ev_start = _parse_month_date(dm.group(1), dm.group(2), dm.group(4))
+                ev_end = _parse_month_date(dm.group(1), dm.group(3), dm.group(4))
+                if ev_start is None or ev_end is None:
                     continue
             else:
                 dm2 = re.search(r"([A-Za-z]+)\s+(\d+),?\s*(\d{4})", li_text)
                 if not dm2:
                     continue
-                try:
-                    ev_start = ev_end = datetime.strptime(
-                        f"{dm2.group(1)} {dm2.group(2)} {dm2.group(3)}", "%B %d %Y"
-                    ).date()
-                except ValueError:
+                ev_start = _parse_month_date(dm2.group(1), dm2.group(2), dm2.group(3))
+                if ev_start is None:
                     continue
+                ev_end = ev_start
 
             if not _overlaps(ev_start, ev_end, w_start, w_end):
                 continue
 
-            event_name_raw = re.split(r"[A-Za-z]+ \d+[-–]", li_text)[0].strip(" -–")
+            # Event name is in the <label> tag: "June 26-29, 2025 - Liberty Swing"
+            label = li.find("label")
+            label_text = label.get_text(strip=True) if label else ""
+            name_parts = re.split(r"\d{4}\s*[-–]\s*", label_text, maxsplit=1)
+            event_name = name_parts[1].strip() if len(name_parts) > 1 else ""
 
             for a in li.find_all("a", href=True):
                 href = a.get("href", "")
+                link_text = a.get_text(strip=True)
                 m = re.search(
                     r"(?:\.\./|/results/)([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+?)(?:\.html)?$",
                     href,
@@ -358,7 +400,11 @@ def discover_eepro(
                     continue
                 event_slug = m.group(1)
                 result_type = m.group(2).lower()
-                if not result_type.endswith("finals") or "prelims" in result_type:
+                # Skip non-finals rounds
+                if re.search(r"prelim|semi|quarter|heat", result_type):
+                    continue
+                # Keep only relevant competition types (J&J variants, Strictly, All-American)
+                if not re.search(r"jj|jack|strictly|american", result_type):
                     continue
 
                 result_url = f"https://eepro.com/results/{event_slug}/{m.group(2)}.html"
@@ -366,29 +412,15 @@ def discover_eepro(
                     continue
                 seen_urls.add(result_url)
 
-                try:
-                    resp = client.get(result_url)
-                    if resp.status_code == 404:
-                        continue
-                    resp.raise_for_status()
-                    content = resp.content
-                except Exception as e:
-                    logging.warning(f"eepro.com: failed to fetch {result_url}: {e}")
-                    continue
-
-                rsoup = BeautifulSoup(content.decode("utf-8", errors="replace"), "lxml")
-                h2 = rsoup.find("h2")
-                event_name = h2.get_text(strip=True) if h2 else event_slug
-
                 finals.append(DiscoveredFinal(
                     site="eepro.com",
-                    event_name=event_name,
+                    event_name=event_name or event_slug,
                     event_date=ev_start,
                     event_end_date=ev_end,
                     division="",
                     url=result_url,
                 ))
-                logging.info(f"eepro.com: {event_name} ({ev_start} – {ev_end})")
+                logging.info(f"eepro.com: {event_name} — {link_text} ({ev_start} – {ev_end})")
 
     return finals
 
@@ -437,12 +469,12 @@ def discover_danceconvention(
         event_name_re = re.compile(r'eventId:(\d+),name:"([^"]*)"')
 
         for em in event_name_re.finditer(blob):
-            event_id, event_name = em.group(1), em.group(2)
+            event_id, event_name = em.group(1), html.unescape(em.group(2))
             if event_id in events:
                 continue
 
-            # Look forward ~400 chars for startDate, endDate, eventPage
-            ctx = blob[em.start(): em.start() + 400]
+            # Look forward ~600 chars for startDate, endDate, eventPage
+            ctx = blob[em.start(): em.start() + 600]
 
             start_m = re.search(r"startDate:" + _date_or_var, ctx)
             end_m = re.search(r"endDate:" + _date_or_var, ctx)
@@ -499,15 +531,41 @@ def discover_danceconvention(
 
             rblob = _decode_nuxt(resp.text)
 
-            # Division entries: {div_id},"Division Name",{pdf_id},"/eventdirector/en/roundscores/{pdf_id}.pdf"
+            # Every real division entry in the Nuxt data is preceded by a numeric division ID:
+            #   div_id,"Division Name",[opt "TYPE_CODE",]pdf_id,[opt "Round Name",]"/URL"
+            # Per-couple/per-person scoresheets have no preceding division ID — they start
+            # directly with a quoted name — so anchoring on \d+," naturally excludes them.
+            # Formats:
+            #   A: div_id,"Division",pdf_id,"/URL"
+            #   B: div_id,"Division",pdf_id,"Round Name","/URL"
+            #   D: div_id,"Division","TYPE_CODE",pdf_id,"/URL"         (e.g. RANDOM_COUPLE)
+            #   D+B: div_id,"Division","TYPE_CODE",pdf_id,"Round Name","/URL"
             div_re = re.compile(
-                r'\d+,"([^"]+)",(\d+),"/eventdirector/en/roundscores/\d+\.pdf"'
+                r'\d+,"([^"]+)",(?:"([^"]+)",)?(\d+),(?:"([^"]+)",)?"/eventdirector/en/roundscores/\d+\.pdf"'
+            )
+            # "final" (Latin) and "Финал" (Cyrillic) both signal a finals round.
+            # NON_FINALS covers semi/prelim/quarter in Latin and Отбор (qualifier) in Cyrillic.
+            # Полуфинал/Четвертьфинал contain финал as a substring so are listed explicitly.
+            FINALS_IN_NAME = re.compile(r"\bfinal|финал", re.IGNORECASE)
+            NON_FINALS = re.compile(
+                r"\b(?:semi|prelim|quarter|heat)\b|отбор|полуфинал|четвертьфинал", re.IGNORECASE
             )
             count = 0
             for m in div_re.finditer(rblob):
-                division_name, pdf_id = m.group(1), m.group(2)
-                if ROUND_KEYWORDS.match(division_name.strip()):
+                division_name, pre_field, pdf_id, round_name = (
+                    html.unescape(m.group(1)), m.group(2), m.group(3), m.group(4)
+                )
+                # Guard against spurious matches where the "division name" is actually a URL path
+                if division_name.startswith('/'):
                     continue
+                if round_name is not None:
+                    # Format B / D+B: filter by round name
+                    if not FINALS_IN_NAME.search(round_name) or NON_FINALS.search(round_name):
+                        continue
+                else:
+                    # Format A / D: skip entries where the "division name" is actually a round keyword
+                    if ROUND_KEYWORDS.match(division_name.strip()):
+                        continue
                 finals.append(DiscoveredFinal(
                     site="danceconvention.net",
                     event_name=event_name,
@@ -553,12 +611,16 @@ def download_and_record(
     client: RateLimitedClient, final: DiscoveredFinal, manifest: dict,
     dry_run: bool = False,
 ) -> None:
+    label = final.event_name
+    if final.division:
+        label += f" — {final.division}"
+
     if final.url in manifest:
-        logging.debug(f"Already cached: {final.url}")
+        logging.info(f"Already cached: {label} | {final.url}")
         return
 
     if dry_run:
-        logging.info(f"[DRY RUN] Would download: {final.event_name} — {final.division or '(no division)'} | {final.url}")
+        logging.info(f"[DRY RUN] Would download: {label} | {final.url}")
         return
 
     filename = url_to_filename(final.url)
