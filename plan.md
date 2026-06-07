@@ -24,7 +24,7 @@ Three data sources already have parsers and discovery code:
 
 **Goal:** Build a local cache of as many final scoresheets as possible, with metadata.
 
-**Approach:** Write `scripts/collect.py`, adapting the discovery functions from `check_new_scoresheets.py`:
+**Approach:** Write `scripts/download.py`, adapting the discovery functions from `check_new_scoresheets.py`:
 - Accepts a `--site` argument (scoring.dance / eepro / danceconvention); defaults to all three. In practice, run one process per site in parallel.
 - Sweep a date range (default: calendar year 2025; extend later as needed) for all three sites
 - For each discovered final, download raw content and save to `data/raw/`; skip if already cached
@@ -141,7 +141,7 @@ wcs-judge-divergence/
       eepro_usdc2024_intermediate.json
       ...
   scripts/
-    collect.py                  # Phase 1: discover and download scoresheets
+    download.py                 # Phase 1: discover and download scoresheets
     extract.py                  # Phase 2: parse raw files, validate, normalise covariates
     compute_metrics.py          # Phase 3: compute divergence metrics → results/metrics.csv
     analyze.ipynb               # Phase 5: exploratory analysis and visualisations
