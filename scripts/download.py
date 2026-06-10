@@ -26,6 +26,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
 MANIFEST_PATH = DATA_DIR / "manifest.jsonl"
+EVENTS_PATH = DATA_DIR / "events.jsonl"
 
 # ---------------------------------------------------------------------------
 # Dataclasses and helpers
@@ -58,6 +59,8 @@ class DiscoveredFinal:
     division: str
     url: str
     parser_division: str | None = None
+    event_id: str | None = None         # namespaced: "sd-228", "ee-swinglebell2025", "dc-301126"
+    source_event_id: str | None = None  # raw native id: "228", "swinglebell2025", "301126"
 
 
 def _overlaps(ev_start: date, ev_end: date, w_start: date, w_end: date) -> bool:
@@ -321,6 +324,8 @@ def discover_scoring_dance(
                 event_end_date=ev_end,
                 division=division,
                 url=url,
+                event_id=f"sd-{event_id}",
+                source_event_id=event_id,
             ))
             count += 1
         logging.info(f"scoring.dance: {event_name} — {count} finals")
@@ -441,6 +446,8 @@ def discover_eepro(
                     event_end_date=ev_end,
                     division="",
                     url=result_url,
+                    event_id=f"ee-{event_slug}",
+                    source_event_id=event_slug,
                 ))
                 logging.info(f"eepro.com: {event_name} — {link_text} ({ev_start} – {ev_end})")
 
@@ -601,6 +608,8 @@ def discover_danceconvention(
                     event_end_date=ev_end,
                     division=division_name,
                     url=f"https://danceconvention.net/eventdirector/en/roundscores/{pdf_id}.pdf",
+                    event_id=f"dc-{event_id}",
+                    source_event_id=event_id,
                 ))
                 count += 1
             logging.info(f"danceconvention.net: {event_name} — {count} finals found")
@@ -667,6 +676,8 @@ def download_and_record(
     record = {
         "url": final.url,
         "site": final.site,
+        "event_id": final.event_id,
+        "source_event_id": final.source_event_id,
         "event_name": final.event_name,
         "event_start": final.event_date.isoformat(),
         "event_end": final.event_end_date.isoformat(),
@@ -674,6 +685,31 @@ def download_and_record(
     }
     append_manifest(record)
     manifest[final.url] = record
+
+
+# ---------------------------------------------------------------------------
+# Events dimension table
+# ---------------------------------------------------------------------------
+
+def write_events_jsonl(manifest: dict) -> None:
+    """Rebuild data/events.jsonl from the manifest (one row per unique event_id)."""
+    events: dict[str, dict] = {}
+    for rec in manifest.values():
+        eid = rec.get("event_id")
+        if not eid or eid in events:
+            continue
+        events[eid] = {
+            "event_id": eid,
+            "site": rec["site"],
+            "source_event_id": rec.get("source_event_id"),
+            "event_name": rec["event_name"],
+            "event_start": rec["event_start"],
+            "event_end": rec["event_end"],
+        }
+    with EVENTS_PATH.open("w") as f:
+        for ev in events.values():
+            f.write(json.dumps(ev) + "\n")
+    logging.info(f"Wrote {len(events)} events to {EVENTS_PATH.name}")
 
 
 # ---------------------------------------------------------------------------
@@ -752,6 +788,7 @@ def main() -> None:
     if args.dry_run:
         logging.info("DRY RUN complete — nothing written.")
     else:
+        write_events_jsonl(manifest)
         logging.info(f"Done. Manifest now has {len(manifest)} entries.")
 
 

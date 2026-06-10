@@ -59,7 +59,7 @@ Three coupled changes. The taxonomy (§3b) is **already implemented** in
 `extract.py`. Tasks remaining: §3a (event IDs in download.py + manifest) and
 §3c (scoresheet ID scheme in extract.py).
 
-### 3a. Event identity → a real `event_id` (reopen Phase 1) ★ TODO
+### 3a. Event identity → a real `event_id` (reopen Phase 1) — DONE ✓
 
 **Why:** event identity is currently reconstructed downstream from
 `(site, event_name, dates)`. That's fragile — `event_name` slugs are lossy and
@@ -68,31 +68,18 @@ even encoding-inconsistent (the manifest holds both `Swing&Snow 2025` and
 A stable event id fixes this and becomes the clean join key for the Phase-4
 event-level lookups (region, tier, dance-style/WCS classification).
 
-**Use each site's native event id, namespaced** — do **not** invent a synthetic
-key (no allocation state; native ids are stable, unique, traceable):
+**Implemented:** each site's native event id is captured at discovery time and
+namespaced as `{site_abbr}-{native_id}` → `sd-228`, `ee-swinglebell2025`,
+`dc-301126`.
 
-| Site | site abbr | native id | where it is |
-|---|---|---|---|
-| scoring.dance | `sd` | numeric event id | in the URL: `/events/228/results/...` |
-| eepro.com | `ee` | event slug | in the URL: `/results/swinglebell2025/...` |
-| danceconvention.net | `dc` | numeric `eventId` | **only at discovery** — the PDF URL `roundscores/{pdf_id}.pdf` does **not** contain it |
-
-- `event_id = "{site_abbr}-{native_id}"` → `sd-228`, `ee-swinglebell2025`, `dc-301126`.
-- **download.py:** capture the native id during discovery (the discovery
-  functions already iterate events and know it; `DiscoveredFinal` will need an
-  `event_id`/`native_event_id` field) and write `event_id` + `source_event_id`
-  into each manifest record. Also emit `data/events.jsonl` (one row per event:
-  `event_id`, `site`, `source_event_id`, `event_name`, `event_start`,
-  `event_end`) as the dimension table the Phase-4 lookups will join on.
-- **Backfill the existing manifest:** sd/ee ids are recoverable from the stored
-  URL (regex); **dc must be re-derived by re-running dc discovery** (network is
-  available) to rebuild a `pdf_url → event_id` map. Provide a migration that
-  adds `event_id`/`source_event_id` to every existing manifest record and
-  overwrites `data/manifest.jsonl` in place. Also write `data/events.jsonl` from
-  the backfilled records.
-- **The danceconvention name-encoding split must collapse:** records for one DC
-  event under differently-encoded names must share one `event_id`. The native id
-  gives this for free.
+- `DiscoveredFinal` now has `event_id` and `source_event_id` fields.
+- Each manifest record now has `event_id` and `source_event_id`.
+- `download.py` writes `data/events.jsonl` (one row per event: `event_id`,
+  `site`, `source_event_id`, `event_name`, `event_start`, `event_end`) at the
+  end of every non-dry-run.
+- **Migration:** the old manifest was deleted and `download.py` was re-run.
+  Raw files in `data/raw/` are not re-downloaded (deterministic MD5 filenames);
+  a fresh manifest with `event_id` in every record was written.
 
 ### 3b. Division taxonomy (covariate fields) — DONE ✓
 
@@ -190,9 +177,9 @@ are **finalised** — do not change them without user sign-off.
 ## 5. Tasks (in order)
 
 1. ~~**Inventory checkpoint** (§4)~~ — DONE. See `briefs/division_inventory.txt`.
-2. **download.py + manifest**: native `event_id` capture in `DiscoveredFinal`,
-   manifest migration (sd/ee from URL regex, dc via discovery re-run), write
-   `data/events.jsonl`. Migration overwrites `data/manifest.jsonl` in place.
+2. ~~**download.py + manifest**~~ — DONE. `event_id`/`source_event_id` in
+   `DiscoveredFinal` and every manifest record; `data/events.jsonl` written on
+   each non-dry-run; manifest rebuilt from scratch via delete-and-rerun.
 3. ~~**extract.py taxonomy**~~ — DONE. `division_level`, `dance_format`,
    `normalise_level`, `normalise_format`, `FORMAT_CODES`, `LEVEL_CODES` all
    finalised in `scripts/extract.py`.
@@ -249,7 +236,8 @@ are **finalised** — do not change them without user sign-off.
   wraps the validate call when `args.dump_divisions` is True, so the inventory
   run doesn't abort on edge-case sheets. This does NOT affect normal extraction
   (integrity errors still crash there). Keep this behaviour.
-- **DC event_id backfill**: re-running `discover_danceconvention` requires
-  network access (no disk cache for the archive page). It is available.
-  The dc discovery function already knows each event's native id — capture it
-  from the `events` dict and add to `DiscoveredFinal`.
+- **DC event_id**: the dc discovery function captures the native `eventId` from
+  the `events` dict (available at discovery time) and sets it on `DiscoveredFinal`.
+  The PDF URL alone does not contain the event id — it's only available during
+  discovery, which is why this approach (capture at discovery, not derived from
+  URL) was used.
