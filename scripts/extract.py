@@ -10,14 +10,13 @@ See ~/.claude/plans/have-a-look-at-refactored-journal.md for the design rational
 """
 
 import argparse
-import hashlib
 import html
 import json
 import logging
 import re
 import sys
 import time
-from collections import Counter, defaultdict
+from collections import Counter
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -288,53 +287,21 @@ def slugify(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", s.lower()).strip("_")
 
 
-def event_identity(record: dict) -> tuple[str, str, str, str]:
-    """A key that uniquely identifies the event a manifest record belongs to."""
-    return (record["site"], record["event_name"], record["event_start"], record["event_end"])
+def make_id(event_id: str, event_slug: str, div_token: str, used: set[str]) -> str:
+    """Build a unique scoresheet id, appending a numeric suffix on intra-event collision.
 
-
-def event_id_prefixes(records: list[dict]) -> dict[tuple, str]:
-    """Map each distinct event identity to the slug prefix used in its ids.
-
-    Normally the prefix is just the event-name slug. But slugifying is lossy
-    (`"Swing & Snow"` and `"Swing Snow"` collapse to the same slug), so two
-    GENUINELY DIFFERENT events could share a slug — and, having different dates,
-    could be split across runs by the --start/--end/--event filters, which would
-    make the positional collision suffix unstable. To prevent that, when a slug is
-    shared by more than one event identity we salt each with a short, deterministic
-    hash of its identity. This is computed from the FULL manifest, so it does not
-    depend on which subset a given run processes.
-    """
-    by_slug: dict[str, list[tuple]] = defaultdict(list)
-    for key in dict.fromkeys(event_identity(r) for r in records):  # distinct, order-preserved
-        by_slug[slugify(key[1])].append(key)
-
-    prefixes: dict[tuple, str] = {}
-    for slug, keys in by_slug.items():
-        if len(keys) == 1:
-            prefixes[keys[0]] = slug
-        else:
-            for key in keys:
-                h = hashlib.md5("|".join(key).encode()).hexdigest()[:4]
-                prefixes[key] = f"{slug}-{h}"
-    return prefixes
-
-
-def make_id(event_prefix: str, division_blob: str, used: set[str]) -> str:
-    """Build a unique slug id, appending a numeric suffix on collision.
-
-    The id is `{event_prefix}_{division_slug}` — the site is omitted (an event only
-    ever lives on one site, so it's redundant), and `event_prefix` is the
-    collision-safe event slug from event_id_prefixes().
+    Format: `{event_id}_{event_slug}_{div_token}` e.g. `sd-228_swingcouver-2025_str_chp`.
+    `event_id` carries global uniqueness; `event_slug` is decorative (kebab-case);
+    `div_token` is the output of make_div_token_base().
 
     Disambiguation is against the ids already assigned THIS run only — never disk
     state. Because the manifest is processed in a stable (append-only) order, a
     given scoresheet lands on the same id every run, which is what makes the
-    out_path.exists() cache check (and thus idempotency) correct. Remaining
-    collisions are now strictly intra-event (same event + division blob), which the
-    filters can never split, so the positional suffix stays stable under filtering.
+    out_path.exists() cache check (and thus idempotency) correct. Collisions are
+    strictly intra-event (same event_id + same div_token), which the --site/--start/
+    --end/--event filters can never split, so the positional suffix stays stable.
     """
-    base = "_".join(p for p in (event_prefix, slugify(division_blob)) if p)
+    base = "_".join(p for p in (event_id, event_slug, div_token) if p)
     base = base or "scoresheet"
     candidate = base
     n = 1
@@ -546,8 +513,6 @@ def main() -> None:
     args = ap.parse_args()
 
     all_records = load_manifest()
-    # Build id prefixes from the FULL manifest so they don't depend on the filter.
-    prefixes = event_id_prefixes(all_records)
     sites = {SITE_ALIASES[s] for s in args.sites} if args.sites else None
     records = select_records(all_records, sites, args.start, args.end, args.event)
     logging.info(f"Selected {len(records)} of the manifest's entries to process.")
@@ -642,7 +607,9 @@ def main() -> None:
             if args.dump_divisions:
                 continue
 
-            entry_id = make_id(prefixes[event_identity(record)], division_blob, used_ids)
+            div_token = make_div_token_base(division_blob, level, fmt)
+            event_slug = slugify(event_name).replace("_", "-")
+            entry_id = make_id(record["event_id"], event_slug, div_token, used_ids)
             out_path = PARSED_DIR / f"{entry_id}.json"
             if out_path.exists() and not args.force:
                 skips.append((label, "already parsed (cached)"))
@@ -654,6 +621,8 @@ def main() -> None:
                 "raw_file": local_path.name,  # basename within data/raw/ (eepro: 1 file → many divisions)
                 "site": site,
                 "event_name": event_name,
+                "event_id": record["event_id"],
+                "source_event_id": record["source_event_id"],
                 "event_start": record["event_start"],
                 "event_end": record["event_end"],
                 "event_date": canonical_event_date(event_start, event_end).isoformat(),

@@ -50,7 +50,9 @@ Three data sources already have parsers and discovery code:
 
 ## Phase 2: Extraction and Validation
 
-**Status:** ⬜ Not started.
+**Status:** ✅ Complete — `scripts/extract.py` implemented and reworked; 1498 parsed finals
+in `data/parsed/`; each file carries `event_id`/`source_event_id` from the manifest.
+See `briefs/PHASE_2_REWORK_BRIEF.md` for full history.
 
 **Goal:** Parse every raw file into a single standardised format, run data quality checks, and produce a clean dataset ready for metric computation.
 

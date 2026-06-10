@@ -183,10 +183,12 @@ are **finalised** — do not change them without user sign-off.
 3. ~~**extract.py taxonomy**~~ — DONE. `division_level`, `dance_format`,
    `normalise_level`, `normalise_format`, `FORMAT_CODES`, `LEVEL_CODES` all
    finalised in `scripts/extract.py`.
-4. **extract.py IDs**: new `id` scheme (`{event_slug}_{event_id}_{div_token}`),
-   delete `event_id_prefixes` salting, keep positional intra-event suffix; carry
-   `event_id`/`source_event_id` into each parsed JSON.
-5. **Re-extract** (`--force`) and verify (§6).
+4. ~~**extract.py IDs**~~ — DONE. New `id` scheme (`{event_id}_{event_slug}_{div_token}`,
+   e.g. `sd-228_swingcouver-2025_str_chp`); `event_id_prefixes` salting deleted;
+   `event_id`/`source_event_id` carried into each parsed JSON.
+5. ~~**Re-extract** (`--force`) and verify~~ — DONE. 1498 parsed files; Swing&Snow
+   unified under `dc-300047750`; filter stability and idempotency confirmed; old
+   pre-rework files in `data/parsed/` deleted.
 
 ---
 
