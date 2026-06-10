@@ -1,8 +1,7 @@
 # Phase 2 Rework Brief — event IDs, division taxonomy, and scoresheet IDs
 
 **For:** a fresh implementing agent. You are picking up a working pipeline and
-reworking three things: how events are identified, how divisions are classified,
-and how scoresheet IDs are built. Read this whole brief before editing.
+completing the remaining implementation. Read this whole brief before editing.
 
 ---
 
@@ -18,7 +17,8 @@ West Coast Swing competition finals. The pipeline:
 - **Phase 2 — `scripts/extract.py`** (done, being reworked): parses each raw file
   via the vendored parsers in `scripts/parsers/`, validates, normalises
   covariates, and writes one self-contained `data/parsed/{id}.json` per
-  scoresheet. Currently produces **418 parsed finals** from 340 manifest entries.
+  scoresheet. Currently produces ~418 parsed finals from 340 manifest entries
+  (manifest has since grown to 692 entries).
 
 The three sites and how pages map to events:
 | Site | Raw format | Page ↔ event |
@@ -27,9 +27,8 @@ The three sites and how pages map to events:
 | eepro.com | HTML tables | **one** URL per event, **many** divisions per page (1:M at parse) |
 | danceconvention.net | PDF | many URLs per event (one PDF per division) |
 
-Read `~/.claude/plans/have-a-look-at-refactored-journal.md` (the approved Phase 2
-plan) and `scripts/extract.py` before starting — most machinery you need already
-exists and must be **reused, not rewritten**.
+Read `scripts/extract.py` and `scripts/download.py` in full before starting —
+most machinery you need already exists and must be **reused, not rewritten**.
 
 ---
 
@@ -47,14 +46,20 @@ exists and must be **reused, not rewritten**.
   end) on incomplete (`0`/missing placements), too-small fields (`<2` judges /
   `<3` competitors), role-separated/multi-block sheets, and non-finals leaks.
   Don't loosen these into silent passes.
+- **Dance-style filtering**: a separate agent has added `NON_WCS_STYLE_RE` to
+  both `download.py` and `extract.py` and is still refining it. Do **not** modify
+  or remove that constant or its usages. Check for conflicts before editing either
+  file.
 
 ---
 
 ## 3. What this rework changes and why
 
-Three coupled changes. Implement them together and re-extract once at the end.
+Three coupled changes. The taxonomy (§3b) is **already implemented** in
+`extract.py`. Tasks remaining: §3a (event IDs in download.py + manifest) and
+§3c (scoresheet ID scheme in extract.py).
 
-### 3a. Event identity → a real `event_id` (reopen Phase 1)
+### 3a. Event identity → a real `event_id` (reopen Phase 1) ★ TODO
 
 **Why:** event identity is currently reconstructed downstream from
 `(site, event_name, dates)`. That's fragile — `event_name` slugs are lossy and
@@ -76,73 +81,93 @@ key (no allocation state; native ids are stable, unique, traceable):
 - **download.py:** capture the native id during discovery (the discovery
   functions already iterate events and know it; `DiscoveredFinal` will need an
   `event_id`/`native_event_id` field) and write `event_id` + `source_event_id`
-  into each manifest record. Optionally also emit `data/events.jsonl` (one row per
-  event: `event_id`, `site`, `source_event_id`, `event_name`, `event_start`,
+  into each manifest record. Also emit `data/events.jsonl` (one row per event:
+  `event_id`, `site`, `source_event_id`, `event_name`, `event_start`,
   `event_end`) as the dimension table the Phase-4 lookups will join on.
 - **Backfill the existing manifest:** sd/ee ids are recoverable from the stored
-  URL (regex); **dc must be re-derived by re-running dc discovery** (cheap — list
-  page cached, no re-downloads) to rebuild a `pdf_url → event_id` map. Provide a
-  one-time migration that adds `event_id`/`source_event_id` to every existing
-  manifest record.
+  URL (regex); **dc must be re-derived by re-running dc discovery** (network is
+  available) to rebuild a `pdf_url → event_id` map. Provide a migration that
+  adds `event_id`/`source_event_id` to every existing manifest record and
+  overwrites `data/manifest.jsonl` in place. Also write `data/events.jsonl` from
+  the backfilled records.
 - **The danceconvention name-encoding split must collapse:** records for one DC
   event under differently-encoded names must share one `event_id`. The native id
   gives this for free.
 
-### 3b. Division taxonomy (covariate fields) — corrected model
+### 3b. Division taxonomy (covariate fields) — DONE ✓
 
-Normalise into these fields (keyword-matched on the **isolated division blob** —
-see `isolate_division_blob` in `extract.py`; keep matching off the blob, not the
-full `competition_name`, to avoid event-name contamination):
+Already implemented in `scripts/extract.py`. The finalised taxonomy:
 
-- **`division_level`** — a single flat field; skill rungs and age categories are
-  peers (Masters/Sophisticated/Junior are *levels*, not comp types — confirmed by
-  the user; it's a bit odd but that's how they work in practice). Category wins
-  when both appear (`Masters Novice` → Masters; rare). Starting value set:
-  Newcomer, Novice, Intermediate, Advanced, All-Star, Champions, Open, Masters,
-  Sophisticated, Junior, Invitational, All-American, Unknown. **Pro-Am is NOT a
-  level** (see below); for a pro-am division, `division_level` is the *amateur's*
-  skill rung, or Unknown if the name carries none.
-- **`dance_format`** — now **includes pro-am as part of the format axis** (user
-  decision: a Pro-Am J&J is a fundamentally different competition from a J&J —
-  the pros aren't assessed — so the two are never comparable and must not share a
-  format). So format = base dance (J&J / Strictly / Classic) × pro-am-ness
-  (none / pro-am-leader / pro-am-follower / pro-am-unspecified). Role markers seen
-  in data: `(AmL)`/`(AmF)`, trailing ` L final`/` F final`, `LEADER`/`FOLLOWER`
-  prefixes. Plus `Unknown`.
-- Keep `num_judges`, `num_competitors`, `event_date` (Saturday rule), the verbatim
-  `competition_name`, etc., as they are now.
+- **`division_level`** — single flat field, `str | None`. Returns `None` when no
+  level keyword is detected (e.g. unlevel Bachata J&J). Category wins over skill
+  rung when both appear (`Masters Novice` → Masters). Combined rungs resolve to
+  the higher rung (LEVEL_PATTERNS is ordered high-to-low, first match wins).
+  Pro-Am is **not** a level — level is the amateur's skill rung.
+- **`dance_format`** — `str | None`. Includes pro-am (with role) and switch as
+  part of the format axis. Returns `None` when undetectable.
+- `division_level` and `dance_format` are `null` in JSON when `None`.
+- See `FORMAT_CODES`, `LEVEL_CODES`, and detection regexes in `extract.py` for
+  the full implementation.
 
-### 3c. Scoresheet ID scheme
+See also `briefs/division_inventory.txt` — the checkpoint inventory of all 382
+distinct division blobs with their finalised classifications.
+
+### 3c. Scoresheet ID scheme ★ TODO
 
 - `id = "{event_slug}_{event_id}_{div_token}"`, e.g.
-  `swingcouver_2025_sd-228_str_chp` (abbreviated) or, for an unusual division,
-  `swingcouver_2025_sd-228_rising_star_routines` (raw fallback).
+  `swingcouver_2025_sd-228_str_chp`.
   - `event_slug` = readable slug of `event_name` (decoration only).
-  - `event_id` (e.g. `sd-228`) carries **global uniqueness** — so the lossy
-    event_slug never needs to be unique and all the old slug-collision/salting
-    machinery (`event_id_prefixes`) is **deleted**.
+  - `event_id` (e.g. `sd-228`) carries **global uniqueness**.
   - `div_token` — see below.
-- **`div_token`**: the abbreviated code **`{format}_{level}`** (format first), e.g.
-  `jnj_nov`, `str_new`, `pamljnj_int`, `pamjnj_adv` — **only for comp-types/levels
-  in the agreed standard set**; otherwise the **raw division slug**. Strip round
-  words (`final`/`finals`/Cyrillic `финал`) from both — they're all finals.
+- **Delete** the existing `event_id_prefixes` / salting machinery in `extract.py`
+  (it exists to handle slug collisions; `event_id` makes it unnecessary).
+- **`div_token`**: `{format_code}_{level_code}` when both are in the standard
+  maps; otherwise the raw division slug (with final/finals/финал stripped and
+  J&J variants → `jnj`, Strictly/Strictly Swing → `str`).
+- Residual intra-event collisions get a positional `_2` suffix (keep existing
+  `make_id` collision logic, just update its inputs).
+- Carry `event_id` and `source_event_id` into each parsed JSON.
 
-### Abbreviation map (starting point — FINALISED at the §4 checkpoint)
+---
 
-The `format` code is a **single atomic token with no internal underscore**, so the
-`{format}_{level}` id token always has exactly one separator. Pro-am is folded into
-the format and **keeps its base dance** (a pro-am Strictly ≠ a pro-am J&J):
+## 4. ★ Finalised abbreviation map
+
+The taxonomy checkpoint is at `briefs/division_inventory.txt`. The maps below
+are **finalised** — do not change them without user sign-off.
+
+### Format codes
 
 | `dance_format` | code |
 |---|---|
-| J&J | `jnj` |
+| Jack & Jill | `jnj` |
 | Strictly | `str` |
-| Classic | `cla` |
-| Pro-Am J&J (no role split) | `pamjnj` |
-| Pro-Am J&J, amateur Leader | `pamljnj` |
-| Pro-Am J&J, amateur Follower | `pamfjnj` |
-| Pro-Am Strictly (—/Leader/Follower) | `pamstr` / `pamlstr` / `pamfstr` |
-| Unknown | raw fallback |
+| Classic | `classic` |
+| Routine | `routine` |
+| Rising Star | `risingstar` |
+| Showcase | `showcase` |
+| Switch Jack & Jill | `swjnj` |
+| Switch Strictly | `swstr` |
+| Pro-Am Jack & Jill (no role split) | `pamjnj` |
+| Pro-Am Jack & Jill, amateur Leader | `pamljnj` |
+| Pro-Am Jack & Jill, amateur Follower | `pamfjnj` |
+| Pro-Am Strictly (no role) | `pamstr` |
+| Pro-Am Strictly, Leader | `pamlstr` |
+| Pro-Am Strictly, Follower | `pamfstr` |
+| Anything else | raw fallback |
+
+**Key format decisions:**
+- Classic requires the literal word "classic" (or "team"). "Routines" alone ≠ Classic.
+- Showcase and Routine are their own formats (not sub-types of Classic).
+- Pro-Am Routine → raw fallback (not Pro-Am Classic).
+- Switch/Switchly/Role Rotation are all Switch format. "Switchly" = Switch Strictly.
+- All-American level: any blob containing the whole word `all` (that isn't already All-Star
+  or All-Stars — those are checked first). "All Human" and similar are acceptable false positives.
+  All-X blobs → Jack & Jill by convention (format inference mirrors this broadened pattern).
+- Pro-am role detection: `(AmL)`/`(AmF)`, `L final`/`F final`, `LEADER`/`FOLLOWER`,
+  `Am Lead`/`Am Follow` — role follows the amateur. "Pro Lead/Am Follow" → Follower.
+- `\binter\b` matches Intermediate (French abbreviation convention).
+
+### Level codes
 
 | `division_level` | code |
 |---|---|
@@ -154,68 +179,25 @@ the format and **keeps its base dance** (a pro-am Strictly ≠ a pro-am J&J):
 | Champions | `chp` |
 | Open | `opn` |
 | Invitational | `inv` |
-| All-American / All-European / All-Australian / … (all the same thing) | `all` |
+| All-American (any blob with whole word "all", excl. All-Star) | `all` |
 | Sophisticated | `sop` |
 | Masters | `mas` |
 | Junior | `jnr` |
-| Unknown | raw fallback |
-
-Pro-am role markers seen in data, for detection: `(AmL)`/`(AmF)`, trailing
-` L final`/` F final`, `LEADER`/`FOLLOWER` prefixes. Levels/formats not in this map
-(novelty, non-WCS, deep sub-tiers like Hustle "Legends/Open") get the **raw slug**,
-not a bespoke code — the §4 inventory is where the user decides what's standard.
-- The abbreviate-or-raw choice is **deterministic per division** (keyed on whether
-  its classification is in the standard set + the abbreviation map — *not* on its
-  siblings), so there's no sibling-dependence instability.
-- Residual collisions (two divisions in one event producing the same token, e.g.
-  NJ Hustle `Intermediate Legends` vs `Intermediate Open` → both `pamfjnj_int`)
-  get a positional `_2` suffix. These are intra-event, so the event filters never
-  split them and the suffix stays stable. (This is the existing `make_id`
-  behaviour; keep it.)
+| No level detectable | `null` → raw fallback |
 
 ---
 
-## 4. ★ Deliverable + checkpoint: division/comp-type inventory (do this first)
+## 5. Tasks (in order)
 
-Before finalising any abbreviation map, **produce an inventory for the user to
-review, and stop.** Extend the existing `extract.py --dump-divisions` mode.
-
-The inventory must list, across all manifest entries:
-- every distinct **isolated division blob**, with its **frequency** (how many
-  scoresheets),
-- its first-pass classification: proposed `division_level`, `dance_format`
-  (incl. pro-am + role), and proposed `div_token`,
-- a clear flag for anything Unknown / unmatched / unusual.
-
-Group/sort so the user can see at a glance which comp-types and levels are
-**common** (worth a standard abbreviation) vs **unusual/novelty** (should fall
-back to the raw slug — do **not** invent bespoke abbreviations for one-offs).
-
-**Then pause and ask the user to:**
-1. confirm/adjust the abbreviation map (level codes, format/pro-am codes, role
-   markers), and
-2. mark which comp-types are "standard" (abbreviated) vs "raw fallback".
-
-Only after that sign-off, finalise normalisation + IDs and re-extract.
-
-Known messy cases to surface in the inventory (from prior analysis): Pro-Am with
-`(AmL)/(AmF)` and with `Legends/Open` sub-tiers; Masters with `50+`/age
-qualifiers; `Switch`/`Switchly`/role-rotation formats; novelty/event-specific
-names (`Avalanche J&J`, `WCS 101`, `JackPot`, `History J&J`); non-WCS dances
-(`Line Dance`, `Country Two-Step`, Bachata); regional `All-American` variants
-(`All Australian`, `All Korean`, …); source typos (`Invitaional`).
-
----
-
-## 5. Tasks (suggested order)
-
-1. **Inventory deliverable** (§4) → checkpoint with user.
-2. **download.py + manifest**: native `event_id` capture, manifest migration
-   (sd/ee from URL, dc via discovery re-run), optional `events.jsonl`.
-3. **extract.py taxonomy**: corrected `division_level`, pro-am-aware
-   `dance_format`, using the user-approved abbreviation map.
-4. **extract.py IDs**: new `id` scheme (`event_slug_event_id_div_token`), delete
-   `event_id_prefixes` salting, keep positional intra-event suffix; carry
+1. ~~**Inventory checkpoint** (§4)~~ — DONE. See `briefs/division_inventory.txt`.
+2. **download.py + manifest**: native `event_id` capture in `DiscoveredFinal`,
+   manifest migration (sd/ee from URL regex, dc via discovery re-run), write
+   `data/events.jsonl`. Migration overwrites `data/manifest.jsonl` in place.
+3. ~~**extract.py taxonomy**~~ — DONE. `division_level`, `dance_format`,
+   `normalise_level`, `normalise_format`, `FORMAT_CODES`, `LEVEL_CODES` all
+   finalised in `scripts/extract.py`.
+4. **extract.py IDs**: new `id` scheme (`{event_slug}_{event_id}_{div_token}`),
+   delete `event_id_prefixes` salting, keep positional intra-event suffix; carry
    `event_id`/`source_event_id` into each parsed JSON.
 5. **Re-extract** (`--force`) and verify (§6).
 
@@ -225,8 +207,8 @@ names (`Avalanche J&J`, `WCS 101`, `JackPot`, `History J&J`); non-WCS dances
 
 - `extract.py` runs clean (no `IntegrityError` crash); skip summary only contains
   expected categories.
-- Counts: ~418 parsed files (± any new standard-set decisions); eepro 1:M
-  expansion intact.
+- Counts: similar to current ~418 parsed files (± new standard-set decisions and
+  dance-style filtering); eepro 1:M expansion intact.
 - **Event id integrity:** every parsed file has `event_id`; the DC Swing&Snow
   event is no longer split across two ids; no two distinct events share an
   `event_id`.
@@ -237,8 +219,8 @@ names (`Avalanche J&J`, `WCS 101`, `JackPot`, `History J&J`); non-WCS dances
 - Spot-check per site: rankings are clean `1..N` permutations; pro-am divisions
   classify with the right level + role; `div_token` matches the agreed map or
   falls back to raw for unusual divisions.
-- Dump the final division→token mapping and eyeball for collapses/leaks before
-  declaring done.
+- Dump the final division→token mapping (`--dump-divisions`) and eyeball for
+  collapses/leaks before declaring done.
 
 ---
 
@@ -260,3 +242,14 @@ names (`Avalanche J&J`, `WCS 101`, `JackPot`, `History J&J`); non-WCS dances
 - Keep covariate keyword-matching on the **isolated division blob**, not the full
   `competition_name` (a real eepro event is named `Novice Invitational`, which
   would otherwise inject a false "Novice").
+- **Dance-style filtering**: `NON_WCS_STYLE_RE` is defined in both `download.py`
+  and `extract.py` by a concurrent agent. Do not remove or modify it. The
+  constant in `extract.py` is used to skip non-WCS divisions at extraction time.
+- **IntegrityError in `--dump-divisions` mode**: a `try/except IntegrityError`
+  wraps the validate call when `args.dump_divisions` is True, so the inventory
+  run doesn't abort on edge-case sheets. This does NOT affect normal extraction
+  (integrity errors still crash there). Keep this behaviour.
+- **DC event_id backfill**: re-running `discover_danceconvention` requires
+  network access (no disk cache for the archive page). It is available.
+  The dc discovery function already knows each event's native id — capture it
+  from the `events` dict and add to `DiscoveredFinal`.
