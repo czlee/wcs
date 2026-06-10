@@ -52,11 +52,11 @@ PARSED_DIR = DATA_DIR / "parsed"
 # wins, so order encodes precedence.
 LEVEL_PATTERNS: list[tuple[str, str]] = [
     # Category / age divisions (win over skill rungs — they are the division's
-    # identity, e.g. "Masters Novice" → Masters).
+    # identity, e.g. "Masters Novice" → Masters). Pro-Am is NOT a level — it is
+    # encoded in dance_format instead; level is the amateur's skill rung.
     ("Masters", r"\bmaster"),
     ("Sophisticated", r"\bsophisticated\b"),
     ("Junior", r"\bjunior|\byouth\b|\bteen\b"),
-    ("Pro-Am", r"\bpro[\s./-]?am\b"),
     ("Invitational", r"\binvitational\b|\binvite\b|\binvitation\b"),
     # All-American and its national variants (All Australian / All Korean / ...).
     ("All-American", r"\ball[\s-]?(american|australian|korean|japanese|canadian|"
@@ -66,34 +66,162 @@ LEVEL_PATTERNS: list[tuple[str, str]] = [
     ("Champions", r"\bchampion|\bchamps?\b"),
     ("All-Star", r"\ball[\s-]?stars?\b|\ballstar"),
     ("Advanced", r"\badvanced?\b|\badv\b"),
-    ("Intermediate", r"\bintermediate\b|\binterm\b|\bint\b"),
+    ("Intermediate", r"\bintermediate\b|\binterm\b|\binter\b|\bint\b"),
     ("Novice", r"\bnovice\b|\bnov\b"),
     ("Newcomer", r"\bnewcomer\b|\bnew\b|\brookie\b"),
     ("Open", r"\bopen\b"),
 ]
 
-FORMAT_PATTERNS: list[tuple[str, str]] = [
-    # Strictly (incl. "Switchly Strictly") before J&J.
-    ("Strictly", r"\bstrictly\b|\bswitchly\b"),
-    ("J&J", r"\bjack\s*[&'n]*\s*jill\b|\bjack\s+and\s+jill\b|\bj\s*&\s*j\b|\bjnj\b|\bjandj\b"),
-    ("Classic", r"\bclassic\b|\broutines?\b|\bshowcase\b|\bcabaret\b|\bteam\b"),
-]
+# Format detection regexes.
+_PROAM_RE = re.compile(
+    r"\bpro[\s./-]?am\b|\bam\s+(?:follow|fol|lead)\b",
+    re.IGNORECASE,
+)
+# Role = the amateur's role.
+_ROLE_LEADER_RE = re.compile(
+    r"\(AmL\)|\bLEADER\b|\bL\s+[Ff]inal\b|\bam\s+lead",
+    re.IGNORECASE,
+)
+_ROLE_FOLLOWER_RE = re.compile(
+    r"\(AmF\)|\bFOLLOWER\b|\bF\s+[Ff]inal\b|\bam\s+(?:follow|fol)\b",
+    re.IGNORECASE,
+)
+# Switchly/Switch/Role-Rotation detection precedes _STRICTLY_RE (switchly = Switch Strictly).
+_SWITCH_RE = re.compile(r"\bswitch\b|\bswitchly\b|\brole[\s-]?rotation\b", re.IGNORECASE)
+_RISING_STAR_RE = re.compile(r"\brising[\s-]?star\b", re.IGNORECASE)
+# Strictly no longer includes switchly — that's handled by _SWITCH_RE above.
+_STRICTLY_RE = re.compile(r"\bstrictly\b", re.IGNORECASE)
+_JNJ_RE = re.compile(
+    r"\bjack\s*[&'n]*\s*jill\b|\bjack\s+and\s+jill\b|\bjack[-\s]*n[-\s]*jill\b"
+    r"|\bj\s*&\s*j\b|\bjnj\b|\bjandj\b",
+    re.IGNORECASE,
+)
+# Classic, Showcase, and Cabaret are distinct formats — do not conflate them.
+_CLASSIC_RE = re.compile(r"\bclassic\b|\bteam\b", re.IGNORECASE)
+_SHOWCASE_RE = re.compile(r"\bshowcase\b", re.IGNORECASE)
+_ROUTINE_RE = re.compile(r"\broutines?\b", re.IGNORECASE)
+# All-national pattern mirrors LEVEL_PATTERNS; used to infer J&J format for All-X blobs.
+_ALL_NATIONAL_RE = re.compile(
+    r"\ball[\s-]?(american|australian|korean|japanese|canadian|"
+    r"british|irish|ireland|european|french|german|kiwi|aussie|nz|usa)\b",
+    re.IGNORECASE,
+)
+
+# Abbreviation maps for div_token generation.
+FORMAT_CODES: dict[str, str] = {
+    "J&J": "jnj",
+    "Strictly": "str",
+    "Classic": "classic",
+    "Routine": "routine",
+    "Showcase": "showcase",
+    "Rising Star": "rst",
+    "Switch J&J": "swjnj",
+    "Switch Strictly": "swstr",
+    "Pro-Am J&J": "pamjnj",
+    "Pro-Am J&J (Leader)": "pamljnj",
+    "Pro-Am J&J (Follower)": "pamfjnj",
+    "Pro-Am Strictly": "pamstr",
+    "Pro-Am Strictly (Leader)": "pamlstr",
+    "Pro-Am Strictly (Follower)": "pamfstr",
+}
+
+LEVEL_CODES: dict[str, str] = {
+    "Newcomer": "new",
+    "Novice": "nov",
+    "Intermediate": "int",
+    "Advanced": "adv",
+    "All-Star": "als",
+    "Champions": "chp",
+    "Open": "opn",
+    "Invitational": "inv",
+    "All-American": "all",
+    "Sophisticated": "sop",
+    "Masters": "mas",
+    "Junior": "jnr",
+}
+
+_FINALS_WORDS_RE = re.compile(r"\b(finals?|финал)\b", re.IGNORECASE)
+# For raw-slug normalisation: shorten known format keywords even in fallback tokens.
+_STRICTLY_NORM_RE = re.compile(r"\bstrictly(?:\s+swing)?\b", re.IGNORECASE)
 
 
-def _match(patterns: list[tuple[str, str]], text: str) -> str:
-    low = text.lower()
-    for label, pat in patterns:
+def normalise_level(division_blob: str) -> str | None:
+    """Return the division level, or None if no level is detectable."""
+    low = division_blob.lower()
+    for label, pat in LEVEL_PATTERNS:
         if re.search(pat, low):
             return label
-    return "Unknown"
+    return None
 
 
-def normalise_level(division_blob: str) -> str:
-    return _match(LEVEL_PATTERNS, division_blob)
+def normalise_format(division_blob: str) -> str | None:
+    """Return the dance format (including pro-am/switch variants), or None if undetectable.
+
+    Detection priority (highest first):
+      1. Role Rotation / Switch Roles → nonstandard marker (not in FORMAT_CODES)
+      2. Pro-Am (existing logic)
+      3. Switch/Switchly → Switch J&J or Switch Strictly
+      4. Rising Star (before Classic, which would otherwise catch "Routines")
+      5. Strictly / J&J / Classic
+      6. All-national blobs (All-American etc.) → J&J by convention
+    """
+    # Pro-am: detect role then base dance.
+    if _PROAM_RE.search(division_blob):
+        if _ROLE_LEADER_RE.search(division_blob):
+            role = " (Leader)"
+        elif _ROLE_FOLLOWER_RE.search(division_blob):
+            role = " (Follower)"
+        else:
+            role = ""
+        if _STRICTLY_RE.search(division_blob):
+            return f"Pro-Am Strictly{role}"
+        if _JNJ_RE.search(division_blob):
+            return f"Pro-Am J&J{role}"
+        return f"Pro-Am Unknown{role}"
+
+    # Switch / Switchly: "switchly" always means Switch Strictly.
+    if _SWITCH_RE.search(division_blob):
+        if re.search(r"\bswitchly\b", division_blob, re.IGNORECASE):
+            return "Switch Strictly"
+        if _JNJ_RE.search(division_blob):
+            return "Switch J&J"
+        if _STRICTLY_RE.search(division_blob):
+            return "Switch Strictly"
+        return None  # switch present but base dance unknown
+
+    if _RISING_STAR_RE.search(division_blob):
+        return "Rising Star"
+    if _STRICTLY_RE.search(division_blob):
+        return "Strictly"
+    if _JNJ_RE.search(division_blob):
+        return "J&J"
+    if _SHOWCASE_RE.search(division_blob):
+        return "Showcase"
+    if _CLASSIC_RE.search(division_blob):
+        return "Classic"
+    if _ROUTINE_RE.search(division_blob):
+        return "Routine"
+    # All-national blobs (All-American, All-European, etc.) are J&J by convention.
+    if _ALL_NATIONAL_RE.search(division_blob):
+        return "J&J"
+    return None
 
 
-def normalise_format(division_blob: str) -> str:
-    return _match(FORMAT_PATTERNS, division_blob)
+def make_div_token_base(blob: str, level: str | None, fmt: str | None) -> str:
+    """Compute the div_token (format_code + level_code, or raw slug fallback).
+
+    Both format and level must be in their respective code maps to get an
+    abbreviated token; otherwise falls back to a slug of the blob minus round words.
+    """
+    fmt_code = FORMAT_CODES.get(fmt) if fmt is not None else None
+    level_code = LEVEL_CODES.get(level) if level is not None else None
+    if fmt_code is not None and level_code is not None:
+        return f"{fmt_code}_{level_code}"
+    # Raw fallback: strip round words, then shorten known format keywords.
+    s = _FINALS_WORDS_RE.sub(" ", blob)
+    s = _JNJ_RE.sub("jnj", s)
+    s = _STRICTLY_NORM_RE.sub("str", s)
+    return slugify(s) or slugify(blob)
 
 
 # ---------------------------------------------------------------------------
@@ -465,8 +593,15 @@ def main() -> None:
                 skips.append((label, "non-finals round (name)"))
                 continue
 
-            # Validation: integrity violations raise (abort); soft issues → skip.
-            reason = validate(scoresheet)
+            # Validation: integrity violations raise (abort) during extraction;
+            # during --dump-divisions we catch them and record for the inventory.
+            try:
+                reason = validate(scoresheet)
+            except IntegrityError as e:
+                if args.dump_divisions:
+                    skips.append((label, f"integrity issue (dump only): {e}"))
+                    continue
+                raise
             if reason is not None:
                 skips.append((label, reason))
                 continue
@@ -525,20 +660,43 @@ def main() -> None:
             print(f"  - {label}: {reason}")
 
 
+_SITE_ABBREV = {"scoring.dance": "sd", "eepro.com": "ee", "danceconvention.net": "dc"}
+
+
 def _print_division_audit(audit: list[tuple[str, str, str, str]]) -> None:
-    """Print distinct division blobs and their level/format mapping for review."""
-    seen: dict[tuple[str, str], tuple[str, str, int]] = {}
+    """Print distinct division blobs and their proposed classification for review."""
+    by_blob: dict[str, dict] = {}
     for site, blob, level, fmt in audit:
-        key = (site, blob)
-        if key in seen:
-            l, f, c = seen[key]
-            seen[key] = (l, f, c + 1)
+        if blob not in by_blob:
+            by_blob[blob] = {"sites": Counter(), "count": 0, "level": level, "fmt": fmt}
+        by_blob[blob]["count"] += 1
+        by_blob[blob]["sites"][site] += 1
+
+    sorted_blobs = sorted(by_blob.items(), key=lambda x: -x[1]["count"])
+
+    print(f"\n=== {len(by_blob)} distinct division blobs ({len(audit)} total scoresheets) ===\n")
+    hdr = f"{'Freq':>5}  {'Sites':<8}  {'Level':<15}  {'Format':<28}  {'div_token':<25}  Blob"
+    print(hdr)
+    print("-" * len(hdr))
+    for blob, info in sorted_blobs:
+        level = info["level"]
+        fmt = info["fmt"]
+        token = make_div_token_base(blob, level, fmt)
+        is_raw = FORMAT_CODES.get(fmt) is None or LEVEL_CODES.get(level) is None
+        if level is None or fmt is None:
+            flag = "  *** UNCLASSIFIED"
+        elif is_raw:
+            flag = "  (raw fallback)"
         else:
-            seen[key] = (level, fmt, 1)
-    print(f"\n=== {len(seen)} distinct division blobs (from {len(audit)} scoresheets) ===\n")
-    for (site, blob), (level, fmt, count) in sorted(seen.items()):
-        flag = "  <-- UNKNOWN" if level == "Unknown" or fmt == "Unknown" else ""
-        print(f"[{site:18}] {level:13} {fmt:9} x{count:<3} {blob!r}{flag}")
+            flag = ""
+        level_s = level or "null"
+        fmt_s = fmt or "null"
+        site_str = "+".join(
+            f"{_SITE_ABBREV.get(s, s)}:{c}" for s, c in sorted(info["sites"].items())
+        )
+        print(
+            f"{info['count']:>5}  {site_str:<8}  {level_s:<15}  {fmt_s:<28}  {token:<25}  {blob!r}{flag}"
+        )
 
 
 if __name__ == "__main__":
