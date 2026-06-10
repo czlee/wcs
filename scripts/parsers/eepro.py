@@ -1,0 +1,321 @@
+"""Parser for eepro.com HTML pages.
+
+Vendored verbatim from ~/who-woulda-won/core/parsers/eepro.py
+(only the `core.*` imports were rewritten to local relative imports).
+"""
+
+import re
+from bs4 import BeautifulSoup
+
+from .models import Scoresheet
+from . import register_parser
+from .base import PrelimsError, ScoresheetParser
+
+_ROUND_SUFFIX_RE = re.compile(
+    r'\s+(?:Finals|Prelims|Semis|Quarters|Final|Prelim|Semi|Quarter)\b.*$', re.IGNORECASE
+)
+
+
+def _common_word_prefix(names: list[str]) -> str:
+    """Return the longest common word-level prefix across all names."""
+    if not names:
+        return ""
+    word_lists = [name.split() for name in names]
+    prefix_words = []
+    for words in zip(*word_lists):
+        if len({w.lower() for w in words}) == 1:
+            prefix_words.append(words[0])
+        else:
+            break
+    return " ".join(prefix_words)
+
+
+def _get_division_core(name: str, prefix: str) -> str:
+    """Strip the common prefix and round suffix from a division name, returning the lowercased core."""
+    core = name
+    if prefix and core.lower().startswith(prefix.lower()):
+        core = core[len(prefix):].lstrip()
+    return _ROUND_SUFFIX_RE.sub("", core).lower()
+
+
+
+@register_parser
+class EeproParser(ScoresheetParser):
+    """Parser for eepro.com (Event Express Pro) competition results.
+
+    eepro.com pages contain simple HTML tables, one per division.
+    Each table has:
+    - Header row with a single cell spanning the table width (division name)
+    - Second row with column headers: Place, Competitor, [Judge Names], BIB, Marks Sorted
+    - Data rows with placements
+
+    Note: Pages may contain multiple divisions.
+
+    Expected URL format:
+        https://eepro.com/results/<slug>/<slug>.html
+    """
+
+    URL_PATTERN = re.compile(
+        r"^https?://eepro\.com"
+        r"/results/[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+\.html$"
+    )
+
+    EXAMPLE_URL = "https://eepro.com/results/eventname2026/competitionfinals.html"
+
+    def can_parse(self, source: str) -> bool:
+        """Check if this is a valid eepro.com results URL."""
+        return bool(self.URL_PATTERN.match(source))
+
+    def can_parse_content(self, content: bytes, filename: str) -> bool:
+        """Check if this looks like an eepro.com HTML page.
+
+        Tell-tale sign: The <title> tag contains "Event Express Pro".
+        """
+        try:
+            html = content.decode("utf-8", errors="replace")
+        except Exception:
+            return False
+        return "event express pro" in html.lower()
+
+    def parse(self, source: str, content: bytes, division: str | None = None) -> Scoresheet:
+        """Parse eepro.com HTML content into a Scoresheet.
+
+        Args:
+            source: URL or filename
+            content: Raw HTML bytes
+            division: Optional division name substring (case-insensitive).
+                      If None and there is exactly one division, parses it.
+                      If None and there are multiple divisions, raises an error
+                      listing all available divisions.
+
+        Returns:
+            Scoresheet for the specified division.
+        """
+        html = content.decode("utf-8", errors="replace")
+        soup = BeautifulSoup(html, "lxml")
+
+        # Find all division tables. A division table has a first row
+        # containing a single cell with a colspan (the division header).
+        tables = soup.find_all("table")
+        division_tables = []
+        division_names = []
+        found_prelims = False
+
+        for table in tables:
+            first_row = table.find("tr")
+            if not first_row:
+                continue
+            cells = first_row.find_all("td")
+            if len(cells) == 1 and cells[0].get("colspan"):
+                if self._table_is_prelims(table):
+                    found_prelims = True
+                    continue  # skip prelims tables
+                division_tables.append(table)
+                name = cells[0].get_text(strip=True)
+                if name.startswith("Division:"):
+                    name = name[9:].strip()
+                division_names.append(name)
+
+        if not division_tables:
+            if found_prelims:
+                raise PrelimsError(
+                    "This looks like a prelims scoresheet from eepro.com. "
+                    "Judge cells contain callback votes (Y/N/A1) rather than numeric placements."
+                )
+            raise ValueError("No division tables found in HTML")
+
+        # Select the division
+        if division is not None:
+            division_lower = division.lower()
+            prefix = _common_word_prefix(division_names)
+            # Tier 1: core == search term (exact core match)
+            # Tier 2: core starts with search term
+            # Tier 3: core contains search term
+            # Tier 4: full name contains search term (for searches that include the prefix)
+            # Within a tier, prefer the shortest full name.
+            best_tier = None
+            best_index = None
+            for i, name in enumerate(division_names):
+                core = _get_division_core(name, prefix)
+                name_lower = name.lower()
+                if core == division_lower:
+                    tier = 1
+                elif core.startswith(division_lower):
+                    tier = 2
+                elif division_lower in core:
+                    tier = 3
+                elif division_lower in name_lower:
+                    tier = 4
+                else:
+                    continue
+                if (best_tier is None
+                        or tier < best_tier
+                        or (tier == best_tier and len(name) < len(division_names[best_index]))):
+                    best_tier = tier
+                    best_index = i
+
+            if best_index is None:
+                division_list = "\n".join(f"  - {name}" for name in division_names)
+                raise ValueError(
+                    f"No division matching \"{division}\" was found. "
+                    f"Available divisions:\n{division_list}"
+                )
+
+            selected_index = best_index
+        elif len(division_tables) == 1:
+            selected_index = 0
+        else:
+            division_list = "\n".join(f"  - {name}" for name in division_names)
+            raise ValueError(
+                f"This page contains {len(division_tables)} divisions. "
+                f"Please specify which division to analyse.\n\n"
+                f"Available divisions:\n{division_list}"
+            )
+
+        # Get event name from page title or H2
+        event_name = "Unknown Event"
+        h2 = soup.find("h2")
+        if h2:
+            event_name = h2.get_text(strip=True)
+
+        return self._parse_division_table(division_tables[selected_index], event_name)
+
+    def _parse_division_table(self, table, event_name: str) -> Scoresheet:
+        """Parse a single division table into a Scoresheet."""
+        rows = table.find_all("tr")
+
+        if len(rows) < 3:
+            raise ValueError("Table has too few rows")
+
+        # First row: division name
+        division_row = rows[0]
+        division_cell = division_row.find("td")
+        division_name = division_cell.get_text(strip=True) if division_cell else "Unknown Division"
+
+        # Clean up division name (remove "Division: " prefix)
+        if division_name.startswith("Division:"):
+            division_name = division_name[9:].strip()
+
+        competition_name = f"{event_name} - {division_name}"
+
+        # Second row: column headers
+        header_row = rows[1]
+        header_cells = header_row.find_all("td")
+
+        # Expected: Place, Competitor, [Judges...], BIB, Marks Sorted
+        # We need to identify which columns are judges
+        headers = [cell.get_text(strip=True) for cell in header_cells]
+
+        # Find judge columns (between Competitor and BIB)
+        try:
+            competitor_idx = next(i for i, h in enumerate(headers) if "competitor" in h.lower())
+            bib_idx = next(i for i, h in enumerate(headers) if "bib" in h.lower())
+        except StopIteration:
+            raise ValueError(f"Could not find Competitor or BIB columns. Headers: {headers}")
+
+        judge_indices = list(range(competitor_idx + 1, bib_idx))
+        judges = [headers[i] for i in judge_indices]
+
+        if not judges:
+            raise ValueError("No judge columns found")
+
+        # Check for prelims (callback) scoresheets
+        if self._looks_like_callbacks(rows, judge_indices):
+            raise PrelimsError(
+                "This looks like a prelims scoresheet from eepro.com. "
+                "Judge cells contain callback votes (Y/N/A1) rather than numeric placements."
+            )
+
+        # Parse data rows
+        competitors = []
+        rankings = {judge: {} for judge in judges}
+
+        for row in rows[2:]:
+            cells = row.find_all("td")
+            if len(cells) < bib_idx:
+                continue  # Skip malformed rows
+
+            # Get competitor name
+            competitor = cells[competitor_idx].get_text(strip=True)
+            if not competitor:
+                continue
+
+            competitors.append(competitor)
+
+            # Get judge placements
+            for i, judge_idx in enumerate(judge_indices):
+                if judge_idx < len(cells):
+                    placement_text = cells[judge_idx].get_text(strip=True)
+                    # Handle cases like "6-DQ" by extracting just the number
+                    placement = self._extract_placement(placement_text)
+                    rankings[judges[i]][competitor] = placement
+
+        if not competitors:
+            raise ValueError("No competitors found in table")
+
+        return Scoresheet(
+            competition_name=competition_name,
+            competitors=competitors,
+            judges=judges,
+            rankings=rankings,
+        )
+
+    def _table_is_prelims(self, table) -> bool:
+        """Return True if this table contains callback-style prelims data."""
+        rows = table.find_all("tr")
+        if len(rows) < 3:
+            return False
+        headers = [cell.get_text(strip=True) for cell in rows[1].find_all("td")]
+        try:
+            competitor_idx = next(i for i, h in enumerate(headers) if "competitor" in h.lower())
+            bib_idx = next(i for i, h in enumerate(headers) if "bib" in h.lower())
+        except StopIteration:
+            return False
+        judge_indices = list(range(competitor_idx + 1, bib_idx))
+        if not judge_indices:
+            return False
+        return self._looks_like_callbacks(rows, judge_indices)
+
+    def _looks_like_callbacks(self, rows, judge_indices) -> bool:
+        """Return True if judge cells look like callback votes (Y/N/A1) rather than placements."""
+        callback_pattern = re.compile(r"^(Y|N|A\d+)$", re.IGNORECASE)
+        for row in rows[2:5]:
+            cells = row.find_all("td")
+            for idx in judge_indices:
+                if idx < len(cells):
+                    value = cells[idx].get_text(strip=True)
+                    if callback_pattern.match(value):
+                        return True
+        return False
+
+    def _extract_placement(self, text: str) -> int:
+        """Extract numeric placement from text, handling cases like '6-DQ'."""
+        # Try to extract the first number
+        match = re.match(r"(\d+)", text)
+        if match:
+            return int(match.group(1))
+        return 0  # Default for unparseable placements
+
+    def get_division_names(self, content: bytes) -> list[str]:
+        """Get list of division names in the HTML content.
+
+        Useful for letting users choose which division to parse.
+        """
+        html = content.decode("utf-8", errors="replace")
+        soup = BeautifulSoup(html, "lxml")
+
+        division_names = []
+        for table in soup.find_all("table"):
+            first_row = table.find("tr")
+            if not first_row:
+                continue
+            cells = first_row.find_all("td")
+            if len(cells) == 1 and cells[0].get("colspan"):
+                if self._table_is_prelims(table):
+                    continue  # skip prelims tables
+                name = cells[0].get_text(strip=True)
+                if name.startswith("Division:"):
+                    name = name[9:].strip()
+                division_names.append(name)
+
+        return division_names
