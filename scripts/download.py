@@ -39,6 +39,15 @@ ROUND_KEYWORDS = re.compile(
     re.IGNORECASE,
 )
 
+# Matches dance styles that are definitively not WCS.  Used to skip whole events
+# (when the event name contains the keyword) or individual divisions (when only a
+# division name does).  "country" catches Country Swing / Line Dance; "silc" catches
+# the Ceroc/Modern-Jive SILC Stars competition format.
+NON_WCS_STYLE_RE = re.compile(
+    r"\b(?:salsa|bachata|zouk|lindy|hustle|country|silc|brazuka|ceroc|modern\s+jive|shag)",
+    re.IGNORECASE,
+)
+
 
 @dataclass
 class DiscoveredFinal:
@@ -288,6 +297,9 @@ def discover_scoring_dance(
             re.sub(r"\s+results?$", "", h1.get_text(strip=True), flags=re.IGNORECASE)
             if h1 else f"Event {event_id}"
         )
+        if NON_WCS_STYLE_RE.search(event_name):
+            logging.info(f"scoring.dance: skipping non-WCS event {event_name!r}")
+            continue
         count = 0
         for a in rsoup.find_all("a", href=re.compile(r"/events/\d+/results/\d+\.html")):
             name = a.get_text(strip=True)
@@ -299,6 +311,9 @@ def discover_scoring_dance(
             href = a.get("href", "")
             url = f"https://scoring.dance{href}" if href.startswith("/") else href
             division = re.sub(r"\s+finals?$", "", name, flags=re.IGNORECASE).strip()
+            if NON_WCS_STYLE_RE.search(division):
+                logging.info(f"scoring.dance: skipping non-WCS division {division!r} in {event_name!r}")
+                continue
             finals.append(DiscoveredFinal(
                 site="scoring.dance",
                 event_name=event_name,
@@ -389,6 +404,10 @@ def discover_eepro(
             name_parts = re.split(r"\d{4}\s*[-–]\s*", label_text, maxsplit=1)
             event_name = name_parts[1].strip() if len(name_parts) > 1 else ""
 
+            if NON_WCS_STYLE_RE.search(event_name):
+                logging.info(f"eepro.com: skipping non-WCS event {event_name!r}")
+                continue
+
             for a in li.find_all("a", href=True):
                 href = a.get("href", "")
                 link_text = a.get_text(strip=True)
@@ -405,6 +424,9 @@ def discover_eepro(
                     continue
                 # Keep only relevant competition types (J&J variants, Strictly, All-American)
                 if not re.search(r"jj|jack|strictly|american", result_type):
+                    continue
+                if NON_WCS_STYLE_RE.search(link_text):
+                    logging.info(f"eepro.com: skipping non-WCS division {link_text!r} in {event_name!r}")
                     continue
 
                 result_url = f"https://eepro.com/results/{event_slug}/{m.group(2)}.html"
@@ -515,6 +537,9 @@ def discover_danceconvention(
         )
 
         for event_id, event_name, slug, ev_start, ev_end in qualifying:
+            if NON_WCS_STYLE_RE.search(event_name):
+                logging.info(f"danceconvention.net: skipping non-WCS event {event_name!r}")
+                continue
             results_url = (
                 f"https://danceconvention.net/eventdirector/en/"
                 f"eventpage/{event_id}-{slug}/results"
@@ -566,6 +591,9 @@ def discover_danceconvention(
                     # Format A / D: skip entries where the "division name" is actually a round keyword
                     if ROUND_KEYWORDS.match(division_name.strip()):
                         continue
+                if NON_WCS_STYLE_RE.search(division_name):
+                    logging.info(f"danceconvention.net: skipping non-WCS division {division_name!r} in {event_name!r}")
+                    continue
                 finals.append(DiscoveredFinal(
                     site="danceconvention.net",
                     event_name=event_name,

@@ -16,6 +16,7 @@ import json
 import logging
 import re
 import sys
+import time
 from collections import Counter, defaultdict
 from datetime import date, timedelta
 from pathlib import Path
@@ -58,17 +59,18 @@ LEVEL_PATTERNS: list[tuple[str, str]] = [
     ("Sophisticated", r"\bsophisticated\b"),
     ("Junior", r"\bjunior|\byouth\b|\bteen\b"),
     ("Invitational", r"\binvitational\b|\binvite\b|\binvitation\b"),
-    # All-American and its national variants (All Australian / All Korean / ...).
-    ("All-American", r"\ball[\s-]?(american|australian|korean|japanese|canadian|"
-                     r"british|irish|ireland|european|french|german|kiwi|aussie|nz|usa)\b"),
     # Skill ladder, highest to lowest (combined rungs like "Advanced/All Star" or
     # "All-Stars/Champions" resolve to the higher one — matched first).
     ("Champions", r"\bchampion|\bchamps?\b"),
     ("All-Star", r"\ball[\s-]?stars?\b|\ballstar"),
+    # All-American and its national variants: any "All <X>" blob not already caught
+    # by All-Star above. \ball\b is intentionally broad — false positives (e.g.
+    # "All Human") are acceptable.
+    ("All-American", r"\ball\b"),
     ("Advanced", r"\badvanced?\b|\badv\b"),
-    ("Intermediate", r"\bintermediate\b|\binterm\b|\binter\b|\bint\b"),
+    ("Intermediate", r"\bintermediate\b|\binterm\b|\binter\b(?!-)|\bint\b"),
     ("Novice", r"\bnovice\b|\bnov\b"),
-    ("Newcomer", r"\bnewcomer\b|\bnew\b|\brookie\b"),
+    ("Newcomer", r"\bnewcomer\b|\bnew\b|\brookie\b|\bnewbie\b"),
     ("Open", r"\bopen\b"),
 ]
 
@@ -88,7 +90,7 @@ _ROLE_FOLLOWER_RE = re.compile(
 )
 # Switchly/Switch/Role-Rotation detection precedes _STRICTLY_RE (switchly = Switch Strictly).
 _SWITCH_RE = re.compile(r"\bswitch\b|\bswitchly\b|\brole[\s-]?rotation\b", re.IGNORECASE)
-_RISING_STAR_RE = re.compile(r"\brising[\s-]?star\b", re.IGNORECASE)
+_RISING_STAR_RE = re.compile(r"\brising[\s-]?stars?\b", re.IGNORECASE)
 # Strictly no longer includes switchly — that's handled by _SWITCH_RE above.
 _STRICTLY_RE = re.compile(r"\bstrictly\b", re.IGNORECASE)
 _JNJ_RE = re.compile(
@@ -100,26 +102,23 @@ _JNJ_RE = re.compile(
 _CLASSIC_RE = re.compile(r"\bclassic\b|\bteam\b", re.IGNORECASE)
 _SHOWCASE_RE = re.compile(r"\bshowcase\b", re.IGNORECASE)
 _ROUTINE_RE = re.compile(r"\broutines?\b", re.IGNORECASE)
-# All-national pattern mirrors LEVEL_PATTERNS; used to infer J&J format for All-X blobs.
-_ALL_NATIONAL_RE = re.compile(
-    r"\ball[\s-]?(american|australian|korean|japanese|canadian|"
-    r"british|irish|ireland|european|french|german|kiwi|aussie|nz|usa)\b",
-    re.IGNORECASE,
-)
+# All-national pattern mirrors LEVEL_PATTERNS All-American entry; used to infer J&J format
+# for All-X blobs (All-American, All-European, … are J&J by convention).
+_ALL_NATIONAL_RE = re.compile(r"\ball\b", re.IGNORECASE)
 
 # Abbreviation maps for div_token generation.
 FORMAT_CODES: dict[str, str] = {
-    "J&J": "jnj",
+    "Jack & Jill": "jnj",
     "Strictly": "str",
     "Classic": "classic",
     "Routine": "routine",
     "Showcase": "showcase",
-    "Rising Star": "rst",
-    "Switch J&J": "swjnj",
+    "Rising Star": "risingstar",
+    "Switch Jack & Jill": "swjnj",
     "Switch Strictly": "swstr",
-    "Pro-Am J&J": "pamjnj",
-    "Pro-Am J&J (Leader)": "pamljnj",
-    "Pro-Am J&J (Follower)": "pamfjnj",
+    "Pro-Am Jack & Jill": "pamjnj",
+    "Pro-Am Jack & Jill (Leader)": "pamljnj",
+    "Pro-Am Jack & Jill (Follower)": "pamfjnj",
     "Pro-Am Strictly": "pamstr",
     "Pro-Am Strictly (Leader)": "pamlstr",
     "Pro-Am Strictly (Follower)": "pamfstr",
@@ -141,6 +140,12 @@ LEVEL_CODES: dict[str, str] = {
 }
 
 _FINALS_WORDS_RE = re.compile(r"\b(finals?|финал)\b", re.IGNORECASE)
+
+# Matches dance styles that are definitively not WCS — mirrors the constant in download.py.
+NON_WCS_STYLE_RE = re.compile(
+    r"\b(?:salsa|bachata|zouk|lindy|hustle|country|silc|brazuka|ceroc|modern\s+jive|shag)",
+    re.IGNORECASE,
+)
 # For raw-slug normalisation: shorten known format keywords even in fallback tokens.
 _STRICTLY_NORM_RE = re.compile(r"\bstrictly(?:\s+swing)?\b", re.IGNORECASE)
 
@@ -158,12 +163,11 @@ def normalise_format(division_blob: str) -> str | None:
     """Return the dance format (including pro-am/switch variants), or None if undetectable.
 
     Detection priority (highest first):
-      1. Role Rotation / Switch Roles → nonstandard marker (not in FORMAT_CODES)
-      2. Pro-Am (existing logic)
-      3. Switch/Switchly → Switch J&J or Switch Strictly
-      4. Rising Star (before Classic, which would otherwise catch "Routines")
-      5. Strictly / J&J / Classic
-      6. All-national blobs (All-American etc.) → J&J by convention
+      1. Pro-Am (existing logic)
+      2. Switch/Switchly/Role Rotation → Switch J&J or Switch Strictly
+      3. Rising Star (before Classic, which would otherwise catch "Routines")
+      4. Strictly / J&J / Showcase / Classic / Routine
+      5. All-national blobs (All-American etc.) → J&J by convention
     """
     # Pro-am: detect role then base dance.
     if _PROAM_RE.search(division_blob):
@@ -176,7 +180,7 @@ def normalise_format(division_blob: str) -> str | None:
         if _STRICTLY_RE.search(division_blob):
             return f"Pro-Am Strictly{role}"
         if _JNJ_RE.search(division_blob):
-            return f"Pro-Am J&J{role}"
+            return f"Pro-Am Jack & Jill{role}"
         return f"Pro-Am Unknown{role}"
 
     # Switch / Switchly: "switchly" always means Switch Strictly.
@@ -184,7 +188,7 @@ def normalise_format(division_blob: str) -> str | None:
         if re.search(r"\bswitchly\b", division_blob, re.IGNORECASE):
             return "Switch Strictly"
         if _JNJ_RE.search(division_blob):
-            return "Switch J&J"
+            return "Switch Jack & Jill"
         if _STRICTLY_RE.search(division_blob):
             return "Switch Strictly"
         return None  # switch present but base dance unknown
@@ -194,16 +198,16 @@ def normalise_format(division_blob: str) -> str | None:
     if _STRICTLY_RE.search(division_blob):
         return "Strictly"
     if _JNJ_RE.search(division_blob):
-        return "J&J"
+        return "Jack & Jill"
     if _SHOWCASE_RE.search(division_blob):
         return "Showcase"
     if _CLASSIC_RE.search(division_blob):
         return "Classic"
     if _ROUTINE_RE.search(division_blob):
         return "Routine"
-    # All-national blobs (All-American, All-European, etc.) are J&J by convention.
+    # All-national blobs (All-American, All-European, etc.) are Jack & Jill by convention.
     if _ALL_NATIONAL_RE.search(division_blob):
-        return "J&J"
+        return "Jack & Jill"
     return None
 
 
@@ -217,6 +221,8 @@ def make_div_token_base(blob: str, level: str | None, fmt: str | None) -> str:
     level_code = LEVEL_CODES.get(level) if level is not None else None
     if fmt_code is not None and level_code is not None:
         return f"{fmt_code}_{level_code}"
+    if fmt_code is not None:
+        return fmt_code
     # Raw fallback: strip round words, then shorten known format keywords.
     s = _FINALS_WORDS_RE.sub(" ", blob)
     s = _JNJ_RE.sub("jnj", s)
@@ -340,11 +346,17 @@ def make_id(event_prefix: str, division_blob: str, used: set[str]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Validation (hybrid: crash on integrity bugs, skip on incomplete/too-small data)
+# Validation (skip on incomplete/too-small data or integrity anomalies)
 # ---------------------------------------------------------------------------
 
 class IntegrityError(Exception):
-    """A parsed scoresheet is internally inconsistent — indicates a parser bug."""
+    """A parsed scoresheet is internally inconsistent.
+
+    May indicate a parser bug, but can also arise from genuinely unsupported
+    source data (e.g. raw scores instead of placements, or duplicate ranks from
+    judge error). The main loop catches these and adds them to the skip list
+    rather than aborting the run.
+    """
 
 
 def block_structure(values: list[int], n: int) -> int | None:
@@ -389,7 +401,8 @@ def validate(scoresheet) -> str | None:
     """Validate a parsed scoresheet.
 
     Returns None if OK, or a skip reason string for data we should drop. Raises
-    IntegrityError (which aborts the run) for violations that signal a parser bug.
+    IntegrityError for violations that signal a parser bug or unsupported source
+    data; the caller is expected to catch these and add them to the skip list.
     """
     judges = scoresheet.judges
     competitors = scoresheet.competitors
@@ -549,13 +562,23 @@ def main() -> None:
     written = 0
     division_audit: list[tuple[str, str, str, str]] = []  # (site, blob, level, format)
 
-    for record in records:
+    total = len(records)
+    _last_progress = 0.0
+    for rec_idx, record in enumerate(records):
+        _now = time.monotonic()
+        if _now - _last_progress >= 3.0:
+            print(f"  [{rec_idx}/{total}]", flush=True)
+            _last_progress = _now
         url = record["url"]
         site = record["site"]
         event_name = record["event_name"]
         event_start = date.fromisoformat(record["event_start"])
         event_end = date.fromisoformat(record["event_end"])
         local_path = Path(record["local_path"])
+
+        if NON_WCS_STYLE_RE.search(event_name):
+            skips.append((event_name, "non-WCS event (name)"))
+            continue
 
         if not local_path.exists():
             skips.append((event_name, f"raw file missing: {local_path}"))
@@ -593,15 +616,15 @@ def main() -> None:
                 skips.append((label, "non-finals round (name)"))
                 continue
 
-            # Validation: integrity violations raise (abort) during extraction;
-            # during --dump-divisions we catch them and record for the inventory.
+            # Validation: integrity violations are caught and logged as skips.
+            # Both modes treat them gracefully — they may indicate a parser bug
+            # or genuinely unsupported source data (e.g. raw scores, duplicate
+            # placements), neither of which should abort the whole run.
             try:
                 reason = validate(scoresheet)
             except IntegrityError as e:
-                if args.dump_divisions:
-                    skips.append((label, f"integrity issue (dump only): {e}"))
-                    continue
-                raise
+                skips.append((label, f"integrity error: {e}"))
+                continue
             if reason is not None:
                 skips.append((label, reason))
                 continue
@@ -611,6 +634,9 @@ def main() -> None:
             )
             level = normalise_level(division_blob)
             fmt = normalise_format(division_blob)
+            if NON_WCS_STYLE_RE.search(division_blob):
+                skips.append((label, "non-WCS dance style"))
+                continue
             division_audit.append((site, division_blob, level, fmt))
 
             if args.dump_divisions:
@@ -664,39 +690,52 @@ _SITE_ABBREV = {"scoring.dance": "sd", "eepro.com": "ee", "danceconvention.net":
 
 
 def _print_division_audit(audit: list[tuple[str, str, str, str]]) -> None:
-    """Print distinct division blobs and their proposed classification for review."""
-    by_blob: dict[str, dict] = {}
+    """Print division classifications grouped by div_token for review.
+
+    Groups all blob texts that share the same div_token so that Freq and Sites
+    reflect the total across all sites for that classification.
+    """
+    by_token: dict[str, dict] = {}
     for site, blob, level, fmt in audit:
-        if blob not in by_blob:
-            by_blob[blob] = {"sites": Counter(), "count": 0, "level": level, "fmt": fmt}
-        by_blob[blob]["count"] += 1
-        by_blob[blob]["sites"][site] += 1
+        token = make_div_token_base(blob, level, fmt)
+        if token not in by_token:
+            by_token[token] = {"level": level, "fmt": fmt, "count": 0, "sites": Counter(), "blobs": {}}
+        by_token[token]["count"] += 1
+        by_token[token]["sites"][site] += 1
+        if blob not in by_token[token]["blobs"]:
+            by_token[token]["blobs"][blob] = Counter()
+        by_token[token]["blobs"][blob][site] += 1
 
-    sorted_blobs = sorted(by_blob.items(), key=lambda x: -x[1]["count"])
+    n_blobs = sum(len(g["blobs"]) for g in by_token.values())
+    sorted_tokens = sorted(by_token.items(), key=lambda x: -x[1]["count"])
 
-    print(f"\n=== {len(by_blob)} distinct division blobs ({len(audit)} total scoresheets) ===\n")
-    hdr = f"{'Freq':>5}  {'Sites':<8}  {'Level':<15}  {'Format':<28}  {'div_token':<25}  Blob"
+    print(f"\n=== {n_blobs} distinct division blobs ({len(by_token)} classifications, {len(audit)} total scoresheets) ===\n")
+    hdr = f" Freq  {'Sites':<22}  {'Level':<15}  {'Format':<28}  {'div_token':<25}  Blobs"
     print(hdr)
-    print("-" * len(hdr))
-    for blob, info in sorted_blobs:
+    print("-" * 120)
+    for token, info in sorted_tokens:
         level = info["level"]
         fmt = info["fmt"]
-        token = make_div_token_base(blob, level, fmt)
-        is_raw = FORMAT_CODES.get(fmt) is None or LEVEL_CODES.get(level) is None
-        if level is None or fmt is None:
-            flag = "  *** UNCLASSIFIED"
-        elif is_raw:
-            flag = "  (raw fallback)"
-        else:
+        fmt_code = FORMAT_CODES.get(fmt) if fmt is not None else None
+        level_code = LEVEL_CODES.get(level) if level is not None else None
+        if fmt_code is not None and level_code is not None:
             flag = ""
+        elif fmt_code is not None:
+            flag = "  (no level)"
+        else:
+            flag = "  *** UNCLASSIFIED"
         level_s = level or "null"
         fmt_s = fmt or "null"
-        site_str = "+".join(
-            f"{_SITE_ABBREV.get(s, s)}:{c}" for s, c in sorted(info["sites"].items())
-        )
-        print(
-            f"{info['count']:>5}  {site_str:<8}  {level_s:<15}  {fmt_s:<28}  {token:<25}  {blob!r}{flag}"
-        )
+        site_str = "+".join(f"{_SITE_ABBREV.get(s, s)}:{c}" for s, c in sorted(info["sites"].items()))
+        n_blobs_in_group = len(info["blobs"])
+        print(f"{info['count']:>5}  {site_str:<22}  {level_s:<15}  {fmt_s:<28}  {token:<25}  {n_blobs_in_group} blob(s){flag}")
+        sorted_blobs = sorted(info["blobs"].items(), key=lambda x: -sum(x[1].values()))
+        for blob, blob_sites_counter in sorted_blobs:
+            blob_count = sum(blob_sites_counter.values())
+            blob_site_str = "+".join(
+                f"{_SITE_ABBREV.get(s, s)}:{c}" for s, c in sorted(blob_sites_counter.items())
+            )
+            print(f"       {blob_count:>5}  {blob_site_str:<22}  {blob!r}")
 
 
 if __name__ == "__main__":
