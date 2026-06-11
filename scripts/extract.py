@@ -99,7 +99,7 @@ _JNJ_RE = re.compile(
     re.IGNORECASE,
 )
 # Classic, Showcase, and Cabaret are distinct formats — do not conflate them.
-_CLASSIC_RE = re.compile(r"\bclassic\b|\bteam\b", re.IGNORECASE)
+_CLASSIC_RE = re.compile(r"\bclassic\b", re.IGNORECASE)
 _SHOWCASE_RE = re.compile(r"\bshowcase\b", re.IGNORECASE)
 _ROUTINE_RE = re.compile(r"\broutines?\b", re.IGNORECASE)
 # All-national pattern mirrors LEVEL_PATTERNS All-American entry; used to infer J&J format
@@ -530,8 +530,8 @@ def main() -> None:
     _last_progress = 0.0
     for rec_idx, record in enumerate(records):
         _now = time.monotonic()
-        if _now - _last_progress >= 3.0:
-            print(f"  [{rec_idx}/{total}]", flush=True)
+        if _now - _last_progress >= 1.0:
+            print(f"  [{rec_idx}/{total}]", flush=True, end="\r")
             _last_progress = _now
         url = record["url"]
         site = record["site"]
