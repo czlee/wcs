@@ -35,6 +35,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 MANIFEST_PATH = DATA_DIR / "manifest.jsonl"
 PARSED_DIR = DATA_DIR / "parsed"
+INVENTORY_PATH = DATA_DIR / "division_inventory.html"
 
 
 # ---------------------------------------------------------------------------
@@ -42,7 +43,7 @@ PARSED_DIR = DATA_DIR / "parsed"
 #
 # NB: these keyword maps are a STARTING POINT grounded in a sample of the real
 # data. The distinct division blobs must be eyeballed and the maps extended
-# before the output is trusted — run with --dump-divisions to list them.
+# before the output is trusted — run inventory.py to review them.
 # ---------------------------------------------------------------------------
 
 # division_level is a single flat field: the skill ladder and the category/age
@@ -485,10 +486,9 @@ def parse_targets(record: dict, content: bytes) -> list[str | None]:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument(
-        "--dump-divisions",
+        "--no-inventory",
         action="store_true",
-        help="Parse everything and print the distinct division blobs and their "
-             "level/format mapping, without writing any parsed files.",
+        help="Skip writing data/division_inventory.html after extraction.",
     )
     ap.add_argument(
         "--force",
@@ -519,8 +519,7 @@ def main() -> None:
     if args.limit:
         records = records[: args.limit]
 
-    if not args.dump_divisions:
-        PARSED_DIR.mkdir(parents=True, exist_ok=True)
+    PARSED_DIR.mkdir(parents=True, exist_ok=True)
 
     used_ids: set[str] = set()
     skips: list[tuple[str, str]] = []  # (label, reason)
@@ -604,9 +603,6 @@ def main() -> None:
                 continue
             division_audit.append((site, division_blob, level, fmt))
 
-            if args.dump_divisions:
-                continue
-
             div_token = make_div_token_base(division_blob, level, fmt)
             event_slug = slugify(event_name).replace("_", "-")
             entry_id = make_id(record["event_id"], event_slug, div_token, used_ids)
@@ -640,10 +636,6 @@ def main() -> None:
             logging.info(f"wrote {entry_id}  ({level} / {fmt}, J={doc['num_judges']} C={doc['num_competitors']})")
 
     # ---- summaries ----
-    if args.dump_divisions:
-        _print_division_audit(division_audit)
-        return
-
     logging.info(f"Done. Wrote {written} parsed files; skipped {len(skips)}.")
     if skips:
         reason_counts = Counter(re.split(r"[:(]", r, 1)[0].strip() for _, r in skips)
@@ -653,58 +645,9 @@ def main() -> None:
         print("\n=== Skips (detail) ===")
         for label, reason in skips:
             print(f"  - {label}: {reason}")
-
-
-_SITE_ABBREV = {"scoring.dance": "sd", "eepro.com": "ee", "danceconvention.net": "dc"}
-
-
-def _print_division_audit(audit: list[tuple[str, str, str, str]]) -> None:
-    """Print division classifications grouped by div_token for review.
-
-    Groups all blob texts that share the same div_token so that Freq and Sites
-    reflect the total across all sites for that classification.
-    """
-    by_token: dict[str, dict] = {}
-    for site, blob, level, fmt in audit:
-        token = make_div_token_base(blob, level, fmt)
-        if token not in by_token:
-            by_token[token] = {"level": level, "fmt": fmt, "count": 0, "sites": Counter(), "blobs": {}}
-        by_token[token]["count"] += 1
-        by_token[token]["sites"][site] += 1
-        if blob not in by_token[token]["blobs"]:
-            by_token[token]["blobs"][blob] = Counter()
-        by_token[token]["blobs"][blob][site] += 1
-
-    n_blobs = sum(len(g["blobs"]) for g in by_token.values())
-    sorted_tokens = sorted(by_token.items(), key=lambda x: -x[1]["count"])
-
-    print(f"\n=== {n_blobs} distinct division blobs ({len(by_token)} classifications, {len(audit)} total scoresheets) ===\n")
-    hdr = f" Freq  {'Sites':<22}  {'Level':<15}  {'Format':<28}  {'div_token':<25}  Blobs"
-    print(hdr)
-    print("-" * 120)
-    for token, info in sorted_tokens:
-        level = info["level"]
-        fmt = info["fmt"]
-        fmt_code = FORMAT_CODES.get(fmt) if fmt is not None else None
-        level_code = LEVEL_CODES.get(level) if level is not None else None
-        if fmt_code is not None and level_code is not None:
-            flag = ""
-        elif fmt_code is not None:
-            flag = "  (no level)"
-        else:
-            flag = "  *** UNCLASSIFIED"
-        level_s = level or "null"
-        fmt_s = fmt or "null"
-        site_str = "+".join(f"{_SITE_ABBREV.get(s, s)}:{c}" for s, c in sorted(info["sites"].items()))
-        n_blobs_in_group = len(info["blobs"])
-        print(f"{info['count']:>5}  {site_str:<22}  {level_s:<15}  {fmt_s:<28}  {token:<25}  {n_blobs_in_group} blob(s){flag}")
-        sorted_blobs = sorted(info["blobs"].items(), key=lambda x: -sum(x[1].values()))
-        for blob, blob_sites_counter in sorted_blobs:
-            blob_count = sum(blob_sites_counter.values())
-            blob_site_str = "+".join(
-                f"{_SITE_ABBREV.get(s, s)}:{c}" for s, c in sorted(blob_sites_counter.items())
-            )
-            print(f"       {blob_count:>5}  {blob_site_str:<22}  {blob!r}")
+    if not args.no_inventory:
+        from inventory import write_inventory
+        write_inventory(division_audit, INVENTORY_PATH)
 
 
 if __name__ == "__main__":
