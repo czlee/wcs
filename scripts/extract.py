@@ -379,9 +379,9 @@ def validate(scoresheet) -> str | None:
     n = len(competitors)
 
     # Size floor → skip (legitimately odd source data, not a bug).
-    if len(judges) < 2:
+    if len(judges) < 3:
         return f"too few judges ({len(judges)})"
-    if n < 3:
+    if n < 5:
         return f"too few competitors ({n})"
 
     # rankings keys must match the judges list exactly → integrity (parser bug).
