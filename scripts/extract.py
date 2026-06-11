@@ -37,6 +37,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 MANIFEST_PATH = DATA_DIR / "manifest.jsonl"
 PARSED_DIR = DATA_DIR / "parsed"
 INVENTORY_PATH = DATA_DIR / "division_inventory.html"
+SKIPS_PATH = DATA_DIR / "extract-skips.html"
 
 
 # ---------------------------------------------------------------------------
@@ -484,6 +485,84 @@ def parse_targets(record: dict, content: bytes) -> list[str | None]:
     return [None]
 
 
+def _reason_key(r: str) -> str:
+    """Normalise a skip reason to a summary bucket label.
+
+    Strips quoted identifiers (e.g. judge names) so per-name variants group
+    together, truncates at the first ': ' to drop long error details, then
+    removes a trailing parenthetical (e.g. '(3)', '(name)') that only adds
+    noise to the summary.
+    """
+    r = re.sub(r"'[^']*'", "...", r)           # remove quoted names
+    r = re.split(r": ", r, 1)[0]               # drop long detail after ': '
+    r = re.sub(r"\s+\([^)]*\)\s*$", "", r)     # strip trailing (...)
+    return r.strip()
+
+
+_SKIPS_CSS = """\
+    body { font-family: system-ui, sans-serif; font-size: 14px; padding: 1em 2em; color: #222; }
+    h1 { font-size: 1.2em; margin-bottom: .25em; }
+    h2 { font-size: 1.0em; margin: 1.2em 0 .3em; }
+    p.stats { color: #555; margin-top: 0; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 1.5em; }
+    th, td { text-align: left; padding: 4px 10px; border: 1px solid #ddd; }
+    thead th { background: #444; color: #fff; }
+    tbody tr:nth-child(even) { background: #f9f9f9; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; color: #555; }
+    a { color: #1d4ed8; word-break: break-all; }
+"""
+
+
+def write_skips_html(skips: list[tuple[str, str, str]], output_path: Path) -> None:
+    """Write an HTML skip report to output_path."""
+    def _e(s: object) -> str:
+        return html.escape(str(s))
+
+    n = len(skips)
+    reason_counts = Counter(_reason_key(r) for _, r, _ in skips)
+
+    summary_rows = "".join(
+        f'<tr><td class="num">{count}</td><td>{_e(reason)}</td></tr>\n'
+        for reason, count in reason_counts.most_common()
+    )
+
+    detail_rows = "".join(
+        f'<tr>'
+        f'<td>{_e(label)}</td>'
+        f'<td>{_e(reason)}</td>'
+        f'<td><a href="{_e(url)}" target="_blank" rel="noopener">{_e(url)}</a></td>'
+        f'</tr>\n'
+        for label, reason, url in skips
+    )
+
+    page = (
+        f'<!DOCTYPE html>\n'
+        f'<html lang="en">\n'
+        f'<head>\n'
+        f'<meta charset="utf-8">\n'
+        f'<title>Extract Skips</title>\n'
+        f'<style>\n{_SKIPS_CSS}</style>\n'
+        f'</head>\n'
+        f'<body>\n'
+        f'<h1>Extract Skips</h1>\n'
+        f'<p class="stats">{n} total skips</p>\n'
+        f'<h2>Reason summary</h2>\n'
+        f'<table>\n'
+        f'<thead><tr><th>Count</th><th>Reason</th></tr></thead>\n'
+        f'<tbody>\n{summary_rows}</tbody>\n'
+        f'</table>\n'
+        f'<h2>Detail</h2>\n'
+        f'<table>\n'
+        f'<thead><tr><th>Event / Division</th><th>Reason</th><th>URL</th></tr></thead>\n'
+        f'<tbody>\n{detail_rows}</tbody>\n'
+        f'</table>\n'
+        f'</body>\n'
+        f'</html>\n'
+    )
+    output_path.write_text(page, encoding="utf-8")
+    print(f"Wrote {output_path}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument(
@@ -523,9 +602,9 @@ def main() -> None:
     PARSED_DIR.mkdir(parents=True, exist_ok=True)
 
     used_ids: set[str] = set()
-    skips: list[tuple[str, str]] = []  # (label, reason)
+    skips: list[tuple[str, str, str]] = []  # (label, reason, url)
     written = 0
-    division_audit: list[tuple[str, str, str, str]] = []  # (site, blob, level, format)
+    division_audit: list[tuple[str, str, str, str, str]] = []  # (site, blob, level, fmt, url)
 
     for record in tqdm(records, unit="sheet"):
         url = record["url"]
@@ -536,26 +615,26 @@ def main() -> None:
         local_path = Path(record["local_path"])
 
         if NON_WCS_STYLE_RE.search(event_name):
-            skips.append((event_name, "non-WCS event (name)"))
+            skips.append((event_name, "non-WCS event (name)", url))
             continue
 
         if not local_path.exists():
-            skips.append((event_name, f"raw file missing: {local_path}"))
+            skips.append((event_name, f"raw file missing: {local_path}", url))
             continue
 
         content = local_path.read_bytes()
         parser = detect_parser(url) or detect_parser_by_content(content, url)
         if parser is None:
-            skips.append((event_name, "no parser matched"))
+            skips.append((event_name, "no parser matched", url))
             continue
 
         try:
             divisions = parse_targets(record, content)
         except Exception as e:
-            skips.append((event_name, f"division enumeration failed: {e}"))
+            skips.append((event_name, f"division enumeration failed: {e}", url))
             continue
         if not divisions:
-            skips.append((event_name, "no finals divisions found"))
+            skips.append((event_name, "no finals divisions found", url))
             continue
 
         for div_arg in divisions:
@@ -563,16 +642,16 @@ def main() -> None:
             try:
                 scoresheet = parser.parse(url, content, division=div_arg)
             except PrelimsError:
-                skips.append((label, "prelims/callback round"))
+                skips.append((label, "prelims/callback round", url))
                 continue
             except Exception as e:
-                skips.append((label, f"parse error: {type(e).__name__}: {e}"))
+                skips.append((label, f"parse error: {type(e).__name__}: {e}", url))
                 continue
 
             # Content-level non-finals safety net (numeric prelims that the
             # parser's callback check and the Phase 1 URL filter both missed).
             if looks_like_non_finals(scoresheet.competition_name):
-                skips.append((label, "non-finals round (name)"))
+                skips.append((label, "non-finals round (name)", url))
                 continue
 
             # Validation: integrity violations are caught and logged as skips.
@@ -582,10 +661,10 @@ def main() -> None:
             try:
                 reason = validate(scoresheet)
             except IntegrityError as e:
-                skips.append((label, f"integrity error: {e}"))
+                skips.append((label, f"integrity error: {e}", url))
                 continue
             if reason is not None:
-                skips.append((label, reason))
+                skips.append((label, reason, url))
                 continue
 
             division_blob = isolate_division_blob(
@@ -594,16 +673,16 @@ def main() -> None:
             level = normalise_level(division_blob)
             fmt = normalise_format(division_blob)
             if NON_WCS_STYLE_RE.search(division_blob):
-                skips.append((label, "non-WCS dance style"))
+                skips.append((label, "non-WCS dance style", url))
                 continue
-            division_audit.append((site, division_blob, level, fmt))
+            division_audit.append((site, division_blob, level, fmt, url))
 
             div_token = make_div_token_base(division_blob, level, fmt)
             event_slug = slugify(event_name).replace("_", "-")
             entry_id = make_id(record["event_id"], event_slug, div_token, used_ids)
             out_path = PARSED_DIR / f"{entry_id}.json"
             if out_path.exists() and not args.force:
-                skips.append((label, "already parsed (cached)"))
+                skips.append((label, "already parsed (cached)", url))
                 continue
 
             doc = {
@@ -633,13 +712,11 @@ def main() -> None:
     # ---- summaries ----
     logging.info(f"Done. Wrote {written} parsed files; skipped {len(skips)}.")
     if skips:
-        reason_counts = Counter(re.split(r"[:(]", r, 1)[0].strip() for _, r in skips)
+        reason_counts = Counter(_reason_key(r) for _, r, _ in skips)
         print("\n=== Skip summary ===")
         for reason, count in reason_counts.most_common():
             print(f"  {count:4d}  {reason}")
-        print("\n=== Skips (detail) ===")
-        for label, reason in skips:
-            print(f"  - {label}: {reason}")
+        write_skips_html(skips, SKIPS_PATH)
     if not args.no_inventory:
         from inventory import write_inventory
         write_inventory(division_audit, INVENTORY_PATH)

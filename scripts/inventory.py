@@ -49,19 +49,21 @@ def _site_str(sites_counter: Counter) -> str:
     )
 
 
-def write_inventory(audit: list[tuple[str, str, str, str]], output_path: Path) -> None:
+def write_inventory(audit: list[tuple[str, str, str, str, str]], output_path: Path) -> None:
     """Write an HTML division inventory to output_path."""
     from extract import FORMAT_CODES, LEVEL_CODES, make_div_token_base  # lazy to avoid circular import
     by_token: dict[str, dict] = {}
-    for site, blob, level, fmt in audit:
+    for site, blob, level, fmt, url in audit:
         token = make_div_token_base(blob, level, fmt)
         if token not in by_token:
             by_token[token] = {"level": level, "fmt": fmt, "count": 0, "sites": Counter(), "blobs": {}}
         by_token[token]["count"] += 1
         by_token[token]["sites"][site] += 1
         if blob not in by_token[token]["blobs"]:
-            by_token[token]["blobs"][blob] = Counter()
-        by_token[token]["blobs"][blob][site] += 1
+            by_token[token]["blobs"][blob] = {"sites": Counter(), "url": None}
+        by_token[token]["blobs"][blob]["sites"][site] += 1
+        if by_token[token]["blobs"][blob]["url"] is None:
+            by_token[token]["blobs"][blob]["url"] = url
 
     n_blobs = sum(len(g["blobs"]) for g in by_token.values())
     sorted_tokens = sorted(by_token.items(), key=lambda x: -x[1]["count"])
@@ -80,17 +82,25 @@ def write_inventory(audit: list[tuple[str, str, str, str]], output_path: Path) -
         else:
             flag_html = ' <span class="flag-unclassified">UNCLASSIFIED</span>'
 
-        sorted_blobs = sorted(info["blobs"].items(), key=lambda x: -sum(x[1].values()))
+        sorted_blobs = sorted(info["blobs"].items(), key=lambda x: -sum(x[1]["sites"].values()))
         n_in_group = len(info["blobs"])
+        is_unclassified = fmt_code is None
 
-        blob_rows = "".join(
-            f'<tr>'
-            f'<td class="num">{sum(bs.values())}</td>'
-            f'<td>{_e(_site_str(bs))}</td>'
-            f'<td>{_e(blob)}</td>'
-            f'</tr>'
-            for blob, bs in sorted_blobs
-        )
+        blob_rows_parts = []
+        for blob, binfo in sorted_blobs:
+            count = sum(binfo["sites"].values())
+            if is_unclassified and binfo["url"]:
+                blob_td = f'<td><a href="{_e(binfo["url"])}" target="_blank" rel="noopener">{_e(blob)}</a></td>'
+            else:
+                blob_td = f'<td>{_e(blob)}</td>'
+            blob_rows_parts.append(
+                f'<tr>'
+                f'<td class="num">{count}</td>'
+                f'<td>{_e(_site_str(binfo["sites"]))}</td>'
+                f'{blob_td}'
+                f'</tr>'
+            )
+        blob_rows = "".join(blob_rows_parts)
         blob_cell = (
             f'<details><summary>{n_in_group} blob(s){flag_html}</summary>'
             f'<table class="blob-table">{blob_rows}</table></details>'
@@ -228,6 +238,6 @@ if __name__ == "__main__":
             fmt = normalise_format(blob)
             if NON_WCS_STYLE_RE.search(blob):
                 continue
-            div_audit.append((site, blob, level, fmt))
+            div_audit.append((site, blob, level, fmt, url))
 
     write_inventory(div_audit, args.output)
