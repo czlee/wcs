@@ -15,10 +15,11 @@ import json
 import logging
 import re
 import sys
-import time
 from collections import Counter
 from datetime import date, timedelta
 from pathlib import Path
+
+from tqdm import tqdm
 
 # Make the vendored `parsers` package importable when run as `python scripts/extract.py`.
 sys.path.insert(0, str(Path(__file__).parent))
@@ -526,13 +527,7 @@ def main() -> None:
     written = 0
     division_audit: list[tuple[str, str, str, str]] = []  # (site, blob, level, format)
 
-    total = len(records)
-    _last_progress = 0.0
-    for rec_idx, record in enumerate(records):
-        _now = time.monotonic()
-        if _now - _last_progress >= 1.0:
-            print(f"  [{rec_idx}/{total}]", flush=True, end="\r")
-            _last_progress = _now
+    for record in tqdm(records, unit="sheet"):
         url = record["url"]
         site = record["site"]
         event_name = record["event_name"]
@@ -633,7 +628,7 @@ def main() -> None:
             }
             out_path.write_text(json.dumps(doc, indent=2, ensure_ascii=False))
             written += 1
-            logging.info(f"wrote {entry_id}  ({level} / {fmt}, J={doc['num_judges']} C={doc['num_competitors']})")
+            logging.debug(f"wrote {entry_id}  ({level} / {fmt}, J={doc['num_judges']} C={doc['num_competitors']})")
 
     # ---- summaries ----
     logging.info(f"Done. Wrote {written} parsed files; skipped {len(skips)}.")
