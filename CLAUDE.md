@@ -1,0 +1,81 @@
+# WCS Judge Divergence — Project Guide
+
+**Goal:** Quantify how much judges on the same panel disagree in WCS competition finals, and find what predicts higher or lower divergence (division level, panel size, field size, etc.).
+
+See `plan.md` for the full project plan and open questions.
+
+---
+
+## Phase Status
+
+| Phase | Script | Status |
+|---|---|---|
+| 1 — Download | `scripts/download.py` | ✅ Complete |
+| 2 — Extract | `scripts/extract.py` | ✅ Complete |
+| 3 — Metrics | `scripts/compute_metrics.py` | ⬜ Not started |
+| 4 — Covariates | (lookup tables + join at analysis time) | ⬜ Not started |
+| 5 — Analysis | `scripts/analyze.ipynb` | ⬜ Not started |
+
+Debugging history for Phases 1 and 2 is in `briefs/`.
+
+---
+
+## Environment
+
+```bash
+python -m venv venv          # venv/, not .venv/
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+`requirements.txt` currently covers phases 1–2 only. Phases 3–5 will need `pandas`, `scipy`, `matplotlib`, `seaborn`, `jupyter`.
+
+---
+
+## File Layout
+
+```
+data/
+  raw/                  # Phase 1: cached raw files (named by MD5 of URL)
+  manifest.jsonl        # Phase 1: one record per downloaded file
+  events.jsonl          # Phase 1: one record per discovered event (namespaced event_id)
+  parsed/               # Phase 2: one JSON per scoresheet ({id}.json)
+scripts/
+  download.py           # Phase 1
+  extract.py            # Phase 2
+  inventory.py          # helper: renders data/division_inventory.html
+  parsers/              # vendored parsers (scoring_dance, eepro, danceconvention)
+briefs/                 # extended history/debugging notes per phase
+lookups/                # (planned) manual mapping tables joined at analysis time
+results/                # (planned) metrics.csv output of Phase 3
+```
+
+---
+
+## Parsers
+
+Parsers are **vendored** in `scripts/parsers/` — do not import from `~/who-woulda-won`.
+
+`extract.py` makes them importable with:
+```python
+sys.path.insert(0, str(Path(__file__).parent))  # adds scripts/ to path
+from parsers import detect_parser, ...
+from parsers.base import PrelimsError
+```
+
+The three parsers: `scoring_dance`, `eepro`, `danceconvention`.
+
+---
+
+## Key Data Relationships
+
+- **manifest.jsonl → parsed/**: 1:M. A single eepro page can contain multiple divisions, producing multiple `data/parsed/{id}.json` files from one manifest entry.
+- **Parsed file fields:** `id`, `url`, `site`, `event_name`, `division_raw`, `event_start`, `event_end`, `event_date`, `division_level`, `dance_format`, `num_judges`, `num_competitors`, `competitors`, `judges`, `rankings`.
+- **`event_date`:** normalised canonical date (the Saturday of a weekend event, or the actual competition day otherwise). Computed in Phase 2.
+- **`division_level`** and **`dance_format`** are keyword-matched from `division_raw` in `extract.py`. The keyword maps are a starting point — run `inventory.py` to review unmatched divisions before trusting the output.
+
+---
+
+## Non-WCS Filtering
+
+`download.py` filters out definitively non-WCS divisions at discovery time using `NON_WCS_STYLE_RE` (salsa, bachata, zouk, lindy, hustle, country, silc, etc.). This is a best-effort filter — a manual or agent-assisted pass over the event list may still be needed before analysis (see plan.md open question 2).
