@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate data/division_inventory.html — a browsable audit of division classifications.
+"""Generate data/division-inventory.html — a browsable audit of division classifications.
 
 Run standalone to regenerate the inventory without writing parsed files:
 
@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 _SITE_ABBREV = {"scoring.dance": "sd", "eepro.com": "ee", "danceconvention.net": "dc"}
 
 DATA_DIR = Path(__file__).parent.parent / "data"
-INVENTORY_PATH = DATA_DIR / "division_inventory.html"
+INVENTORY_PATH = DATA_DIR / "division-inventory.html"
 
 _CSS = """\
     body { font-family: system-ui, sans-serif; font-size: 14px; padding: 1em 2em; color: #222; }

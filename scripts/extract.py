@@ -37,7 +37,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 MANIFEST_PATH = DATA_DIR / "manifest.jsonl"
 PARSED_DIR = DATA_DIR / "parsed"
-INVENTORY_PATH = DATA_DIR / "division_inventory.html"
+INVENTORY_PATH = DATA_DIR / "division-inventory.html"
 SKIPS_PATH = DATA_DIR / "extract-skips.html"
 
 
