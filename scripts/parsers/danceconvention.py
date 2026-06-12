@@ -1,7 +1,9 @@
 """Parser for danceconvention.net PDF scoresheets.
 
-Vendored verbatim from ~/who-woulda-won/core/parsers/danceconvention.py
-(only the `core.*` imports were rewritten to local relative imports).
+Vendored from ~/who-woulda-won/core/parsers/danceconvention.py
+(core.* imports rewritten to local relative imports; _common_word_prefix and
+_get_division_core copied locally rather than imported from base; get_division_names()
+added for bulk extraction in parse_targets()).
 """
 
 import re
@@ -12,6 +14,33 @@ import pdfplumber
 from .models import Scoresheet
 from . import register_parser
 from .base import PrelimsError, ScoresheetParser
+
+
+_ROUND_SUFFIX_RE = re.compile(
+    r'\s+(?:Finals|Prelims|Semis|Quarters|Final|Prelim|Semi|Quarter)\b.*$', re.IGNORECASE
+)
+
+
+def _common_word_prefix(names: list[str]) -> str:
+    """Return the longest common word-level prefix across all names."""
+    if not names:
+        return ""
+    word_lists = [name.split() for name in names]
+    prefix_words = []
+    for words in zip(*word_lists):
+        if len({w.lower() for w in words}) == 1:
+            prefix_words.append(words[0])
+        else:
+            break
+    return " ".join(prefix_words)
+
+
+def _get_division_core(name: str, prefix: str) -> str:
+    """Strip the common prefix and round suffix from a division name, returning the lowercased core."""
+    core = name
+    if prefix and core.lower().startswith(prefix.lower()):
+        core = core[len(prefix):].lstrip()
+    return _ROUND_SUFFIX_RE.sub("", core).lower()
 
 
 @register_parser
@@ -80,28 +109,153 @@ class DanceConventionParser(ScoresheetParser):
             if not pdf.pages:
                 raise ValueError("PDF has no pages")
 
-            # Extract text and tables from all pages
-            all_text = ""
-            all_tables = []
+            sections, nonfinals_tables = self._split_into_sections(pdf.pages)
 
-            for page in pdf.pages:
-                text = page.extract_text() or ""
-                all_text += text + "\n"
-
-                tables = page.extract_tables()
-                all_tables.extend(tables)
-
-        if not all_tables:
+        if not sections:
+            if nonfinals_tables:
+                self._check_if_prelims(nonfinals_tables)  # raises PrelimsError if appropriate
             raise ValueError("No tables found in PDF")
 
-        # Parse competition info from text
-        competition_name = self._extract_competition_name(all_text)
+        if len(sections) == 1:
+            competition_name, all_text, all_tables = sections[0]
+        elif division is None:
+            division_list = "\n".join(f"  - {s[0]}" for s in sections)
+            raise ValueError(
+                f"This PDF contains {len(sections)} competitions. "
+                f"Please specify which competition to analyse.\n\n"
+                f"Available competitions:\n{division_list}"
+            )
+        else:
+            competition_name, all_text, all_tables = self._select_section(sections, division)
 
-        # Parse judge key from text
         judge_key = self._extract_judge_key(all_text)
-
-        # Find and parse the main results table
         return self._parse_results_table(all_tables, competition_name, judge_key)
+
+    def get_division_names(self, content: bytes) -> list[str | None]:
+        """Return section names for multi-section PDFs, or [None] for single-section ones."""
+        pdf_file = BytesIO(content)
+        with pdfplumber.open(pdf_file) as pdf:
+            if not pdf.pages:
+                return [None]
+            sections, _ = self._split_into_sections(pdf.pages)
+        if len(sections) <= 1:
+            return [None]
+        return [s[0] for s in sections]
+
+    def _get_page_section_name(self, text: str) -> str | None:
+        """Detect whether a page starts a new competition section.
+
+        Continuation pages begin their extracted text with the table column
+        header row ("# Name ...") or a data row (leading digit). All other
+        pages are treated as the start of a new competition section.
+        Returns the competition name, or None for continuation pages.
+        """
+        lines = [l.strip() for l in text.split("\n") if l.strip()]
+        if not lines or lines[0].startswith("#") or lines[0][:1].isdigit():
+            return None
+        return self._extract_competition_name(text)
+
+    def _split_into_sections(
+        self, pages
+    ) -> tuple[list[tuple[str, str, list]], list]:
+        """Split PDF pages into competition sections.
+
+        Returns:
+          - sections: list of (competition_name, all_text, finals_tables),
+            one per competition found (only sections that have finals tables)
+          - nonfinals_results_tables: all results tables lacking cumulative
+            columns, for use in prelims detection when no finals are found
+        """
+        sections: list[list] = []  # each entry: [name, text, finals_tables]
+        current: list | None = None
+        nonfinals_results_tables: list = []
+
+        for page in pages:
+            text = page.extract_text() or ""
+            page_tables = page.extract_tables() or []
+
+            results_tables = [
+                t for t in page_tables
+                if t and len(t) >= 2 and self._is_results_header(t[0])
+            ]
+            finals_tables = [
+                t for t in results_tables if self._has_cumulative_columns(t[0])
+            ]
+            nonfinals_results_tables.extend(
+                t for t in results_tables if not self._has_cumulative_columns(t[0])
+            )
+
+            section_name = self._get_page_section_name(text)
+
+            if section_name is not None and (
+                current is None or section_name != current[0]
+            ):
+                current = [section_name, text, []]
+                sections.append(current)
+            elif current is not None:
+                current[1] += "\n" + text
+            else:
+                # First page has no recognisable header — still start a section
+                name = self._extract_competition_name(text)
+                current = [name, text, []]
+                sections.append(current)
+
+            current[2].extend(finals_tables)
+
+        sections_with_finals = [(s[0], s[1], s[2]) for s in sections if s[2]]
+        return sections_with_finals, nonfinals_results_tables
+
+    def _select_section(
+        self, sections: list[tuple[str, str, list]], division: str
+    ) -> tuple[str, str, list]:
+        """Select a competition section by fuzzy-matching the division string.
+
+        Four-tier match against the core (common prefix and round suffix stripped),
+        case-insensitive:
+          1. Exact core match
+          2. Core starts with search term
+          3. Search term is substring of core
+          4. Search term is substring of full name (for queries that include the prefix)
+        If multiple sections match at the same tier, raises a ValueError.
+        """
+        division_lower = division.lower()
+        names = [s[0] for s in sections]
+        prefix = _common_word_prefix(names)
+        candidates: list[tuple[int, int]] = []  # (tier, index)
+
+        for i, (name, _, _) in enumerate(sections):
+            core = _get_division_core(name, prefix)
+            name_lower = name.lower()
+            if core == division_lower:
+                tier = 1
+            elif core.startswith(division_lower):
+                tier = 2
+            elif division_lower in core:
+                tier = 3
+            elif division_lower in name_lower:
+                tier = 4
+            else:
+                continue
+            candidates.append((tier, i))
+
+        if not candidates:
+            division_list = "\n".join(f"  - {s[0]}" for s in sections)
+            raise ValueError(
+                f"No competition matching \"{division}\" was found. "
+                f"Available competitions:\n{division_list}"
+            )
+
+        best_tier = min(t for t, _ in candidates)
+        best_candidates = [i for t, i in candidates if t == best_tier]
+
+        if len(best_candidates) > 1:
+            matched_list = "\n".join(f"  - {sections[i][0]}" for i in best_candidates)
+            raise ValueError(
+                f"Multiple competitions match \"{division}\". Please be more specific.\n\n"
+                f"Matching competitions:\n{matched_list}"
+            )
+
+        return sections[best_candidates[0]]
 
     def _extract_competition_name(self, text: str) -> str:
         """Extract competition name from PDF text."""

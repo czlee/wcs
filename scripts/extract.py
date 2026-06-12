@@ -27,6 +27,7 @@ from parsers import detect_parser, detect_parser_by_content  # noqa: E402
 from parsers import scoring_dance, eepro, danceconvention  # noqa: E402,F401 — registers parsers
 from parsers.base import PrelimsError  # noqa: E402
 from parsers.eepro import EeproParser  # noqa: E402
+from parsers.danceconvention import DanceConventionParser  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -83,11 +84,11 @@ _PROAM_RE = re.compile(
 )
 # Role = the amateur's role.
 _ROLE_LEADER_RE = re.compile(
-    r"\(AmL\)|\bLEADER\b|\bL\s+[Ff]inal\b|\bam\s+lead",
+    r"\(AmL\)|\bLEADERS?\b|\bL\s+final\b|\bam\s+lead",
     re.IGNORECASE,
 )
 _ROLE_FOLLOWER_RE = re.compile(
-    r"\(AmF\)|\bFOLLOWER\b|\bF\s+[Ff]inal\b|\bam\s+(?:follow|fol)\b",
+    r"\(AmF\)|\bFOLLOWERS?\b|\bF\s+final\b|\bam\s+(?:follow|fol)\b",
     re.IGNORECASE,
 )
 # Switchly/Switch/Role-Rotation detection precedes _STRICTLY_RE (switchly = Switch Strictly).
@@ -478,11 +479,15 @@ def select_records(
 def parse_targets(record: dict, content: bytes) -> list[str | None]:
     """Return the list of `division` arguments to parse for this manifest entry.
 
-    eepro pages are 1:M (one file per division); the other sites are 1:1.
+    eepro pages are 1:M (one file per division); danceconvention PDFs are
+    usually 1:1 but pro-am sheets contain two competitions (leaders + followers).
     """
     if record["site"] == "eepro.com":
         names = EeproParser().get_division_names(content)
         return list(names)  # may be empty (e.g. prelims-only page)
+    if record["site"] == "danceconvention.net":
+        names = DanceConventionParser().get_division_names(content)
+        return list(names)
     return [None]
 
 
