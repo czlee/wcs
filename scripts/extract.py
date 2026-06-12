@@ -323,9 +323,8 @@ class IntegrityError(Exception):
     """A parsed scoresheet is internally inconsistent.
 
     May indicate a parser bug, but can also arise from genuinely unsupported
-    source data (e.g. raw scores instead of placements, or duplicate ranks from
-    judge error). The main loop catches these and adds them to the skip list
-    rather than aborting the run.
+    source data (e.g. duplicate ranks from judge error). The main loop catches
+    these and adds them to the skip list rather than aborting the run.
     """
 
 
@@ -371,8 +370,8 @@ def validate(scoresheet) -> str | None:
     """Validate a parsed scoresheet.
 
     Returns None if OK, or a skip reason string for data we should drop. Raises
-    IntegrityError for violations that signal a parser bug or unsupported source
-    data; the caller is expected to catch these and add them to the skip list.
+    IntegrityError for violations that signal a parser bug (e.g. mismatched
+    judge keys, unexplained non-permutation values); the caller catches these.
     """
     judges = scoresheet.judges
     competitors = scoresheet.competitors
@@ -403,6 +402,8 @@ def validate(scoresheet) -> str | None:
         if k is None:
             # Genuine values present but neither a permutation nor a clean set of
             # equal blocks → unexplained, signals a parser bug.
+            if min(values) >= 70 and max(values) <= 100:
+                return "raw scores out of 100 (not placements)"
             raise IntegrityError(
                 f"judge {judge!r} ranking is not a permutation of 1..{n}: {sorted(values)}"
             )
@@ -513,13 +514,13 @@ _SKIPS_CSS = """\
 """
 
 
-def write_skips_html(skips: list[tuple[str, str, str]], output_path: Path) -> None:
+def write_skips_html(skips: list[tuple[str, str | None, str, str]], output_path: Path) -> None:
     """Write an HTML skip report to output_path."""
     def _e(s: object) -> str:
         return html.escape(str(s))
 
     n = len(skips)
-    reason_counts = Counter(_reason_key(r) for _, r, _ in skips)
+    reason_counts = Counter(_reason_key(r) for _, _, r, _ in skips)
 
     summary_rows = "".join(
         f'<tr><td class="num">{count}</td><td>{_e(reason)}</td></tr>\n'
@@ -528,11 +529,12 @@ def write_skips_html(skips: list[tuple[str, str, str]], output_path: Path) -> No
 
     detail_rows = "".join(
         f'<tr>'
-        f'<td>{_e(label)}</td>'
+        f'<td>{_e(event_name)}</td>'
+        f'<td>{_e(division) if division else ""}</td>'
         f'<td>{_e(reason)}</td>'
         f'<td><a href="{_e(url)}" target="_blank" rel="noopener">{_e(url)}</a></td>'
         f'</tr>\n'
-        for label, reason, url in skips
+        for event_name, division, reason, url in skips
     )
 
     page = (
@@ -553,7 +555,7 @@ def write_skips_html(skips: list[tuple[str, str, str]], output_path: Path) -> No
         f'</table>\n'
         f'<h2>Detail</h2>\n'
         f'<table>\n'
-        f'<thead><tr><th>Event / Division</th><th>Reason</th><th>URL</th></tr></thead>\n'
+        f'<thead><tr><th>Event</th><th>Division</th><th>Reason</th><th>URL</th></tr></thead>\n'
         f'<tbody>\n{detail_rows}</tbody>\n'
         f'</table>\n'
         f'</body>\n'
@@ -602,7 +604,7 @@ def main() -> None:
     PARSED_DIR.mkdir(parents=True, exist_ok=True)
 
     used_ids: set[str] = set()
-    skips: list[tuple[str, str, str]] = []  # (label, reason, url)
+    skips: list[tuple[str, str | None, str, str]] = []  # (event_name, division, reason, url)
     written = 0
     division_audit: list[tuple[str, str, str, str, str]] = []  # (site, blob, level, fmt, url)
 
@@ -615,65 +617,64 @@ def main() -> None:
         local_path = Path(record["local_path"])
 
         if NON_WCS_STYLE_RE.search(event_name):
-            skips.append((event_name, "non-WCS event (name)", url))
+            skips.append((event_name, None, "non-WCS event (name)", url))
             continue
 
         if not local_path.exists():
-            skips.append((event_name, f"raw file missing: {local_path}", url))
+            skips.append((event_name, None, f"raw file missing: {local_path}", url))
             continue
 
         content = local_path.read_bytes()
         parser = detect_parser(url) or detect_parser_by_content(content, url)
         if parser is None:
-            skips.append((event_name, "no parser matched", url))
+            skips.append((event_name, None, "no parser matched", url))
             continue
 
         try:
             divisions = parse_targets(record, content)
         except Exception as e:
-            skips.append((event_name, f"division enumeration failed: {e}", url))
+            skips.append((event_name, None, f"division enumeration failed: {e}", url))
             continue
         if not divisions:
-            skips.append((event_name, "no finals divisions found", url))
+            skips.append((event_name, None, "no finals divisions found", url))
             continue
 
         for div_arg in divisions:
-            label = event_name if div_arg is None else f"{event_name} — {div_arg}"
             try:
                 scoresheet = parser.parse(url, content, division=div_arg)
             except PrelimsError:
-                skips.append((label, "prelims/callback round", url))
+                skips.append((event_name, div_arg, "prelims/callback round", url))
                 continue
             except Exception as e:
-                skips.append((label, f"parse error: {type(e).__name__}: {e}", url))
-                continue
-
-            # Content-level non-finals safety net (numeric prelims that the
-            # parser's callback check and the Phase 1 URL filter both missed).
-            if looks_like_non_finals(scoresheet.competition_name):
-                skips.append((label, "non-finals round (name)", url))
-                continue
-
-            # Validation: integrity violations are caught and logged as skips.
-            # Both modes treat them gracefully — they may indicate a parser bug
-            # or genuinely unsupported source data (e.g. raw scores, duplicate
-            # placements), neither of which should abort the whole run.
-            try:
-                reason = validate(scoresheet)
-            except IntegrityError as e:
-                skips.append((label, f"integrity error: {e}", url))
-                continue
-            if reason is not None:
-                skips.append((label, reason, url))
+                skips.append((event_name, div_arg, f"parse error: {type(e).__name__}: {e}", url))
                 continue
 
             division_blob = isolate_division_blob(
                 site, scoresheet.competition_name, event_name, div_arg
             )
+
+            # Content-level non-finals safety net (numeric prelims that the
+            # parser's callback check and the Phase 1 URL filter both missed).
+            if looks_like_non_finals(scoresheet.competition_name):
+                skips.append((event_name, division_blob, "non-finals round (name)", url))
+                continue
+
+            # Validation: integrity violations are caught and logged as skips.
+            # Both modes treat them gracefully — they may indicate a parser bug
+            # or duplicate placements from judge error; neither aborts the run.
+            try:
+                reason = validate(scoresheet)
+            except IntegrityError as e:
+                skips.append((event_name, division_blob, f"integrity error: {e}", url))
+                continue
+            if reason is not None:
+                skips.append((event_name, division_blob, reason, url))
+                continue
+
             level = normalise_level(division_blob)
             fmt = normalise_format(division_blob)
             if NON_WCS_STYLE_RE.search(division_blob):
-                skips.append((label, "non-WCS dance style", url))
+                skips.append((event_name, division_blob, "non-WCS dance style", url))
                 continue
             division_audit.append((site, division_blob, level, fmt, url))
 
@@ -682,7 +683,6 @@ def main() -> None:
             entry_id = make_id(record["event_id"], event_slug, div_token, used_ids)
             out_path = PARSED_DIR / f"{entry_id}.json"
             if out_path.exists() and not args.force:
-                skips.append((label, "already parsed (cached)", url))
                 continue
 
             doc = {
@@ -712,7 +712,7 @@ def main() -> None:
     # ---- summaries ----
     logging.info(f"Done. Wrote {written} parsed files; skipped {len(skips)}.")
     if skips:
-        reason_counts = Counter(_reason_key(r) for _, r, _ in skips)
+        reason_counts = Counter(_reason_key(r) for _, _, r, _ in skips)
         print("\n=== Skip summary ===")
         for reason, count in reason_counts.most_common():
             print(f"  {count:4d}  {reason}")
