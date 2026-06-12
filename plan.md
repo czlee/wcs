@@ -50,7 +50,7 @@ Three data sources already have parsers and discovery code:
 
 ## Phase 2: Extraction and Validation
 
-**Status:** ✅ Complete — `scripts/extract.py` implemented and reworked; 1498 parsed finals
+**Status:** ✅ Complete — `scripts/extract.py` implemented and reworked; 1459 parsed finals
 in `data/parsed/`; each file carries `event_id`/`source_event_id` from the manifest.
 See `briefs/PHASE_2_REWORK_BRIEF.md` for full history.
 
