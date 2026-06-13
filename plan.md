@@ -81,7 +81,7 @@ This stage acts as the single interface between raw data and all downstream work
 
 **Status:** ⬜ Not started.
 
-**Script:** `scripts/compute_metrics.py` — reads files from `data/parsed/`, writes `results/metrics.csv` (one row per scoresheet, metrics + covariates as columns).
+**Script:** `scripts/compute_metrics.py` — reads files from `data/parsed/`, writes `data/metrics.csv` (one row per scoresheet, metrics + covariates as columns).
 
 **Metrics are specified in `briefs/phase-3-implementation-brief.md`** (informed by
 `briefs/judge-divergence-metrics-research.md`), which supersedes this section. Candidates
@@ -154,16 +154,15 @@ wcs-judge-divergence/
       scoring_dance_budafest2025_novice.json
       eepro_usdc2024_intermediate.json
       ...
+    metrics.csv                 # Phase 3: output of compute_metrics.py (one row per scoresheet)
   scripts/
     download.py                 # Phase 1: discover and download scoresheets
     extract.py                  # Phase 2: parse raw files, validate, normalise covariates
-    compute_metrics.py          # Phase 3: compute divergence metrics → results/metrics.csv
+    compute_metrics.py          # Phase 3: compute divergence metrics → data/metrics.csv
     analyze.ipynb               # Phase 5: exploratory analysis and visualisations
   lookups/
     regions.json                # manual mapping: event name → geographic region
     tiers.json                  # manual mapping: event name → competition tier
-  results/
-    metrics.csv                 # output of compute_metrics.py
 ```
 
 ---

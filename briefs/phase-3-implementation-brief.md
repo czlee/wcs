@@ -2,7 +2,7 @@
 
 **Script:** `scripts/compute_metrics.py`
 **Input:** `data/parsed/*.json` (one file per scoresheet, schema from Phase 2)
-**Output:** `results/metrics.csv` (one row per scoresheet)
+**Output:** `data/metrics.csv` (one row per scoresheet)
 
 Supersedes the "Phase 3" section of `plan.md`.
 

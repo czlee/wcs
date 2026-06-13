@@ -4,5 +4,8 @@ lxml
 pdfplumber
 tqdm
 pandas
+numpy
+scipy
 plotly
 jupyterlab
+pytest
