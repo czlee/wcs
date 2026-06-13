@@ -14,7 +14,7 @@ See `plan.md` for the full project plan and open questions.
 | 2 — Extract | `scripts/extract.py` | ✅ Complete |
 | 3 — Metrics | `scripts/compute_metrics.py` | ⬜ Not started |
 | 4 — Covariates | (lookup tables + join at analysis time) | ⬜ Not started |
-| 5 — Analysis | `scripts/analyze.ipynb` | ⬜ Not started |
+| 5 — Analysis | `notebooks/analyze.ipynb` | ⬜ Not started |
 
 Debugging history for Phases 1 and 2 is in `briefs/`.
 
@@ -47,8 +47,10 @@ scripts/
   download.py           # Phase 1
   extract.py            # Phase 2
   inventory.py          # helper: renders data/division-inventory.html
-  division_stats.ipynb  # exploratory: field and panel size distributions by division
   parsers/              # vendored parsers (scoring_dance, eepro, danceconvention)
+notebooks/
+  division_stats.ipynb  # exploratory: field and panel size distributions by division
+  analyze.ipynb         # Phase 5: analysis notebook (when implemented)
 briefs/                 # extended history/debugging notes per phase
 lookups/                # (planned) manual mapping tables joined at analysis time
 ```
