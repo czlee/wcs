@@ -73,9 +73,9 @@ The three parsers: `scoring_dance`, `eepro`, `danceconvention`.
 ## Key Data Relationships
 
 - **manifest.jsonl → parsed/**: 1:M. A single eepro page can contain multiple divisions, producing multiple `data/parsed/{id}.json` files from one manifest entry.
-- **Parsed file fields:** `id`, `url`, `site`, `event_name`, `division_raw`, `event_start`, `event_end`, `event_date`, `division_level`, `dance_format`, `num_judges`, `num_competitors`, `competitors`, `judges`, `rankings`.
+- **Parsed file fields:** `id`, `url`, `raw_file`, `site`, `event_name`, `event_id`, `source_event_id`, `event_start`, `event_end`, `event_date`, `competition_name`, `division_level`, `dance_format`, `num_judges`, `num_competitors`, `judges`, `competitors`, `rankings`.
 - **`event_date`:** normalised canonical date (the Saturday of a weekend event, or the actual competition day otherwise). Computed in Phase 2.
-- **`division_level`** and **`dance_format`** are keyword-matched from `division_raw` in `extract.py`. The keyword maps are a starting point — run `inventory.py` to review unmatched divisions before trusting the output.
+- **`division_level`** and **`dance_format`** are keyword-matched from `competition_name` in `extract.py`. The keyword maps are a starting point — run `inventory.py` to review unmatched divisions before trusting the output.
 
 ---
 

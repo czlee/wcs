@@ -52,7 +52,7 @@ Three data sources already have parsers and discovery code:
 
 **Status:** ✅ Complete — `scripts/extract.py` implemented and reworked; 1459 parsed finals
 in `data/parsed/`; each file carries `event_id`/`source_event_id` from the manifest.
-See `briefs/PHASE_2_REWORK_BRIEF.md` for full history.
+See `briefs/phase-2-rework-brief.md` for full history.
 
 **Goal:** Parse every raw file into a single standardised format, run data quality checks, and produce a clean dataset ready for metric computation.
 
@@ -61,15 +61,14 @@ See `briefs/PHASE_2_REWORK_BRIEF.md` for full history.
 - Skip if a parsed file for this entry already exists (`data/parsed/{id}.json`) — re-run is incremental
 - Assign each scoresheet a **unique ID**: a human-readable slug (`{site}_{event_slug}_{division_slug}`) with a numeric suffix added if there is a collision
 - Write to `data/parsed/{id}.json`; the slug/ID is for convenience only — all critical information must be in the file contents:
-  - `id`, `url`, `site`, `event_name`, `division_raw`, `event_start`, `event_end`, `event_date`, `division_level`, `dance_format`, `num_judges`, `num_competitors`, `competitors` (list), `judges` (list), `rankings` (judge → competitor → rank)
+  - `id`, `url`, `raw_file`, `site`, `event_name`, `event_id`, `source_event_id`, `event_start`, `event_end`, `event_date`, `competition_name`, `division_level`, `dance_format`, `num_judges`, `num_competitors`, `judges` (list), `competitors` (list), `rankings` (judge → competitor → rank)
   - `event_start` / `event_end` carried through from the manifest; `event_date` is the normalised canonical date derived here (the Saturday of a weekend event, or the actual competition day for non-weekend events)
-- **Data quality checks** — these run after parsing; raise an exception and crash if any fail (a violation here indicates a parser bug, not bad source data):
-  - Each judge's ranking is a permutation of the competitors (no missing entries, no duplicate ranks, no rank collisions)
-  - Number of judges ≥ 2; number of competitors ≥ 3
-  - Rankings dict keys match the judges list exactly
+- **Data quality checks:**
+  - Integrity checks (run after parsing) **raise and crash** if they fail — a violation indicates a parser bug, not bad source data: each judge's ranking is a permutation of the competitors (no missing entries, no duplicate ranks, no rank collisions); the rankings dict keys match the judges list exactly
+  - Size thresholds are **skip conditions** (logged to the skips report, not crashes): scoresheets with fewer than 3 judges or fewer than 5 competitors are skipped
 - Normalised covariate fields assigned at this stage:
-  - `division_level` (Novice / Intermediate / Advanced / All-Star / Open / Champions / Masters / Unknown) — keyword match on `division_raw`
-  - `dance_format` (J&J / Classic / Strictly / Unknown) — keyword match on `division_raw`
+  - `division_level` — keyword match on `competition_name`; one of Masters / Sophisticated / Junior / Invitational / Champions / All-Star / All-American / Advanced / Intermediate / Novice / Newcomer / Open, or `null` if unmatched (see `LEVEL_PATTERNS` in `extract.py`)
+  - `dance_format` — keyword match on `competition_name`; Jack & Jill / Strictly / Classic / Routine / Showcase / Rising Star / Switch (J&J or Strictly) / Pro-Am (J&J or Strictly, optionally Leader/Follower), or `null` if unmatched
   - `num_judges`, `num_competitors` — computed directly
 
 **Design note:** Additional characteristics that require manual lookup tables (geographic region, competition tier) are kept in separate files in `lookups/` and joined at analysis time, not baked into the parsed files. The `id` field is the join key. This keeps the pipeline stages independent and the lookup tables easy to edit without re-extracting.
@@ -84,13 +83,16 @@ This stage acts as the single interface between raw data and all downstream work
 
 **Script:** `scripts/compute_metrics.py` — reads files from `data/parsed/`, writes `results/metrics.csv` (one row per scoresheet, metrics + covariates as columns).
 
-**Metrics to be decided in a separate investigation.** Candidates to evaluate:
+**Metrics are specified in `briefs/phase-3-implementation-brief.md`** (informed by
+`briefs/judge-divergence-metrics-research.md`), which supersedes this section. Candidates
+originally evaluated:
 - Kendall's W (coefficient of concordance)
 - Mean pairwise Kendall's tau
 - Top-N agreement rate
 - Mean absolute rank deviation across judges
 
-The choice of metric(s) warrants its own focused session before implementation.
+That investigation is complete; see the brief above for the final metric set and the
+rationale for storing raw values with size-correction deferred to Phases 4/5.
 
 ---
 
