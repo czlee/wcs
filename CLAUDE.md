@@ -12,7 +12,7 @@ See `plan.md` for the full project plan and open questions.
 |---|---|---|
 | 1 — Download | `scripts/download.py` | ✅ Complete |
 | 2 — Extract | `scripts/extract.py` | ✅ Complete |
-| 3 — Metrics | `scripts/compute_metrics.py` | ⬜ Not started |
+| 3 — Metrics | `scripts/compute_metrics.py` | ✅ Complete |
 | 4 — Covariates | (lookup tables + join at analysis time) | ⬜ Not started |
 | 5 — Analysis | `notebooks/analyze.ipynb` | ⬜ Not started |
 
@@ -28,7 +28,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-`requirements.txt` already includes `pandas`, `plotly`, `jupyterlab`. Still missing for Phase 5: `scipy`, `matplotlib`, `seaborn`.
+`requirements.txt` already includes `pandas`, `plotly`, `jupyterlab`, `scipy`. No additional packages needed for Phase 5.
 
 ---
 
@@ -49,8 +49,9 @@ scripts/
   inventory.py          # helper: renders data/division-inventory.html
   parsers/              # vendored parsers (scoring_dance, eepro, danceconvention)
 notebooks/
-  division_stats.ipynb  # exploratory: field and panel size distributions by division
-  analyze.ipynb         # Phase 5: analysis notebook (when implemented)
+  division_stats.ipynb    # exploratory: field and panel size distributions by division
+  explore_metrics.ipynb   # exploratory: divergence metrics by division level
+  analyze.ipynb           # Phase 5: analysis notebook (when implemented)
 briefs/                 # extended history/debugging notes per phase
 lookups/                # (planned) manual mapping tables joined at analysis time
 ```

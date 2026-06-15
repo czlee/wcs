@@ -100,25 +100,25 @@ rationale for storing raw values with size-correction deferred to Phases 4/5.
 
 **Status:** ⬜ Not started.
 
-The normalised covariate fields (`division_level`, `dance_format`, `num_judges`, `num_competitors`) are already assigned in Phase 2. Additional covariates:
+The normalised covariate fields (`division_level`, `dance_format`, `num_judges`, `num_competitors`) are already assigned in Phase 2. Covariates derivable from metadata (`site`, `year`, `event_name`) can be joined in at analysis time directly. Two additional covariates require separate work:
 
-### Derivable from metadata
-| Covariate | Source |
-|---|---|
-| **Data source/site** | From manifest |
-| **Year** | From `event_date` |
-| **Event** | From `event_name` — can study whether some events are consistently higher/lower divergence |
+### Task 4A: Geographic region lookup
 
-### Requiring manual mapping
-| Covariate | Notes |
-|---|---|
-| **Geographic region** | Infer from event name (e.g. "NZO" = New Zealand Open, "USDC" = US Dance Championships); build a lookup table as a small JSON file |
-| **Competition tier** (major nationals vs. regional) | Manual tagging based on known competition list |
+Build `lookups/regions.json` — a manual mapping from event name to geographic region (e.g. "NZO" → "New Zealand", "USDC" → "United States"). Joined to metrics at analysis time using `event_name` or `event_id` as key.
+
+**To start:** extract the list of distinct event names/IDs from `data/parsed/` to see what needs mapping.
+
+### Task 4B: Competition format (stretch)
+
+Whether the final was **spotlights**, **cluster spotlights**, or **all-skates** would be highly valuable for explaining divergence differences. However, this information is not on any of the source sites and would require manual research or crowdsourcing per event. Treat as a stretch covariate — valuable if filled in, but not blocking analysis.
+
+If pursued: build `lookups/formats.json` with the same join key as regions.
 
 ### Possible interaction effects to explore
 - Does divergence scale with division level? (Hypothesis: higher levels may have more consensus because judges agree on quality, or alternatively more divergence because top-level differences are subtle)
 - Does panel size (5 vs 7 vs 9) affect divergence? (Larger panels may or may not have more variance)
 - Does field size matter? (Closer fields may produce more divergence)
+- Does competition format (spotlights vs. all-skates) affect divergence?
 
 ---
 
@@ -138,7 +138,7 @@ Primary mode is visual: if a pattern isn't obvious on a plot, it isn't interesti
    - Any other obvious cuts (year, site, competition tier)
 3. **Confirmation:** For patterns that look visually clear, a simple statistical test (e.g. Kruskal-Wallis or Spearman correlation) to check it isn't noise
 
-Tools: Python with `pandas`, `scipy`, `matplotlib`/`seaborn`. Use a Jupyter notebook for the exploratory analysis phase.
+Tools: Python with `pandas`, `scipy`, `plotly`. Use a Jupyter notebook for the exploratory analysis phase.
 
 ---
 
@@ -162,7 +162,7 @@ wcs-judge-divergence/
     analyze.ipynb               # Phase 5: exploratory analysis and visualisations
   lookups/
     regions.json                # manual mapping: event name → geographic region
-    tiers.json                  # manual mapping: event name → competition tier
+    formats.json                # manual mapping: event name → competition format (spotlights/cluster/all-skates)
 ```
 
 ---
