@@ -108,11 +108,31 @@ Build `lookups/regions.json` — a manual mapping from event name to geographic 
 
 **To start:** extract the list of distinct event names/IDs from `data/parsed/` to see what needs mapping.
 
-### Task 4B: Competition format (stretch)
+### Task 4B: Competition format (confound test)
 
-Whether the final was **spotlights**, **cluster spotlights**, or **all-skates** would be highly valuable for explaining divergence differences. However, this information is not on any of the source sites and would require manual research or crowdsourcing per event. Treat as a stretch covariate — valuable if filled in, but not blocking analysis.
+Whether the final was **spotlights**, **cluster spotlights**, or **all-skates** is not a mere
+nice-to-have covariate — it is a **confound on the headline level effect**. By convention higher
+levels run spotlights and lower levels run all-skates, so "divergence varies by level" and
+"divergence varies by format" are nearly the same claim. The only way to separate them is to find
+finals that ran an *off-convention* format (e.g. an all-skate at a high level) and check whether
+divergence tracks the format or the level. That within-level variation is the entire point.
 
-If pursued: build `lookups/formats.json` with the same join key as regions.
+This information is on **none** of the source sites (confirmed by scanning all raw files and
+parsed `competition_name`s — the only "spotlight" hits are an event literally named "Spotlight
+New Year's Celebration"), so labels require external research (YouTube finals videos, event
+programs, organizer/community knowledge). Format is set **per event×division**, so labels are
+near per-final granularity — a heuristic that derives format from level is disqualified (it would
+answer the confound question by assumption).
+
+**Lookup:** `lookups/formats.csv`, keyed per scoresheet **`id`** (supersedes the earlier
+event-keyed `formats.json` idea — event keying is too coarse since format varies by division),
+joined to `data/metrics.csv` at analysis time. Taxonomy: `all-skate` / `cluster` / `spotlight`.
+
+**First pass is a pilot:** Intermediate-level J&J/Strictly finals, **2025 only** (Intermediate is
+the level most likely to have a real format mix, and is the largest bucket). The pilot tests both
+label-coverage feasibility *and* format variation as go/no-go gates before any larger effort;
+Advanced is the next candidate level if the pilot clears. Claude prepares the worklist + candidate
+sources; the user applies/confirms labels. See the per-task plan for detail.
 
 ### Possible interaction effects to explore
 - Does divergence scale with division level? (Hypothesis: higher levels may have more consensus because judges agree on quality, or alternatively more divergence because top-level differences are subtle)
