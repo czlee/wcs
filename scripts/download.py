@@ -344,7 +344,7 @@ def discover_eepro(
 ) -> list[DiscoveredFinal]:
     finals = []
 
-    for year in sorted({w_start.year, w_end.year}):
+    for year in range(w_start.year, w_end.year + 1):
         listing_url = f"https://eepro.com/results/{year}/"
         logging.info(f"eepro.com: fetching results/{year}/...")
         try:
@@ -467,7 +467,7 @@ def discover_danceconvention(
     # Regex pieces for fields that may be a quoted literal or a variable reference
     _date_or_var = r'(?:"([^"]+)"|([a-zA-Z_$][a-zA-Z0-9_$]*))'
 
-    for year in sorted({w_start.year, w_end.year}):
+    for year in range(w_start.year, w_end.year + 1):
         archive_url = f"https://danceconvention.net/eventdirector/en/eventsarchive/{year}"
         logging.info(f"danceconvention.net: fetching archive ({year})...")
         try:
