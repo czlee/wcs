@@ -1,8 +1,10 @@
 <script>
 	import PairMatrix from './PairMatrix.svelte';
 	import Check from './Check.svelte';
+	import Tex from './Tex.svelte';
 	import { kendallTau, footrule, judgePairs } from '#lib/metrics.js';
 	import { fx, minus } from '#lib/format.js';
+	import { tp } from '#lib/tex.js';
 	import { agreeBg, disagreeBg } from './agree.js';
 
 	/** @type {{sheet: import('#lib/server/data.js').Sheet}} */
@@ -14,6 +16,7 @@
 	const meanOf = (/** @type {(a: number, b: number) => number} */ f) => pairs.reduce((t, [a, b]) => t + f(a, b), 0) / pairs.length;
 	const tauBar = $derived(meanOf(tau));
 	const frBar = $derived(meanOf(fr));
+	const compPairs = $derived((n * (n - 1)) / 2);
 	/** @type {[number, number]} */
 	let selTau = $state([0, 1]);
 	/** @type {[number, number]} */
@@ -29,9 +32,10 @@
 <p>
 	Take two judges and any two competitors. If both judges put the same one of the two ahead, that
 	competitor pair is <strong>concordant</strong>; if they disagree on who goes ahead, it’s
-	<strong>discordant</strong>. With n = {n} competitors there are n(n − 1)/2 = {(n * (n - 1)) / 2}
-	competitor pairs, and τ = (concordant − discordant) / {(n * (n - 1)) / 2}.
+	<strong>discordant</strong>. With <Tex tex={`n = ${n}`} /> competitors there are
+	<Tex tex={String.raw`\tfrac{n(n-1)}{2} = ${compPairs}`} /> competitor pairs, and
 </p>
+<Tex display tex={String.raw`\tau = \frac{\text{concordant} - \text{discordant}}{${compPairs}}`} />
 <PairMatrix
 	judges={sheet.judges}
 	value={tau}
@@ -69,28 +73,31 @@
 				</tbody>
 			</table>
 		</div>
-		<p class="formula">τ = ({kt.C} − {kt.D}) / {kt.pairs} = {minus(fx(kt.tau))}</p>
+		<Tex display tex={String.raw`\tau = \frac{${kt.C} - ${kt.D}}{${kt.pairs}} = ${fx(kt.tau)}`} />
 	{/snippet}
 </PairMatrix>
-<p>The analysis averages τ over all {pairs.length} pairs of judges:</p>
-<Check label="τ̄" js={tauBar} py={sheet.py.mean_pairwise_tau} />
+<p>The analysis averages <Tex tex={String.raw`\tau`} /> over all {pairs.length} pairs of judges:</p>
+<Check label="τ̄" tex={String.raw`\bar\tau`} js={tauBar} py={sheet.py.mean_pairwise_tau} />
 
 <h4>Kendall τ distance</h4>
 <p>
-	The τ distance is (1 − τ̄)/2. It’s the same information as τ̄, turned around and rescaled: for a single
-	pair of judges, (1 − τ)/2 is exactly the share of competitor pairs they order differently (discordant ÷
-	total). It’s included because “judges disagree on {fx(((1 - tauBar) / 2) * 100, 0)}% of head-to-heads” is
-	easier to read than τ̄ itself.
+	The τ distance is <Tex tex={String.raw`\frac{1 - \bar\tau}{2}`} />. It’s the same information as
+	<Tex tex={String.raw`\bar\tau`} />, turned around and rescaled: for a single pair of judges,
+	<Tex tex={String.raw`\frac{1 - \tau}{2}`} /> is exactly the share of competitor pairs they order differently
+	(discordant ÷ total). It’s included because “judges disagree on {fx(((1 - tauBar) / 2) * 100, 0)}% of
+	head-to-heads” is easier to read than <Tex tex={String.raw`\bar\tau`} /> itself.
 </p>
-<p class="formula">τ distance = (1 − τ̄)/2 = (1 − {minus(fx(tauBar))})/2 = {fx((1 - tauBar) / 2)}</p>
-<Check label="τ distance" js={(1 - tauBar) / 2} py={sheet.py.tau_distance} />
+<Tex display tex={String.raw`\tau\text{ distance} = \frac{1 - \bar\tau}{2} = \frac{1 - ${tp(+fx(tauBar))}}{2} = ${fx((1 - tauBar) / 2)}`} />
+<Check label="τ distance" tex={String.raw`\tau\text{ distance}`} js={(1 - tauBar) / 2} py={sheet.py.tau_distance} />
 
 <h4>Spearman’s footrule</h4>
 <p>
 	The footrule adds up how many places apart two judges put each competitor, and divides by the largest
-	total possible, ⌊n²/2⌋ = ⌊{n}²/2⌋ = {Math.floor((n * n) / 2)} (when one ranking is the reverse of the other).
-	0 means identical rankings, 1 means as different as possible. Lower is more agreement.
+	total possible, <Tex tex={String.raw`\lfloor n^2/2 \rfloor = \lfloor ${n}^2/2 \rfloor = ${Math.floor((n * n) / 2)}`} />
+	(when one ranking is the reverse of the other). 0 means identical rankings, 1 means as different as
+	possible. Lower is more agreement.
 </p>
+<Tex display tex={String.raw`\text{footrule} = \frac{\sum_i |r_{a,i} - r_{b,i}|}{\lfloor n^2/2 \rfloor}`} />
 <PairMatrix
 	judges={sheet.judges}
 	value={fr}
@@ -112,7 +119,7 @@
 				<tfoot><tr><td colspan="3">Total</td><td class="num">{ft.total}</td></tr></tfoot>
 			</table>
 		</div>
-		<p class="formula">footrule = {ft.total} / {ft.max} = {fx(ft.value)}</p>
+		<Tex display tex={String.raw`\text{footrule} = \frac{${ft.total}}{${ft.max}} = ${fx(ft.value)}`} />
 	{/snippet}
 </PairMatrix>
 <p>Again, the analysis averages this over all {pairs.length} pairs:</p>

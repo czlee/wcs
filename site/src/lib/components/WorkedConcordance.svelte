@@ -3,8 +3,10 @@
 	import PairMatrix from './PairMatrix.svelte';
 	import Check from './Check.svelte';
 	import Term from './Term.svelte';
+	import Tex from './Tex.svelte';
 	import { kendallW, spearman, judgePairs } from '#lib/metrics.js';
 	import { fx, nice, signed, minus } from '#lib/format.js';
+	import { tn } from '#lib/tex.js';
 	import { agreeBg } from './agree.js';
 
 	/** @type {{sheet: import('#lib/server/data.js').Sheet}} */
@@ -26,7 +28,8 @@
 	Add up the ranks each competitor got from the {m} judges. If the judges agreed completely, these
 	rank sums would be as far apart as they can get: one competitor would get {m} firsts (a sum of {m}),
 	the next {m} seconds (a sum of {2 * m}), and so on. If the judges’ rankings had nothing in common, every
-	competitor’s sum would tend towards the same middle value, m(n + 1)/2 = {m}×{n + 1}/2 = <strong>{nice(w.rBar)}</strong>.
+	competitor’s sum would tend towards the same middle value,
+	<Tex tex={String.raw`\tfrac{m(n+1)}{2} = \tfrac{${m} \times ${n + 1}}{2} = \mathbf{${tn(w.rBar, 1)}}`} />.
 </p>
 <RankMatrix
 	{sheet}
@@ -37,24 +40,24 @@
 	]}
 />
 <p>
-	<Term tip="The sum of the squared deviations of the rank sums from m(n+1)/2, shown at the bottom of the last column.">S</Term>
-	measures how spread out the rank sums are. W divides S by the largest value it could take, m²(n³ − n)/12:
+	<Term tip="The sum of the squared deviations of the rank sums from m(n+1)/2, shown at the bottom of the last column."><Tex tex="S" /></Term>
+	measures how spread out the rank sums are. <Tex tex="W" /> divides <Tex tex="S" /> by the largest value it could take,
+	<Tex tex={String.raw`\tfrac{1}{12} m^2(n^3 - n)`} />:
 </p>
-<p class="formula">
-	W = 12 S / [m² (n³ − n)] = 12 × {nice(w.S, 2)} / [{m}² × ({n}³ − {n})] = {nice(12 * w.S, 2)} / {w.denom} = {fx(w.W)}
-</p>
-<Check label="W" js={w.W} py={sheet.py.kendall_w} />
+<Tex display tex={String.raw`W = \frac{S}{\tfrac{1}{12}\, m^2(n^3 - n)} = \frac{${tn(w.S, 2)}}{\tfrac{1}{12} \times ${m}^2 \times (${n}^3 - ${n})} = \frac{${tn(w.S, 2)}}{${tn(w.denom / 12, 1)}} = ${fx(w.W)}`} />
+<Check label="W" tex="W" js={w.W} py={sheet.py.kendall_w} />
 <p>
-	W runs from 0 (no common ordering at all) to 1 (every judge gave the same ranking). One catch: if the
-	judges ranked at random, W would still average <strong>1/m</strong>, here 1/{m} = {fx(1 / m, 3)}. So a
-	bigger panel gets a lower W from chance alone, and W isn’t directly comparable across panel sizes.
+	<Tex tex="W" /> runs from 0 (no common ordering at all) to 1 (every judge gave the same ranking). One
+	catch: if the judges ranked at random, <Tex tex="W" /> would still average <Tex tex={String.raw`\tfrac{1}{m}`} />,
+	here <Tex tex={String.raw`\tfrac{1}{${m}} = ${fx(1 / m, 3)}`} />. So a bigger panel gets a lower
+	<Tex tex="W" /> from chance alone, and <Tex tex="W" /> isn’t directly comparable across panel sizes.
 </p>
 
 <h4>Mean pairwise Spearman ρ</h4>
 <p>
-	<Term tip="Spearman’s rank correlation: 1 if two rankings are identical, −1 if one is the reverse of the other, about 0 if unrelated.">Spearman’s ρ</Term>
-	compares two judges’ rankings. For each competitor, take the difference d between the two ranks;
-	then ρ = 1 − 6 Σd² / [n(n² − 1)]. Here it is for every pair of judges:
+	<Term tip="Spearman’s rank correlation: 1 if two rankings are identical, −1 if one is the reverse of the other, about 0 if unrelated.">Spearman’s <Tex tex={String.raw`\rho`} /></Term>
+	compares two judges’ rankings. For each competitor, take the difference <Tex tex="d" /> between the two
+	ranks; then <Tex tex={String.raw`\rho = 1 - \frac{6\sum d^2}{n(n^2 - 1)}`} />. Here it is for every pair of judges:
 </p>
 <PairMatrix
 	judges={sheet.judges}
@@ -77,17 +80,17 @@
 				<tfoot><tr><td colspan="4">Σd²</td><td class="num">{sp.d2}</td></tr></tfoot>
 			</table>
 		</div>
-		<p class="formula">ρ = 1 − 6 × {sp.d2} / [{n} × ({n}² − 1)] = 1 − {6 * sp.d2} / {sp.denom} = {minus(fx(sp.rho))}</p>
+		<Tex display tex={String.raw`\rho = 1 - \frac{6 \times ${sp.d2}}{${n}\,(${n}^2 - 1)} = 1 - \frac{${6 * sp.d2}}{${sp.denom}} = ${fx(sp.rho)}`} />
 	{/snippet}
 </PairMatrix>
 <p>
 	The mean of these {pairs.length} values is {minus(fx(pairMean))}. For rankings without ties, that mean
-	is exactly (mW − 1)/(m − 1), which is how the analysis computes it:
+	is exactly <Tex tex={String.raw`\frac{mW - 1}{m - 1}`} />, which is how the analysis computes it:
 </p>
-<p class="formula">ρ̄ = (mW − 1)/(m − 1) = ({m} × {fx(w.W)} − 1)/({m} − 1) = {minus(fx(rhoBar))}</p>
-<Check label="ρ̄" js={rhoBar} py={sheet.py.mean_pairwise_rho} />
+<Tex display tex={String.raw`\bar\rho = \frac{mW - 1}{m - 1} = \frac{${m} \times ${fx(w.W)} - 1}{${m} - 1} = ${fx(rhoBar)}`} />
+<Check label="ρ̄" tex={String.raw`\bar\rho`} js={rhoBar} py={sheet.py.mean_pairwise_rho} />
 <p>
-	So ρ̄ carries the same information as W for any one scoresheet, but on a scale that averages 0 under
-	random judging whatever the panel size. That makes it the fairer of the two for comparing panels of
-	different sizes.
+	So <Tex tex={String.raw`\bar\rho`} /> carries the same information as <Tex tex="W" /> for any one scoresheet, but on a
+	scale that averages 0 under random judging whatever the panel size. That makes it the fairer of the two
+	for comparing panels of different sizes.
 </p>

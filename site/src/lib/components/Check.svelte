@@ -3,13 +3,14 @@
 	// the value scripts/compute_metrics.py computed (the one in the charts).
 	import { TOLERANCE } from '#lib/metrics.js';
 	import { fx } from '#lib/format.js';
-	/** @type {{label: string, js: number, py: number}} */
-	let { label, js, py } = $props();
+	import Tex from './Tex.svelte';
+	/** @type {{label: string, tex?: string, js: number, py: number}} */
+	let { label, tex, js, py } = $props();
 	const ok = $derived(Math.abs(js - py) <= TOLERANCE);
 </script>
 
 <p class="check">
-	<strong>{label} = {fx(js)}</strong>
+	<strong>{#if tex}<Tex tex={`${tex} = ${fx(js)}`} />{:else}{label} = {fx(js)}{/if}</strong>
 	{#if ok}
 		<span class="ok" title="Python value: {py}">✓ matches the analysis (compute_metrics.py: {fx(py, 6)})</span>
 	{:else}

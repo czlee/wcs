@@ -1,6 +1,7 @@
 <script>
 	import PairMatrix from './PairMatrix.svelte';
 	import Check from './Check.svelte';
+	import Tex from './Tex.svelte';
 	import { topN, judgePairs } from '#lib/metrics.js';
 	import { fx } from '#lib/format.js';
 	import { agreeBg } from './agree.js';
@@ -24,11 +25,14 @@
 
 <p>
 	These ignore the order within the top places and ask only <em>who</em> made them. For a pair of judges,
-	take the N competitors each ranked 1st to Nth and count how many are in both sets.
-	<strong>Overlap</strong> is that count divided by N. <strong>Jaccard</strong> divides it by the number of
-	competitors in either set instead. Both sets have N members, so with k in common, Jaccard = k/(2N − k):
-	for a single pair it carries the same information as overlap on a different scale. Averaged over pairs,
-	the two differ slightly.
+	take the sets <Tex tex="A" /> and <Tex tex="B" /> of competitors each ranked 1st to <Tex tex="N" />th, and
+	count how many are in both.
+</p>
+<Tex display tex={String.raw`\text{overlap} = \frac{|A \cap B|}{N} \qquad \text{Jaccard} = \frac{|A \cap B|}{|A \cup B|}`} />
+<p>
+	Both sets have <Tex tex="N" /> members, so with <Tex tex="k" /> in common,
+	<Tex tex={String.raw`\text{Jaccard} = \frac{k}{2N - k}`} />: for a single pair it carries the same
+	information as overlap on a different scale. Averaged over pairs, the two differ slightly.
 </p>
 <div class="toggle" role="group" aria-label="Top N">
 	{#each [3, 5] as k (k)}<button aria-pressed={N === k} onclick={() => (N = k)}>Top {k}</button>{/each}
@@ -55,7 +59,7 @@
 			{/each}
 		</div>
 		<p class="small">Highlighted: in both ({x.inter.length}). In either: {x.union.length}.</p>
-		<p class="formula">overlap = {x.inter.length} / {N} = {fx(x.overlap)}<br />Jaccard = {x.inter.length} / {x.union.length} = {fx(x.jaccard)}</p>
+		<Tex display tex={String.raw`\text{overlap} = \frac{${x.inter.length}}{${N}} = ${fx(x.overlap)} \qquad \text{Jaccard} = \frac{${x.inter.length}}{${x.union.length}} = ${fx(x.jaccard)}`} />
 	{/snippet}
 </PairMatrix>
 <p class="small muted">Cells show how many competitors are in both judges’ top {N}, out of {N}.</p>
@@ -63,7 +67,8 @@
 <Check label="Mean Jaccard @ {N}" js={jaccard} py={sheet.py[`jaccard_at_${N}`]} />
 {#if n < 2 * N}
 	<p class="callout small">
-		With only {n} competitors, any two top-{N} sets must share at least 2 × {N} − {n} = {2 * N - n}
+		With only {n} competitors, any two top-{N} sets must share at least
+		<Tex tex={String.raw`2N - n = 2 \times ${N} - ${n} = ${2 * N - n}`} />
 		{2 * N - n === 1 ? 'competitor' : 'competitors'}{#if n === N}: here every judge’s top {N} is the whole field, so both values are exactly 1{/if}.
 		Small finals push these metrics up regardless of how much the judges agree.
 	</p>

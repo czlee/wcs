@@ -1,6 +1,7 @@
 <script>
 	import RankMatrix from './RankMatrix.svelte';
 	import Check from './Check.svelte';
+	import Tex from './Tex.svelte';
 	import { spread } from '#lib/metrics.js';
 	import { nice } from '#lib/format.js';
 
@@ -12,10 +13,14 @@
 </script>
 
 <p>
-	These look at each competitor in turn: how far apart are the {m} ranks they got? For each competitor,
-	take the average distance of their ranks from the mean of those ranks, from their median, and their
-	standard deviation (dividing by m, not m − 1). Each metric is then the average over the {n} competitors.
-	All three are in places, so lower means more agreement.
+	These look at each competitor in turn: how far apart are the {m} ranks they got? For a competitor with
+	ranks <Tex tex={String.raw`r_1, \dots, r_m`} />, mean <Tex tex={String.raw`\bar r`} /> and median
+	<Tex tex={String.raw`\tilde r`} />:
+</p>
+<Tex display tex={String.raw`\text{MAD (mean)} = \frac{1}{m}\sum_{j=1}^{m} |r_j - \bar r| \qquad \text{MAD (median)} = \frac{1}{m}\sum_{j=1}^{m} |r_j - \tilde r| \qquad \text{SD} = \sqrt{\frac{1}{m}\sum_{j=1}^{m} (r_j - \bar r)^2}`} />
+<p>
+	(The SD divides by <Tex tex="m" />, not <Tex tex="m - 1" />.) Each metric is then the average over the
+	{n} competitors. All three are in places, so lower means more agreement.
 </p>
 <RankMatrix
 	{sheet}

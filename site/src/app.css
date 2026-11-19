@@ -93,7 +93,6 @@ p { margin: 0.5em 0; }
 .muted { color: var(--text-2); }
 .small { font-size: 0.85rem; }
 .num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
-.formula { font-variant-numeric: tabular-nums; padding-left: 1em; }
 
 .table-wrap { overflow-x: auto; margin: 0.6em 0; }
 table { border-collapse: collapse; font-size: 0.88rem; }
