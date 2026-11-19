@@ -118,7 +118,7 @@
 	<section class="family">
 		<h2 id={f.id}>{f.title}</h2>
 		<p class="intro">{INTRO[/** @type {keyof typeof INTRO} */ (f.id)]}</p>
-		<details class="worked" open>
+		<details class="worked">
 			<summary>How it’s calculated, using the example scoresheet</summary>
 			{#key example.id}<Worked sheet={example} />{/key}
 		</details>
