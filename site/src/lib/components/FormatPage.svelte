@@ -21,7 +21,7 @@
 	const rows = $derived(data.rows);
 	const WORKED = { concordance: WorkedConcordance, order: WorkedOrder, top: WorkedTop, spread: WorkedSpread };
 	const INTRO = {
-		concordance: 'How much does the panel, as a whole, agree on one order? Two numbers that carry the same information for any one scoresheet, but treat panel size differently.',
+		concordance: 'How much does the panel agree on one order? Kendall’s W looks at the panel as a whole; the mean pairwise Spearman ρ averages the agreement between each pair of judges.',
 		order: 'How often do two judges put competitors in the same order? These compare each pair of judges, then average over all the pairs on the panel.',
 		top: 'Do the judges agree on who belongs at the top, whatever the order?',
 		spread: 'For each competitor, how far apart are the ranks the judges gave them?'

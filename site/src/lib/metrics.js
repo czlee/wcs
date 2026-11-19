@@ -122,7 +122,6 @@ export function pairwise(/** @type {Matrix} */ R) {
 
 /** The site's twelve metrics, keyed as in data/metrics.csv. */
 export function allMetrics(/** @type {Matrix} */ R) {
-	const m = R.length;
 	const { W } = kendallW(R);
 	const p = pairwise(R);
 	const avg = (/** @type {string} */ k) => mean(p.map((x) => /** @type {any} */ (x)[k]));
@@ -130,8 +129,10 @@ export function allMetrics(/** @type {Matrix} */ R) {
 	const s = spread(R);
 	return {
 		kendall_w: W,
-		// compute_metrics.py uses this identity; the mean of the pairwise ρ values equals it exactly.
-		mean_pairwise_rho: (m * W - 1) / (m - 1),
+		// The mean of the pairwise ρ values. compute_metrics.py instead uses the identity
+		// (mW − 1)/(m − 1), which equals it exactly for tie-free rankings, so check-metrics.js
+		// also checks the identity.
+		mean_pairwise_rho: avg('rho'),
 		mean_pairwise_tau: tau,
 		tau_distance: (1 - tau) / 2,
 		footrule_mean: avg('footrule'),

@@ -16,7 +16,8 @@
 	const rhoBar = $derived((m * w.W - 1) / (m - 1));
 	const rho = (/** @type {number} */ a, /** @type {number} */ b) => spearman(sheet.R[a], sheet.R[b]).rho;
 	const pairs = $derived(judgePairs(m));
-	const pairMean = $derived(pairs.reduce((t, [a, b]) => t + rho(a, b), 0) / pairs.length);
+	const pairSum = $derived(pairs.reduce((t, [a, b]) => t + rho(a, b), 0));
+	const pairMean = $derived(pairSum / pairs.length);
 	/** @type {[number, number]} */
 	let selected = $state([0, 1]);
 	$effect(() => { if (selected[1] >= m) selected = [0, 1]; });
@@ -57,8 +58,13 @@
 <p>
 	<Term tip="Spearman’s rank correlation: 1 if two rankings are identical, −1 if one is the reverse of the other, about 0 if unrelated.">Spearman’s <Tex tex={String.raw`\rho`} /></Term>
 	compares two judges’ rankings. For each competitor, take the difference <Tex tex="d" /> between the two
-	ranks; then <Tex tex={String.raw`\rho = 1 - \frac{6\sum d^2}{n(n^2 - 1)}`} />. Here it is for every pair of judges:
+	ranks, and add up the squares, <Tex tex={String.raw`\sum d^2`} />. That’s 0 if the rankings are identical,
+	and at most <Tex tex={String.raw`\tfrac{1}{3}\,n(n^2 - 1)`} />, when one ranking is the reverse of the other.
+	ρ divides <Tex tex={String.raw`\sum d^2`} /> by that maximum and rescales it to run from 1 (identical) to
+	−1 (reversed):
 </p>
+<Tex display tex={String.raw`\rho = 1 - 2 \times \frac{\sum d^2}{\tfrac{1}{3}\, n(n^2 - 1)}`} />
+<p>Here it is for every pair of judges:</p>
 <PairMatrix
 	judges={sheet.judges}
 	value={rho}
@@ -80,17 +86,27 @@
 				<tfoot><tr><td colspan="4">Σd²</td><td class="num">{sp.d2}</td></tr></tfoot>
 			</table>
 		</div>
-		<Tex display tex={String.raw`\rho = 1 - \frac{6 \times ${sp.d2}}{${n}\,(${n}^2 - 1)} = 1 - \frac{${6 * sp.d2}}{${sp.denom}} = ${fx(sp.rho)}`} />
+		<Tex display tex={String.raw`\rho = 1 - 2 \times \frac{${sp.d2}}{\tfrac{1}{3} \times ${n} \times (${n}^2 - 1)} = 1 - 2 \times \frac{${sp.d2}}{${sp.denom / 3}} = ${fx(sp.rho)}`} />
 	{/snippet}
 </PairMatrix>
+<p>The metric is the mean of these values over all {pairs.length} pairs of judges:</p>
+<Tex display tex={String.raw`\bar\rho = \frac{1}{${pairs.length}} \sum_{\text{pairs}} \rho = \frac{${fx(pairSum)}}{${pairs.length}} = ${fx(pairMean)}`} />
+<Check label="ρ̄" tex={String.raw`\bar\rho`} js={pairMean} py={sheet.py.mean_pairwise_rho} />
 <p>
-	The mean of these {pairs.length} values is {minus(fx(pairMean))}. For rankings without ties, that mean
-	is exactly <Tex tex={String.raw`\frac{mW - 1}{m - 1}`} />, which is how the analysis computes it:
+	Unlike <Tex tex="W" />, <Tex tex={String.raw`\bar\rho`} /> averages 0 if the judges rank at random, whatever
+	the panel size, so it’s the fairer of the two for comparing panels of different sizes.
 </p>
-<Tex display tex={String.raw`\bar\rho = \frac{mW - 1}{m - 1} = \frac{${m} \times ${fx(w.W)} - 1}{${m} - 1} = ${fx(rhoBar)}`} />
-<Check label="ρ̄" tex={String.raw`\bar\rho`} js={rhoBar} py={sheet.py.mean_pairwise_rho} />
-<p>
-	So <Tex tex={String.raw`\bar\rho`} /> carries the same information as <Tex tex="W" /> for any one scoresheet, but on a
-	scale that averages 0 under random judging whatever the panel size. That makes it the fairer of the two
-	for comparing panels of different sizes.
-</p>
+<aside class="aside small">
+	<strong>A curiosity, and a cross-check:</strong> for rankings without ties, the mean pairwise ρ is exactly
+	<Tex tex={String.raw`\frac{mW - 1}{m - 1}`} />, so for any one scoresheet it carries the same information
+	as <Tex tex="W" />. The analysis code uses this as a shortcut:
+	<Tex display tex={String.raw`\frac{mW - 1}{m - 1} = \frac{${m} \times ${fx(w.W, 6)} - 1}{${m} - 1} = ${fx(rhoBar)}`} />
+	the same as the mean above.
+</aside>
+
+<style>
+	.aside {
+		border-left: 3px solid var(--border); background: var(--surface-2); color: var(--text-2);
+		padding: 0.5em 0.9em; margin: 0.8em 0; max-width: 72ch;
+	}
+</style>
