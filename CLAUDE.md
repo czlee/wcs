@@ -20,6 +20,18 @@ Debugging history for Phases 1 and 2 is in `briefs/`.
 
 ---
 
+## Results site (`site/`)
+
+A static SvelteKit site presenting the `explore_metrics.ipynb` bar and box charts (J&J and Strictly, six levels, 12 metrics), with the method and limitations inline and every metric worked through on any scoresheet. Deployed by `.github/workflows/pages.yml` to **https://czlee.nz/wcs/judge-divergence/** (this assumes the GitHub repo is named `wcs`).
+
+- **Data:** `scripts/export_site_data.py` writes `site/src/lib/data/{sheets.json,export.json}` from `data/metrics.csv` + `data/parsed/`. The output is **committed**, because CI can't run the pipeline. Re-run it after recomputing metrics.
+- **JS port of the metrics:** `site/src/lib/metrics.js` must reproduce `compute_metrics.py`. `npm run check:metrics` (also run in CI) compares every value; if you change a metric in Python, change it in JS too.
+- **Routes:** `/` = J&J, `/strictly/`, `/sheets/` (browse/filter), `/sheet/<id>/` (prerendered per scoresheet at build time, not committed), `/sheet/<id>/data.json` (used to load the random example).
+- **Provisional/deferred:** the CI method (`site/src/lib/stats.js` `meanCI`, currently ±1.96·SE) and the limitations wording (`site/src/lib/components/Limitations.svelte`). `site/src/lib/config.js` `DRAFT` is true (draft banner + noindex) until launch.
+- **Local:** `cd site && npm install && npm run dev`. `vite preview` 500s on the base-path root (a SvelteKit preview bug), so to test the build, serve `build/` as `wcs/judge-divergence/` with any static server.
+
+---
+
 ## Environment
 
 ```bash
@@ -47,6 +59,7 @@ scripts/
   download.py           # Phase 1
   extract.py            # Phase 2
   inventory.py          # helper: renders data/division-inventory.html
+  export_site_data.py   # writes site/src/lib/data/ for the results site
   parsers/              # vendored parsers (scoring_dance, eepro, danceconvention)
 notebooks/
   division_stats.ipynb    # exploratory: field and panel size distributions by division
