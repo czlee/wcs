@@ -11,6 +11,7 @@
 	import WorkedOrder from './WorkedOrder.svelte';
 	import WorkedTop from './WorkedTop.svelte';
 	import WorkedSpread from './WorkedSpread.svelte';
+	import Switch from './Switch.svelte';
 	import { FAMILIES, METRICS, METRIC_KEYS } from '#lib/families.js';
 	import { FORMATS, LEVELS } from '#lib/levels.js';
 	import { link, date } from '#lib/format.js';
@@ -26,6 +27,10 @@
 		top: 'Do the judges agree on who belongs at the top, whatever the order?',
 		spread: 'For each competitor, how far apart are the ranks the judges gave them?'
 	};
+
+	// Which option of each family's switch is chosen (an index into f.switch.options).
+	/** @type {Record<string, number>} */
+	let picked = $state(Object.fromEntries(FAMILIES.map((f) => [f.id, 0])));
 
 	// The fallback until a random one loads (writable: pickRandom replaces it).
 	let example = $derived(/** @type {import('#lib/server/data.js').Sheet} */ (data.fallback));
@@ -90,7 +95,8 @@
 <p>
 	There are many ways to measure how far apart rankings are, and they don’t all answer the same question.
 	This page uses twelve, in four families. For each family it explains the metrics, works them through on
-	one scoresheet, and then shows the results for every level.
+	one scoresheet, and then shows the results for every level. Some metrics are close variants of each other,
+	so they share a chart, and a switch above the charts picks which one it shows.
 </p>
 
 <h3 id="example">The example scoresheet</h3>
@@ -122,7 +128,14 @@
 			<summary>How it’s calculated, using the example scoresheet</summary>
 			{#key example.id}<Worked sheet={example} />{/key}
 		</details>
-		{#each f.metrics as k (k)}
+		{#if f.switch}
+			<p class="switch-row">
+				Show:
+				<Switch label={f.switch.label} options={f.switch.options.map((label, i) => ({ value: i, label }))} bind:value={picked[f.id]} />
+			</p>
+		{/if}
+		{#each f.charts as variants, ci (ci)}
+			{@const k = variants[Math.min(picked[f.id], variants.length - 1)]}
 			{@const meta = METRICS[k]}
 			<h3 class="metric">{meta.label} <span class="dir">{meta.higher ? 'higher' : 'lower'} = more agreement</span></h3>
 			<MetricChart {rows} index={METRIC_KEYS.indexOf(k)} {meta} colour={fmt.colour} format={data.format} exampleId={example.id} />
@@ -142,6 +155,7 @@
 	.worked summary { cursor: pointer; font-weight: 600; color: var(--text-2); }
 	.worked[open] summary { margin-bottom: 0.4em; }
 	h3.metric { margin-top: 1.8em; }
+	.switch-row { margin: 1.2em 0 -0.6em; color: var(--text-2); font-size: 0.9rem; }
 	.dir { font-size: 0.8rem; font-weight: 400; color: var(--text-3); margin-left: 0.4em; }
 	.btn { margin: 0 0.4em; }
 </style>

@@ -2,6 +2,7 @@
 	import PairMatrix from './PairMatrix.svelte';
 	import Check from './Check.svelte';
 	import Tex from './Tex.svelte';
+	import Switch from './Switch.svelte';
 	import { topN, judgePairs } from '#lib/metrics.js';
 	import { fx } from '#lib/format.js';
 	import { agreeBg } from './agree.js';
@@ -34,9 +35,7 @@
 	<Tex tex={String.raw`\text{Jaccard} = \frac{k}{2N - k}`} />: for a single pair it carries the same
 	information as overlap on a different scale. Averaged over pairs, the two differ slightly.
 </p>
-<div class="toggle" role="group" aria-label="Top N">
-	{#each [3, 5] as k (k)}<button aria-pressed={N === k} onclick={() => (N = k)}>Top {k}</button>{/each}
-</div>
+<Switch label="Top N" options={[3, 5].map((k) => ({ value: k, label: `Top ${k}` }))} bind:value={N} />
 <PairMatrix
 	judges={sheet.judges}
 	value={(a, b) => t(a, b).inter.length}
@@ -75,9 +74,6 @@
 {/if}
 
 <style>
-	.toggle { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; margin: 0.4em 0; }
-	.toggle button { font: inherit; font-size: 0.85rem; padding: 0.25em 0.9em; border: 0; background: transparent; color: var(--text-2); cursor: pointer; }
-	.toggle button[aria-pressed='true'] { background: var(--text); color: var(--surface); }
 	.sets { display: flex; flex-wrap: wrap; gap: 0.5em 1.5em; }
 	.sets ol { margin: 0.2em 0; padding-left: 1.4em; }
 	.both { background: var(--highlight-bg); }

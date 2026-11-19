@@ -18,12 +18,35 @@ export const METRICS = {
 	sd_rank: { key: 'sd_rank', label: 'SD of ranks', short: 'SD', higher: false }
 };
 
-/** Families, in page order. */
+/**
+ * Families, in page order. `metrics` fixes the order of every metric's values in
+ * the exported data. `charts` is what the results pages show: each chart is a list
+ * of variant metrics. Where a family has a `switch`, option i of that switch shows
+ * variant i of every multi-variant chart in the family (the first option is the
+ * default). A chart with one variant is always shown.
+ * @type {{id: string, title: string, metrics: string[], charts: string[][],
+ *   switch?: {label: string, options: string[]}}[]}
+ */
 export const FAMILIES = [
-	{ id: 'concordance', title: 'Whole-panel concordance', metrics: ['kendall_w', 'mean_pairwise_rho'] },
-	{ id: 'order', title: 'Pairwise ordering', metrics: ['mean_pairwise_tau', 'tau_distance', 'footrule_mean'] },
-	{ id: 'top', title: 'Agreement on the top places', metrics: ['overlap_at_3', 'jaccard_at_3', 'overlap_at_5', 'jaccard_at_5'] },
-	{ id: 'spread', title: 'Spread of each competitor’s ranks', metrics: ['mean_abs_rank_dev_mean', 'mean_abs_rank_dev_median', 'sd_rank'] }
+	{
+		id: 'concordance', title: 'Whole-panel concordance', metrics: ['kendall_w', 'mean_pairwise_rho'],
+		charts: [['kendall_w'], ['mean_pairwise_rho']]
+	},
+	{
+		id: 'order', title: 'Pairwise ordering', metrics: ['mean_pairwise_tau', 'tau_distance', 'footrule_mean'],
+		charts: [['mean_pairwise_tau', 'tau_distance'], ['footrule_mean']],
+		switch: { label: 'Kendall τ or τ distance', options: ['τ̄', 'τ distance'] }
+	},
+	{
+		id: 'top', title: 'Agreement on the top places', metrics: ['overlap_at_3', 'jaccard_at_3', 'overlap_at_5', 'jaccard_at_5'],
+		charts: [['overlap_at_5', 'overlap_at_3'], ['jaccard_at_5', 'jaccard_at_3']],
+		switch: { label: 'Top N for the charts', options: ['Top 5', 'Top 3'] }
+	},
+	{
+		id: 'spread', title: 'Spread of each competitor’s ranks', metrics: ['mean_abs_rank_dev_mean', 'mean_abs_rank_dev_median', 'sd_rank'],
+		charts: [['mean_abs_rank_dev_median', 'mean_abs_rank_dev_mean', 'sd_rank']],
+		switch: { label: 'Measure of spread', options: ['MAD (median)', 'MAD (mean)', 'SD'] }
+	}
 ];
 
 export const METRIC_KEYS = FAMILIES.flatMap((f) => f.metrics);
