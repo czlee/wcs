@@ -1,0 +1,25 @@
+{
+ "exported": "2026-11-19",
+ "commit": "40d5635",
+ "first_event": "2024-01-06",
+ "last_event": "2026-01-03",
+ "sheets": 1673,
+ "counts": {
+  "jnj": {
+   "adv": 225,
+   "als": 209,
+   "chp": 77,
+   "int": 250,
+   "new": 218,
+   "nov": 255
+  },
+  "strictly": {
+   "adv": 65,
+   "als": 43,
+   "chp": 56,
+   "int": 137,
+   "new": 8,
+   "nov": 130
+  }
+ }
+}
