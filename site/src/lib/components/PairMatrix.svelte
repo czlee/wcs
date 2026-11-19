@@ -21,7 +21,7 @@
 			<thead>
 				<tr>
 					<th></th>
-					{#each judges as j, b (b)}<th class="num" title={j}>J{b + 1}</th>{/each}
+					{#each judges as j, b (b)}<th class="num colhead" class:on={b === selected[0] || b === selected[1]} title={j}>J{b + 1}</th>{/each}
 				</tr>
 			</thead>
 			<tbody>
@@ -57,7 +57,7 @@
 	.matrix th, .matrix td { padding: 0.15em 0.3em; }
 	.rowhead { white-space: nowrap; font-weight: 600; max-width: 12em; overflow: hidden; text-overflow: ellipsis; }
 	.rowhead .name { font-weight: 400; color: var(--text-3); }
-	.rowhead.on { background: var(--highlight-bg); }
+	.rowhead.on, .colhead.on { background: var(--highlight-bg); }
 	.diag { color: var(--text-3); text-align: center; }
 	td.cell { background: var(--bg); padding: 0; }
 	td.cell button {
