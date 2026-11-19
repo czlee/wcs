@@ -75,18 +75,18 @@
 	const tickFmt = (/** @type {number} */ v) => minus(String(+v.toFixed(3)));
 </script>
 
-{#snippet agreeStrip()}
+{#snippet agreeStrip(/** @type {string} */ panel)}
 	{@const top = meta.higher ? 'ok' : 'bad'}
 	{@const bottom = meta.higher ? 'bad' : 'ok'}
 	<g class="strip" aria-hidden="true">
 		<defs>
-			<linearGradient id="{gid}-strip" x1="0" x2="0" y1="0" y2="1">
+			<linearGradient id="{gid}-{panel}-strip" x1="0" x2="0" y1="0" y2="1">
 				<stop offset="0" style:stop-color="var(--{top})" />
 				<stop offset="0.5" style:stop-color="var(--grid)" />
 				<stop offset="1" style:stop-color="var(--{bottom})" />
 			</linearGradient>
 		</defs>
-		<rect x={STRIP.x} y={M.t} width={STRIP.w} height={H - M.b - M.t} rx="3" fill="url(#{gid}-strip)" />
+		<rect x={STRIP.x} y={M.t} width={STRIP.w} height={H - M.b - M.t} rx="3" fill="url(#{gid}-{panel}-strip)" />
 		<text class="strip-label {top}" transform="translate({W - 14},{M.t}) rotate(90)" text-anchor="start">{meta.higher ? 'more agreement' : 'less agreement'}</text>
 		<text class="strip-label {bottom}" transform="translate({W - 14},{H - M.b}) rotate(90)" text-anchor="end">{meta.higher ? 'less agreement' : 'more agreement'}</text>
 	</g>
@@ -96,7 +96,7 @@
 	<div class="panels">
 		<figure>
 			<figcaption>{CI_LABEL} (provisional), by level</figcaption>
-			<svg viewBox="0 0 {W} {H}" role="img" aria-label="{meta.label}: mean by level">
+			<svg viewBox="0 0 {W} {H}" role="img" aria-label="{meta.label} ({meta.higher ? 'higher' : 'lower'} means more agreement): mean by level">
 				{#each ticks(barY) as t (t)}
 					<line class="grid" x1={M.l} x2={W - M.r} y1={barY(t)} y2={barY(t)} />
 					<text class="tick" x={M.l - 6} y={barY(t)} dy="0.32em" text-anchor="end">{tickFmt(t)}</text>
@@ -120,12 +120,12 @@
 					<text class="n" x={bx + x.bandwidth() / 2} y={H - M.b + 29} text-anchor="middle">n={d.ci.n}</text>
 				{/each}
 				<line class="axis" x1={M.l} x2={W - M.r} y1={barY(0)} y2={barY(0)} />
-				{@render agreeStrip()}
+				{@render agreeStrip('bar')}
 			</svg>
 		</figure>
 		<figure>
 			<figcaption>Every scoresheet, with quartiles{#if exampleId && rows.some((r) => r.id === exampleId)}; <span class="ring">◯</span> is the example scoresheet{/if}</figcaption>
-			<svg viewBox="0 0 {W} {H}" role="img" aria-label="{meta.label}: distribution by level">
+			<svg viewBox="0 0 {W} {H}" role="img" aria-label="{meta.label} ({meta.higher ? 'higher' : 'lower'} means more agreement): distribution by level">
 				{#each ticks(boxY) as t (t)}
 					<line class="grid" x1={M.l} x2={W - M.r} y1={boxY(t)} y2={boxY(t)} />
 					<text class="tick" x={M.l - 6} y={boxY(t)} dy="0.32em" text-anchor="end">{tickFmt(t)}</text>
@@ -165,7 +165,7 @@
 							onclick={() => goto(link(`/sheet/${ex.id}/`))} />
 					{/if}
 				{/if}
-				{@render agreeStrip()}
+				{@render agreeStrip('box')}
 			</svg>
 		</figure>
 	</div>
