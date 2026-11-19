@@ -137,7 +137,7 @@
 		{#each f.charts as variants, ci (ci)}
 			{@const k = variants[Math.min(picked[f.id], variants.length - 1)]}
 			{@const meta = METRICS[k]}
-			<h3 class="metric">{meta.label} <span class="dir">{meta.higher ? 'higher' : 'lower'} = more agreement</span></h3>
+			<h3 class="metric">{meta.label} <span class="dir">{meta.higher ? '▲ higher' : '▼ lower'} = <span class="agree">more agreement</span></span></h3>
 			<MetricChart {rows} index={METRIC_KEYS.indexOf(k)} {meta} colour={fmt.colour} format={data.format} exampleId={example.id} />
 		{/each}
 	</section>
@@ -156,6 +156,7 @@
 	.worked[open] summary { margin-bottom: 0.4em; }
 	h3.metric { margin-top: 1.8em; }
 	.switch-row { margin: 1.2em 0 -0.6em; color: var(--text-2); font-size: 0.9rem; }
-	.dir { font-size: 0.8rem; font-weight: 400; color: var(--text-3); margin-left: 0.4em; }
+	.dir { font-size: 0.85rem; font-weight: 500; color: var(--text-2); margin-left: 0.4em; white-space: nowrap; }
+	.dir .agree { color: var(--ok); font-weight: 600; }
 	.btn { margin: 0 0.4em; }
 </style>

@@ -16,7 +16,11 @@
 	let { rows, index, meta, colour, format, exampleId } = $props();
 
 	const W = 460, H = 240;
-	const M = { t: 12, r: 8, b: 40, l: 46 };
+	// The right margin holds the agreement strip: a green-to-red bar showing which
+	// way along the y-axis the judges agree more, labelled at both ends.
+	const M = { t: 12, r: 30, b: 40, l: 46 };
+	const STRIP = { x: W - 24, w: 6 };
+	const gid = $props.id();
 	const x = scaleBand().domain(LEVELS.map((l) => l.id)).range([M.l, W - M.r]).padding(0.28);
 
 	const byLevel = $derived(LEVELS.map((l) => {
@@ -71,6 +75,23 @@
 	const tickFmt = (/** @type {number} */ v) => minus(String(+v.toFixed(3)));
 </script>
 
+{#snippet agreeStrip()}
+	{@const top = meta.higher ? 'ok' : 'bad'}
+	{@const bottom = meta.higher ? 'bad' : 'ok'}
+	<g class="strip" aria-hidden="true">
+		<defs>
+			<linearGradient id="{gid}-strip" x1="0" x2="0" y1="0" y2="1">
+				<stop offset="0" style:stop-color="var(--{top})" />
+				<stop offset="0.5" style:stop-color="var(--grid)" />
+				<stop offset="1" style:stop-color="var(--{bottom})" />
+			</linearGradient>
+		</defs>
+		<rect x={STRIP.x} y={M.t} width={STRIP.w} height={H - M.b - M.t} rx="3" fill="url(#{gid}-strip)" />
+		<text class="strip-label {top}" transform="translate({W - 14},{M.t}) rotate(90)" text-anchor="start">{meta.higher ? 'more agreement' : 'less agreement'}</text>
+		<text class="strip-label {bottom}" transform="translate({W - 14},{H - M.b}) rotate(90)" text-anchor="end">{meta.higher ? 'less agreement' : 'more agreement'}</text>
+	</g>
+{/snippet}
+
 <div class="chart" bind:this={wrap}>
 	<div class="panels">
 		<figure>
@@ -99,6 +120,7 @@
 					<text class="n" x={bx + x.bandwidth() / 2} y={H - M.b + 29} text-anchor="middle">n={d.ci.n}</text>
 				{/each}
 				<line class="axis" x1={M.l} x2={W - M.r} y1={barY(0)} y2={barY(0)} />
+				{@render agreeStrip()}
 			</svg>
 		</figure>
 		<figure>
@@ -143,6 +165,7 @@
 							onclick={() => goto(link(`/sheet/${ex.id}/`))} />
 					{/if}
 				{/if}
+				{@render agreeStrip()}
 			</svg>
 		</figure>
 	</div>
@@ -163,6 +186,9 @@
 	.grid { stroke: var(--grid); }
 	.axis { stroke: var(--text-3); }
 	.tick, .n { font-size: 10px; fill: var(--text-3); }
+	.strip-label { font-size: 10px; font-weight: 600; }
+	.strip-label.ok { fill: var(--ok); }
+	.strip-label.bad { fill: var(--bad); }
 	.lvl { font-size: 11.5px; fill: var(--text-2); }
 	.err { stroke: var(--text); stroke-width: 1.3; }
 	.hit { fill: transparent; }
