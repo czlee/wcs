@@ -11,9 +11,9 @@
 	/** @typedef {{id: string, level: string, event: string, date: string, name: string, m: number, n: number, v: number[]}} Row */
 	/**
 	 * @type {{rows: Row[], index: number, meta: {label: string, higher: boolean}, colour: string,
-	 *   format: string, exampleId?: string}}
+	 *   format: string}}
 	 */
-	let { rows, index, meta, colour, format, exampleId } = $props();
+	let { rows, index, meta, colour, format } = $props();
 
 	const W = 460, H = 240;
 	// The right margin holds the agreement strip: a green-to-red bar showing which
@@ -124,7 +124,7 @@
 			</svg>
 		</figure>
 		<figure>
-			<figcaption>Every scoresheet, with quartiles{#if exampleId && rows.some((r) => r.id === exampleId)}; <span class="ring">◯</span> is the example scoresheet{/if}</figcaption>
+			<figcaption>Every scoresheet, with quartiles</figcaption>
 			<svg viewBox="0 0 {W} {H}" role="img" aria-label="{meta.label} ({meta.higher ? 'higher' : 'lower'} means more agreement): distribution by level">
 				{#each ticks(boxY) as t (t)}
 					<line class="grid" x1={M.l} x2={W - M.r} y1={boxY(t)} y2={boxY(t)} />
@@ -156,15 +156,6 @@
 					<text class="lvl" x={bx + bw / 2} y={H - M.b + 15} text-anchor="middle">{d.level.short}</text>
 					<text class="n" x={bx + bw / 2} y={H - M.b + 29} text-anchor="middle">n={d.box.n}</text>
 				{/each}
-				{#if mounted && exampleId}
-					{@const ex = rows.find((r) => r.id === exampleId)}
-					{#if ex}
-						{@const bx = /** @type {number} */ (x(ex.level))}
-						<circle class="example" cx={bx + x.bandwidth() / 2 + jitter(ex.id) * x.bandwidth() * 0.9} cy={boxY(ex.v[index])} r="5.5"
-							role="presentation" onmouseenter={(e) => show(e, ['The example scoresheet', ...pointLines(ex)])} onmouseleave={hide}
-							onclick={() => goto(link(`/sheet/${ex.id}/`))} />
-					{/if}
-				{/if}
 				{@render agreeStrip('box')}
 			</svg>
 		</figure>
@@ -197,8 +188,6 @@
 	.median { stroke-width: 2.5; }
 	.pt { fill-opacity: 0.38; cursor: pointer; }
 	.pt:hover { fill-opacity: 1; stroke: var(--text); stroke-width: 1; }
-	.example { fill: none; stroke: var(--text); stroke-width: 2; cursor: pointer; }
-	.ring { font-weight: 700; color: var(--text); }
 	.tip {
 		position: absolute; transform: translate(-50%, calc(-100% - 8px)); pointer-events: none; z-index: 20;
 		width: max-content; max-width: min(22em, calc(100vw - 32px)); padding: 0.4em 0.6em;

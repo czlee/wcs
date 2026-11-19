@@ -32,7 +32,6 @@
 
 	// The fallback until a random one loads (writable: pickRandom replaces it).
 	let example = $derived(/** @type {import('#lib/server/data.js').Sheet} */ (data.fallback));
-	let random = $state(false);
 	let loading = $state(false);
 	async function pickRandom() {
 		const ids = rows.map((/** @type {any} */ r) => r.id).filter((/** @type {string} */ id) => id !== example.id);
@@ -40,7 +39,7 @@
 		loading = true;
 		try {
 			const res = await fetch(link(`/sheet/${id}/data.json`));
-			if (res.ok) { example = await res.json(); random = true; }
+			if (res.ok) { example = await res.json(); }
 		} finally {
 			loading = false;
 		}
@@ -72,24 +71,19 @@
 	so they share a chart, and a switch above the charts picks which one it shows.
 </p>
 
-<h3 id="example">The example scoresheet</h3>
-<p>
-	{#if random}Picked at random from the {rows.length} on this page{:else}The default example (your browser will swap in a random one){/if}:
-	<strong>{example.name}</strong> ({date(example.date)}).
-</p>
-<p class="controls">
-	<button class="btn" onclick={pickRandom} disabled={loading}>{loading ? 'Loading…' : 'Pick another at random'}</button>
-	<a href={link(`/sheet/${example.id}/`)}>Open it on its own page</a> ·
-	<a href={link(`/sheets/?format=${data.format}`)}>choose any scoresheet</a>, or click any point in the charts.
-</p>
-
 {#each FAMILIES as f (f.id)}
 	{@const Worked = WORKED[/** @type {keyof typeof WORKED} */ (f.id)]}
 	<section class="family">
 		<h2 id={f.id}>{f.title}</h2>
 		<p class="intro">{INTRO[/** @type {keyof typeof INTRO} */ (f.id)]}</p>
 		<details class="worked">
-			<summary>How it’s calculated, using the example scoresheet</summary>
+			<summary>How is this calculated?</summary>
+			<p class="example">
+				Example scoresheet chosen at random: <strong>{example.name}</strong> ({date(example.date)}).
+				<button class="btn" onclick={pickRandom} disabled={loading}>{loading ? 'Loading…' : 'Pick another'}</button> ·
+				<a href={link(`/sheet/${example.id}/`)}>More details</a> ·
+				<a href={link(`/sheets/?format=${data.format}`)}>All scoresheets</a>
+			</p>
 			{#key example.id}<Worked sheet={example} />{/key}
 		</details>
 		{#if f.switch}
@@ -102,7 +96,7 @@
 			{@const k = variants[Math.min(picked[f.id], variants.length - 1)]}
 			{@const meta = METRICS[k]}
 			<h3 class="metric">{meta.label}</h3>
-			<MetricChart {rows} index={METRIC_KEYS.indexOf(k)} {meta} colour={fmt.colour} format={data.format} exampleId={example.id} />
+			<MetricChart {rows} index={METRIC_KEYS.indexOf(k)} {meta} colour={fmt.colour} format={data.format} />
 		{/each}
 	</section>
 {/each}
@@ -120,6 +114,6 @@
 	.worked[open] summary { margin-bottom: 0.4em; }
 	h3.metric { margin-top: 1.8em; }
 	.switch-row { margin: 1.2em 0 -0.6em; color: var(--text-2); font-size: 0.9rem; }
-	.controls { margin-top: 0.3em; }
-	.btn { margin-right: 0.4em; }
+	.example { font-size: 0.92rem; color: var(--text-2); }
+	.btn { margin: 0 0.1em; }
 </style>
