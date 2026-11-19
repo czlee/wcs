@@ -1,11 +1,9 @@
 <script>
 	// The results page for one dance format (Jack & Jill or Strictly): intro,
-	// limitations, the data, then each family of metrics with its working on an
+	// limitations, how to read the page, then each family of metrics with its working on an
 	// example scoresheet and its charts by level.
 	import { onMount } from 'svelte';
 	import Limitations from './Limitations.svelte';
-	import SheetMeta from './SheetMeta.svelte';
-	import RankMatrix from './RankMatrix.svelte';
 	import MetricChart from './MetricChart.svelte';
 	import WorkedConcordance from './WorkedConcordance.svelte';
 	import WorkedOrder from './WorkedOrder.svelte';
@@ -13,7 +11,7 @@
 	import WorkedSpread from './WorkedSpread.svelte';
 	import Switch from './Switch.svelte';
 	import { FAMILIES, METRICS, METRIC_KEYS } from '#lib/families.js';
-	import { FORMATS, LEVELS } from '#lib/levels.js';
+	import { FORMATS } from '#lib/levels.js';
 	import { link, date } from '#lib/format.js';
 
 	let { data } = $props();
@@ -48,12 +46,6 @@
 		}
 	}
 	onMount(pickRandom);
-
-	const levelStats = $derived(LEVELS.map((l) => {
-		const rs = rows.filter((/** @type {any} */ r) => r.level === l.id);
-		const avg = (/** @type {string} */ k) => rs.reduce((t, /** @type {any} */ r) => t + r[k], 0) / rs.length;
-		return { level: l, count: rs.length, m: avg('m'), n: avg('n') };
-	}));
 </script>
 
 <h1>How much do WCS judges disagree? <span class="fmt" style:--c={fmt.colour}>{fmt.label} finals</span></h1>
@@ -72,26 +64,7 @@
 
 <Limitations info={data.info} />
 
-<h2 id="data">The data</h2>
-<p>
-	Each scoresheet is one final: a ranking of the finalists by each judge. Panel and field sizes vary by
-	level, which matters for several of the metrics below:
-</p>
-<div class="table-wrap">
-	<table>
-		<thead><tr><th>Level</th><th class="num">Scoresheets</th><th class="num">Mean judges</th><th class="num">Mean competitors</th></tr></thead>
-		<tbody>
-			{#each levelStats as s (s.level.id)}
-				<tr>
-					<td><a href={link(`/sheets/?format=${data.format}&level=${s.level.id}`)}>{s.level.label}</a></td>
-					<td class="num">{s.count}</td>
-					<td class="num">{s.count ? s.m.toFixed(1) : '—'}</td>
-					<td class="num">{s.count ? s.n.toFixed(1) : '—'}</td>
-				</tr>
-			{/each}
-		</tbody>
-	</table>
-</div>
+<h2 id="reading">Reading this page</h2>
 <p>
 	There are many ways to measure how far apart rankings are, and they don’t all answer the same question.
 	This page uses twelve, in four families. For each family it explains the metrics, works them through on
@@ -101,22 +74,13 @@
 
 <h3 id="example">The example scoresheet</h3>
 <p>
-	{#if random}This one was picked at random from the {rows.length} on this page.{:else}This is the default example; your browser will swap in one picked at random.{/if}
+	{#if random}Picked at random from the {rows.length} on this page{:else}The default example (your browser will swap in a random one){/if}:
+	<strong>{example.name}</strong> ({date(example.date)}).
+</p>
+<p class="controls">
 	<button class="btn" onclick={pickRandom} disabled={loading}>{loading ? 'Loading…' : 'Pick another at random'}</button>
 	<a href={link(`/sheet/${example.id}/`)}>Open it on its own page</a> ·
 	<a href={link(`/sheets/?format=${data.format}`)}>choose any scoresheet</a>, or click any point in the charts.
-</p>
-<SheetMeta sheet={example} />
-<RankMatrix sheet={example} caption="Each judge’s ranks (1 = first), competitors in the order on the scoresheet" />
-
-<h3 id="charts">How to read the charts</h3>
-<p>
-	Each metric gets two charts, with one bar or box per level from Newcomer to Champions. On the
-	<strong>left</strong> is the mean across that level’s scoresheets, with an interval of 1.96 standard errors
-	either side (a provisional approximation of a 95% confidence interval; see the limitations). On the
-	<strong>right</strong>, each dot is one scoresheet. The box spans the middle half (quartiles by linear
-	interpolation), the line is the median, and the whiskers reach the furthest scoresheets within 1.5 box-lengths.
-	Hover over anything for details. Click a dot for that scoresheet’s working, or a bar to list its scoresheets.
 </p>
 
 {#each FAMILIES as f (f.id)}
@@ -156,5 +120,6 @@
 	.worked[open] summary { margin-bottom: 0.4em; }
 	h3.metric { margin-top: 1.8em; }
 	.switch-row { margin: 1.2em 0 -0.6em; color: var(--text-2); font-size: 0.9rem; }
-	.btn { margin: 0 0.4em; }
+	.controls { margin-top: 0.3em; }
+	.btn { margin-right: 0.4em; }
 </style>
