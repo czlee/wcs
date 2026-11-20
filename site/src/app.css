@@ -21,7 +21,7 @@
 	/* Format colours (validated against both surfaces with the dataviz palette checker). */
 	--jnj: #3f5bd9;
 	--strictly: #8a3fb8;
-	--font: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	--font: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 	--mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
@@ -110,7 +110,7 @@ tfoot td { font-weight: 600; border-top: 1px solid var(--border); }
 	border-radius: 6px; background: var(--surface-2); color: var(--text); cursor: pointer;
 }
 .btn:hover { border-color: var(--text-3); }
-svg text { fill: var(--text-2); font-family: var(--font); }
+svg text { fill: var(--text-2); font-family: var(--font); font-variant-numeric: tabular-nums; }
 @media (max-width: 600px) {
 	svg text { font-size: 11px; }
 }
