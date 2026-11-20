@@ -33,11 +33,11 @@ export const METRICS = {
  */
 export const FAMILIES = [
 	{
-		id: 'concordance', title: 'Whole-panel concordance', metrics: ['kendall_w', 'mean_pairwise_rho'],
+		id: 'concordance', title: 'Panel-wide concordance', metrics: ['kendall_w', 'mean_pairwise_rho'],
 		charts: [['kendall_w'], ['mean_pairwise_rho']]
 	},
 	{
-		id: 'order', title: 'Pairwise ordering', metrics: ['mean_pairwise_tau', 'tau_distance', 'footrule_mean'],
+		id: 'order', title: 'Distance between two judges’ rankings', metrics: ['mean_pairwise_tau', 'tau_distance', 'footrule_mean'],
 		charts: [['mean_pairwise_tau', 'tau_distance'], ['footrule_mean']],
 		switch: { label: 'Kendall τ or τ distance', options: ['τ̄', 'τ distance'] }
 	},
