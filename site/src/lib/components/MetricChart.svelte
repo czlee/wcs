@@ -8,12 +8,15 @@
 	import { meanCI, boxStats, CI_LABEL } from '#lib/stats.js';
 	import { fx, minus, link, date } from '#lib/format.js';
 
-	/** @typedef {{id: string, level: string, event: string, date: string, name: string, m: number, n: number, v: number[]}} Row */
+	/** @typedef {{id: string, level: string, event: string, date: string, name: string, m: number, n: number, v: (number | null)[]}} Row */
 	/**
-	 * @type {{rows: Row[], index: number, meta: {label: string, higher: boolean}, colour: string,
+	 * @type {{rows: Row[], index: number, meta: {label: string, higher: boolean, chance?: boolean}, colour: string,
 	 *   format: string}}
 	 */
-	let { rows, index, meta, colour, format } = $props();
+	let { rows: allRows, index, meta, colour, format } = $props();
+	// Scoresheets with no value for this metric (a field below its minN) are left out.
+	const rows = $derived(allRows.filter((r) => r.v[index] != null));
+	const val = (/** @type {Row} */ r) => /** @type {number} */ (r.v[index]);
 
 	const W = 460, H = 240;
 	// The right margin holds the agreement strip: a green-to-red bar showing which
@@ -25,7 +28,7 @@
 
 	const byLevel = $derived(LEVELS.map((l) => {
 		const pts = rows.filter((r) => r.level === l.id);
-		const vals = pts.map((r) => r.v[index]);
+		const vals = pts.map(val);
 		return { level: l, pts, ci: meanCI(vals), box: boxStats(vals) };
 	}));
 
@@ -35,7 +38,7 @@
 		return scaleLinear().domain([lo, hi]).nice(5).range([H - M.b, M.t]);
 	});
 	const boxY = $derived.by(() => {
-		const vals = rows.map((r) => r.v[index]);
+		const vals = rows.map(val);
 		return scaleLinear().domain([Math.min(...vals), Math.max(...vals)]).nice(5).range([H - M.b, M.t]);
 	});
 
@@ -69,7 +72,7 @@
 	const hide = () => (tip = null);
 	const pointLines = (/** @type {Row} */ r) => [
 		`${r.event}`, `${r.name}`, `${date(r.date)} · ${r.m} judges, ${r.n} competitors`,
-		`${meta.label}: ${minus(fx(r.v[index]))}`, 'Click to see the working'
+		`${meta.label}: ${minus(fx(val(r)))}`, 'Click to see the working'
 	];
 	const ticks = (/** @type {any} */ y) => y.ticks(5);
 	const tickFmt = (/** @type {number} */ v) => minus(String(+v.toFixed(3)));
@@ -120,6 +123,7 @@
 					<text class="n" x={bx + x.bandwidth() / 2} y={H - M.b + 29} text-anchor="middle">n={d.ci.n}</text>
 				{/each}
 				<line class="axis" x1={M.l} x2={W - M.r} y1={barY(0)} y2={barY(0)} />
+				{#if meta.chance}<text class="chance" x={W - M.r - 2} y={barY(0) - 3} text-anchor="end">chance</text>{/if}
 				{@render agreeStrip('bar')}
 			</svg>
 		</figure>
@@ -147,7 +151,7 @@
 					{/if}
 					{#if mounted}
 						{#each d.pts as r (r.id)}
-							<circle class="pt" cx={bx + bw / 2 + jitter(r.id) * bw * 0.9} cy={boxY(r.v[index])} r="2.4" fill={colour}
+							<circle class="pt" cx={bx + bw / 2 + jitter(r.id) * bw * 0.9} cy={boxY(val(r))} r="2.4" fill={colour}
 								role="link" tabindex="-1" aria-label={r.name}
 								onmouseenter={(e) => show(e, pointLines(r))} onmouseleave={hide}
 								onclick={() => goto(link(`/sheet/${r.id}/`))} onkeydown={() => {}} />
@@ -156,6 +160,10 @@
 					<text class="lvl" x={bx + bw / 2} y={H - M.b + 15} text-anchor="middle">{d.level.short}</text>
 					<text class="n" x={bx + bw / 2} y={H - M.b + 29} text-anchor="middle">n={d.box.n}</text>
 				{/each}
+				{#if meta.chance && boxY.domain()[0] < 0 && boxY.domain()[1] > 0}
+					<line class="chance-line" x1={M.l} x2={W - M.r} y1={boxY(0)} y2={boxY(0)} />
+					<text class="chance" x={W - M.r - 2} y={boxY(0) - 3} text-anchor="end">chance</text>
+				{/if}
 				{@render agreeStrip('box')}
 			</svg>
 		</figure>
@@ -176,6 +184,8 @@
 	svg { width: 100%; height: auto; display: block; overflow: visible; }
 	.grid { stroke: var(--grid); }
 	.axis { stroke: var(--text-3); }
+	.chance-line { stroke: var(--text-3); stroke-dasharray: 3 3; }
+	.chance { font-size: 10px; fill: var(--text-3); }
 	.tick, .n { font-size: 10px; fill: var(--text-3); }
 	.strip-label { font-size: 10px; font-weight: 600; }
 	.strip-label.ok { fill: var(--ok); }

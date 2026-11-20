@@ -2,16 +2,16 @@
 	import PairMatrix from './PairMatrix.svelte';
 	import Check from './Check.svelte';
 	import Tex from './Tex.svelte';
-	import Switch from './Switch.svelte';
-	import { topN, judgePairs } from '#lib/metrics.js';
-	import { fx } from '#lib/format.js';
+	import { topN, topNChance, chanceCorrected, judgePairs } from '#lib/metrics.js';
+	import { METRICS } from '#lib/families.js';
+	import { fx, minus } from '#lib/format.js';
 	import { agreeBg } from './agree.js';
 
 	/** @type {{sheet: import('#lib/server/data.js').Sheet}} */
 	let { sheet } = $props();
+	const N = 3;
 	const m = $derived(sheet.judges.length), n = $derived(sheet.competitors.length);
 	const pairs = $derived(judgePairs(m));
-	let N = $state(3);
 	/** @type {[number, number]} */
 	let selected = $state([0, 1]);
 	$effect(() => { if (selected[1] >= m) selected = [0, 1]; });
@@ -19,23 +19,27 @@
 	const mean = (/** @type {'overlap'|'jaccard'} */ k) => pairs.reduce((s, [a, b]) => s + t(a, b)[k], 0) / pairs.length;
 	const overlap = $derived(mean('overlap'));
 	const jaccard = $derived(mean('jaccard'));
+	const chance = $derived(topNChance(n, N));
+	const overlapCC = $derived(chanceCorrected(overlap, chance.overlap));
+	const jaccardCC = $derived(chanceCorrected(jaccard, chance.jaccard));
+	const minN = /** @type {number} */ (METRICS.overlap_at_3_cc.minN);
 	// Competitors in a judge's top N, best first.
 	const top = (/** @type {number} */ j) =>
 		sheet.R[j].flatMap((r, i) => (r <= N ? [i] : [])).toSorted((x, y) => sheet.R[j][x] - sheet.R[j][y]);
+	const tx = (/** @type {number} */ v) => minus(fx(v));
 </script>
 
 <p>
 	These ignore the order within the top places and ask only <em>who</em> made them. For a pair of judges,
-	take the sets <Tex tex="A" /> and <Tex tex="B" /> of competitors each ranked 1st to <Tex tex="N" />th, and
-	count how many are in both.
+	take the sets <Tex tex="A" /> and <Tex tex="B" /> of competitors each ranked 1st to {N}rd, and count how
+	many are in both.
 </p>
-<Tex display tex={String.raw`\text{overlap} = \frac{|A \cap B|}{N} \qquad \text{Jaccard} = \frac{|A \cap B|}{|A \cup B|}`} />
+<Tex display tex={String.raw`\text{overlap} = \frac{|A \cap B|}{${N}} \qquad \text{Jaccard} = \frac{|A \cap B|}{|A \cup B|}`} />
 <p>
-	Both sets have <Tex tex="N" /> members, so with <Tex tex="k" /> in common,
-	<Tex tex={String.raw`\text{Jaccard} = \frac{k}{2N - k}`} />: for a single pair it carries the same
+	Both sets have {N} members, so with <Tex tex="k" /> in common,
+	<Tex tex={String.raw`\text{Jaccard} = \frac{k}{${2 * N} - k}`} />: for a single pair it carries the same
 	information as overlap on a different scale. Averaged over pairs, the two differ slightly.
 </p>
-<Switch label="Top N" options={[3, 5].map((k) => ({ value: k, label: `Top ${k}` }))} bind:value={N} />
 <PairMatrix
 	judges={sheet.judges}
 	value={(a, b) => t(a, b).inter.length}
@@ -62,14 +66,33 @@
 	{/snippet}
 </PairMatrix>
 <p class="small muted">Cells show how many competitors are in both judges’ top {N}, out of {N}.</p>
-<Check label="Mean overlap @ {N}" js={overlap} py={sheet.py[`overlap_at_${N}`]} />
-<Check label="Mean Jaccard @ {N}" js={jaccard} py={sheet.py[`jaccard_at_${N}`]} />
-{#if n < 2 * N}
+<Check label="Mean overlap @ {N}" js={overlap} py={sheet.py.overlap_at_3} />
+<Check label="Mean Jaccard @ {N}" js={jaccard} py={sheet.py.jaccard_at_3} />
+
+<h4>Correcting for chance</h4>
+<p>
+	Two judges picking their top {N} at random would still share some competitors, and more often in a small
+	final. If each judge’s top {N} were a random {N} of the {n} competitors, the number in both,
+	<Tex tex="i" />, would follow a hypergeometric distribution, with expected values
+</p>
+<Tex display tex={String.raw`E[\text{overlap}] = \frac{${N}}{n} = \frac{${N}}{${n}} = ${fx(chance.overlap)}`} />
+<Tex display tex={String.raw`E[\text{Jaccard}] = \sum_i \frac{\binom{${N}}{i}\binom{n-${N}}{${N}-i}}{\binom{n}{${N}}} \cdot \frac{i}{${2 * N} - i} = ${chance.terms.map((c) => `${fx(c.p)} \\cdot ${fx(c.jaccard)}`).join(' + ')} = ${fx(chance.jaccard)}`} />
+<p>The corrected value scales each mean so that 0 is chance-level agreement and 1 is identical top {N}s:</p>
+<Tex display tex={String.raw`\text{corrected} = \frac{x - E[x]}{1 - E[x]}`} />
+<Tex display tex={String.raw`\text{overlap} = \frac{${tx(overlap)} - ${fx(chance.overlap)}}{1 - ${fx(chance.overlap)}} = ${tx(overlapCC)} \qquad \text{Jaccard} = \frac{${tx(jaccard)} - ${fx(chance.jaccard)}}{1 - ${fx(chance.jaccard)}} = ${tx(jaccardCC)}`} />
+<Check label="Mean overlap @ {N}, chance-corrected" js={overlapCC} py={sheet.py.overlap_at_3_cc} />
+<Check label="Mean Jaccard @ {N}, chance-corrected" js={jaccardCC} py={sheet.py.jaccard_at_3_cc} />
+<p class="small muted">
+	This is a naive, first-pass correction. Real judges’ top {N}s aren’t random: they’re drawn towards the
+	same strong competitors, more so in some fields than others. So it removes the chance level but not every
+	way field size affects these metrics.
+</p>
+{#if n < minN}
 	<p class="callout small">
 		With only {n} competitors, any two top-{N} sets must share at least
-		<Tex tex={String.raw`2N - n = 2 \times ${N} - ${n} = ${2 * N - n}`} />
-		{2 * N - n === 1 ? 'competitor' : 'competitors'}{#if n === N}: here every judge’s top {N} is the whole field, so both values are exactly 1{/if}.
-		Small finals push these metrics up regardless of how much the judges agree.
+		<Tex tex={String.raw`2 \times ${N} - ${n} = ${2 * N - n}`} />
+		{2 * N - n === 1 ? 'competitor' : 'competitors'}, so these metrics can’t reach their full range.
+		Finals of fewer than {minN} are left out of the top-{N} charts.
 	</p>
 {/if}
 

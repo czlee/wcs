@@ -7,7 +7,11 @@ one row per scoresheet to data/metrics.csv.
 
 Governing principle (see briefs/phase-3-implementation-brief.md): store RAW metric
 values plus only transforms with exactly one defensible form. Anything needing a
-choice — chance baseline, threshold, null model — is deferred to Phase 4/5. Every row
+choice — chance baseline, threshold, null model — is deferred to Phase 4/5. One stated
+exception: a naive chance correction of the top-N metrics (the ``*_cc`` columns; see
+topn_chance), stored so the results site can show it. It is a first pass; more
+thorough corrections (a simulated null per (m, n), stratifying by n) stay deferred.
+Every row
 carries m (num_judges) and n (num_competitors) so later phases can normalise and
 filter without re-reading the parsed files.
 
@@ -19,6 +23,7 @@ permutation, num_judges >= 3, num_competitors >= 5. The metrics below assume tha
 import argparse
 import json
 import logging
+import math
 from pathlib import Path
 
 import numpy as np
@@ -61,6 +66,8 @@ METRIC_COLS = [
     "min_pairwise_tau", "sd_pairwise_tau", "min_pairwise_rho", "sd_pairwise_rho",
     # Top-N set agreement
     "overlap_at_3", "overlap_at_5", "jaccard_at_3", "jaccard_at_5",
+    # Top-N set agreement, naively chance-corrected (see topn_chance)
+    "overlap_at_3_cc", "overlap_at_5_cc", "jaccard_at_3_cc", "jaccard_at_5_cc",
     # Rank dispersion
     "mean_abs_rank_dev_mean", "mean_abs_rank_dev_median", "sd_rank",
 ]
@@ -147,7 +154,8 @@ def topn_overlap_jaccard(R: np.ndarray, N: int) -> tuple[float, float]:
     Each judge's top-N set is the competitors they ranked 1..N. When N == n the
     top-N set is the whole field for every judge, so both measures are exactly 1.0
     (the degenerate whole-field case; n >= 5 is guaranteed, so only top-5 at n == 5
-    ever hits this). Phase 5 filters on n if those rows are unwanted.
+    ever hits this). Phase 5 filters on n if those rows are unwanted. The *_cc
+    columns are NaN there (see topn_chance).
     """
     sets = [frozenset(np.flatnonzero(row <= N).tolist()) for row in R]
     m = len(sets)
@@ -159,6 +167,26 @@ def topn_overlap_jaccard(R: np.ndarray, N: int) -> tuple[float, float]:
             overlaps.append(inter / N)
             jaccards.append(inter / union)
     return float(np.mean(overlaps)), float(np.mean(jaccards))
+
+
+def topn_chance(n: int, N: int) -> tuple[float, float]:
+    """Expected top-N overlap and Jaccard for one judge pair under chance.
+
+    The null: each judge's top-N set is an independent, uniformly random N-subset
+    of the n competitors. The intersection size i is then hypergeometric,
+    P(i) = C(N,i) C(n-N,N-i) / C(n,N), so E[overlap] = E[i]/N = N/n and
+    E[Jaccard] = sum_i P(i) i/(2N - i). A naive first-pass baseline: it ignores
+    that real judges' top sets are correlated through the competitors' quality.
+    """
+    total = math.comb(n, N)
+    e_jaccard = sum(math.comb(N, i) * math.comb(n - N, N - i) / total * i / (2 * N - i)
+                    for i in range(max(0, 2 * N - n), N + 1))
+    return N / n, e_jaccard
+
+
+def chance_corrected(x: float, e: float) -> float:
+    """(x - E)/(1 - E): 0 at chance, 1 for identical top-N sets; NaN when E == 1 (n == N)."""
+    return (x - e) / (1.0 - e) if e < 1.0 else float("nan")
 
 
 def rank_dispersion(R: np.ndarray) -> dict[str, float]:
@@ -179,13 +207,15 @@ def rank_dispersion(R: np.ndarray) -> dict[str, float]:
 def compute_metrics(doc: dict) -> dict[str, float]:
     """Compute the full panel of metric columns for one parsed scoresheet."""
     R = build_matrix(doc)
-    m = R.shape[0]
+    m, n = R.shape
     W = kendall_w(R)
     pv = pairwise_values(R)
     tau, rho, footrule = pv["tau"], pv["rho"], pv["footrule"]
     mean_tau = float(tau.mean())
     overlap3, jaccard3 = topn_overlap_jaccard(R, 3)
     overlap5, jaccard5 = topn_overlap_jaccard(R, 5)
+    e_o3, e_j3 = topn_chance(n, 3)
+    e_o5, e_j5 = topn_chance(n, 5)
 
     return {
         "kendall_w": W,
@@ -201,6 +231,10 @@ def compute_metrics(doc: dict) -> dict[str, float]:
         "overlap_at_5": overlap5,
         "jaccard_at_3": jaccard3,
         "jaccard_at_5": jaccard5,
+        "overlap_at_3_cc": chance_corrected(overlap3, e_o3),
+        "overlap_at_5_cc": chance_corrected(overlap5, e_o5),
+        "jaccard_at_3_cc": chance_corrected(jaccard3, e_j3),
+        "jaccard_at_5_cc": chance_corrected(jaccard5, e_j5),
         **rank_dispersion(R),
     }
 

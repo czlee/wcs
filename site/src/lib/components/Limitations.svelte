@@ -23,13 +23,15 @@
 	<ul>
 		<li>
 			<strong>This is exploratory.</strong> It describes how much judges’ rankings differ, by level. It
-			doesn’t explain why, and nothing on this site has been adjusted for the other differences between
-			levels.
+			doesn’t explain why. Apart from a first-pass chance correction of the top-3 metrics (below), nothing
+			on this site has been adjusted for the other differences between levels.
 		</li>
 		<li>
 			<strong>Levels differ in panel size and field size, and most of these metrics depend on both.</strong>
 			Kendall’s W falls with more judges even if they’re just as consistent; the rank-spread metrics grow
-			with the field; top-5 agreement is inflated in finals of fewer than 10. For example, Jack &amp; Jill
+			with the field; and two judges’ top 3s overlap more by chance in a smaller final. The top-3 charts
+			subtract that chance level, a naive first-pass correction that doesn’t remove every effect of field
+			size, and leave out finals of 5, where any two top 3s must share someone. For example, Jack &amp; Jill
 			Novice finals here average about 13 competitors, All-Star finals about 8. Some or all of a difference
 			between levels could come from this.
 		</li>

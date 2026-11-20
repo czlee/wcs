@@ -3,7 +3,7 @@
 // browser: pages get just what they show.
 import sheetsJson from '#lib/data/sheets.json';
 import exportInfo from '#lib/data/export.json';
-import { METRIC_KEYS } from '#lib/families.js';
+import { METRICS, METRIC_KEYS } from '#lib/families.js';
 
 /**
  * @typedef {{id: string, format: string, level: string, event: string, date: string, name: string,
@@ -28,14 +28,16 @@ export const summary = (/** @type {Sheet} */ s) => ({
 /**
  * Chart data for one format: each scoresheet's level, label and metric values,
  * rounded to 6 decimal places (plenty for the charts; the worked examples
- * recompute exact values).
+ * recompute exact values). A value is null where the field is smaller than the
+ * metric's `minN`, which leaves that scoresheet out of that metric's charts.
  */
 export function chartRows(/** @type {string} */ format) {
 	return sheets
 		.filter((s) => s.format === format)
 		.map((s) => ({
 			...summary(s),
-			v: METRIC_KEYS.map((k) => Math.round(s.py[k] * 1e6) / 1e6)
+			v: METRIC_KEYS.map((k) =>
+				s.competitors.length < (METRICS[k].minN ?? 0) ? null : Math.round(s.py[k] * 1e6) / 1e6)
 		}));
 }
 

@@ -86,6 +86,32 @@ export function topN(/** @type {number[]} */ ra, /** @type {number[]} */ rb, /**
 	return { N, A, B, inter, union, overlap: inter.length / N, jaccard: inter.length / union.length };
 }
 
+/** C(n, k), exactly (the values here are small). */
+const comb = (/** @type {number} */ n, /** @type {number} */ k) => {
+	let c = 1;
+	for (let i = 1; i <= k; i++) c = (c * (n - k + i)) / i;
+	return c;
+};
+
+/**
+ * Expected top-N overlap and Jaccard for one judge pair by chance: each judge's top N
+ * a uniformly random N of the n competitors. The number in both, i, is then
+ * hypergeometric, P(i) = C(N,i) C(n−N,N−i) / C(n,N), so E[overlap] = N/n and
+ * E[Jaccard] = Σ P(i) · i/(2N − i). As topn_chance in compute_metrics.py.
+ */
+export function topNChance(/** @type {number} */ n, /** @type {number} */ N) {
+	const total = comb(n, N);
+	const terms = [];
+	for (let i = Math.max(0, 2 * N - n); i <= N; i++) {
+		const p = (comb(N, i) * comb(n - N, N - i)) / total;
+		terms.push({ i, p, jaccard: i / (2 * N - i) });
+	}
+	return { terms, overlap: N / n, jaccard: sum(terms.map((t) => t.p * t.jaccard)) };
+}
+
+/** (x − E)/(1 − E): 0 at chance, 1 for identical top-N sets; NaN when E = 1 (n = N). */
+export const chanceCorrected = (/** @type {number} */ x, /** @type {number} */ e) => (e < 1 ? (x - e) / (1 - e) : NaN);
+
 /** Per-competitor spread of the m ranks it received: mean |deviation| from the mean and median, and the SD (population, ddof=0). */
 export function spread(/** @type {Matrix} */ R) {
 	const perCompetitor = R[0].map((_, i) => {
@@ -105,17 +131,16 @@ export function spread(/** @type {Matrix} */ R) {
 	};
 }
 
-/** Every judge pair's τ, ρ, footrule and top-3/top-5 overlap and Jaccard. */
+/** Every judge pair's τ, ρ, footrule and top-3 overlap and Jaccard. */
 export function pairwise(/** @type {Matrix} */ R) {
 	return judgePairs(R.length).map(([a, b]) => {
-		const t3 = topN(R[a], R[b], 3), t5 = topN(R[a], R[b], 5);
+		const t3 = topN(R[a], R[b], 3);
 		return {
 			a, b,
 			tau: kendallTau(R[a], R[b]).tau,
 			rho: spearman(R[a], R[b]).rho,
 			footrule: footrule(R[a], R[b]).value,
-			overlap3: t3.overlap, jaccard3: t3.jaccard,
-			overlap5: t5.overlap, jaccard5: t5.jaccard
+			overlap3: t3.overlap, jaccard3: t3.jaccard
 		};
 	});
 }
@@ -127,6 +152,7 @@ export function allMetrics(/** @type {Matrix} */ R) {
 	const avg = (/** @type {string} */ k) => mean(p.map((x) => /** @type {any} */ (x)[k]));
 	const tau = avg('tau');
 	const s = spread(R);
+	const chance3 = topNChance(R[0].length, 3);
 	return {
 		kendall_w: W,
 		// The mean of the pairwise ρ values. compute_metrics.py instead uses the identity
@@ -136,10 +162,10 @@ export function allMetrics(/** @type {Matrix} */ R) {
 		mean_pairwise_tau: tau,
 		tau_distance: (1 - tau) / 2,
 		footrule_mean: avg('footrule'),
+		overlap_at_3_cc: chanceCorrected(avg('overlap3'), chance3.overlap),
+		jaccard_at_3_cc: chanceCorrected(avg('jaccard3'), chance3.jaccard),
 		overlap_at_3: avg('overlap3'),
-		overlap_at_5: avg('overlap5'),
 		jaccard_at_3: avg('jaccard3'),
-		jaccard_at_5: avg('jaccard5'),
 		mean_abs_rank_dev_mean: s.madMean,
 		mean_abs_rank_dev_median: s.madMedian,
 		sd_rank: s.sd

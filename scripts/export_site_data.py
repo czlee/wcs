@@ -19,6 +19,7 @@ pipeline (data/ is gitignored).
 """
 
 import json
+import math
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,10 +38,13 @@ LEVELS = {
     "Newcomer": "new", "Novice": "nov", "Intermediate": "int",
     "Advanced": "adv", "All-Star": "als", "Champions": "chp",
 }
-# The metrics shown on the site (the notebook's METRICS list).
+# The metrics shown on the site. This started as the notebook's METRICS list; the site
+# has since dropped the top-5 metrics (degenerate in finals of 5, which are common at
+# the upper levels) and added the naively chance-corrected top-3 metrics, which the
+# notebook doesn't show.
 METRICS = [
     "kendall_w", "mean_pairwise_rho", "mean_pairwise_tau", "tau_distance", "footrule_mean",
-    "overlap_at_3", "overlap_at_5", "jaccard_at_3", "jaccard_at_5",
+    "overlap_at_3_cc", "jaccard_at_3_cc", "overlap_at_3", "jaccard_at_3",
     "mean_abs_rank_dev_mean", "mean_abs_rank_dev_median", "sd_rank",
 ]
 
@@ -78,6 +82,9 @@ def main() -> None:
             "R": R.tolist(),
             "py": {m: float(getattr(row, m)) for m in METRICS},
         })
+        bad = [m for m, v in sheets[-1]["py"].items() if not math.isfinite(v)]
+        if bad:  # JSON has no NaN, and the site assumes every exported value is finite.
+            raise SystemExit(f"{row.id}: non-finite {', '.join(bad)}")
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     (OUT_DIR / "sheets.json").write_text(json.dumps(sheets, ensure_ascii=False, separators=(",", ":")))

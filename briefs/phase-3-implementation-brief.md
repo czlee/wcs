@@ -113,6 +113,10 @@ of these has multiple defensible forms and is deferred to Phase 4/5.
 
 - **Chance-corrected top-N**, e.g. (overlap − N/n)/(1 − N/n): the chance baseline is
   a modelling choice (with- vs without-replacement), so defer.
+  *Update (2026-11-20):* a naive version is now stored in Phase 3 as the `*_cc`
+  columns (uniform-random top-N sets, without replacement; see `topn_chance` in
+  `compute_metrics.py`) so the results site can show it. It's a first pass; the
+  simulated null and stratifying by n remain open.
 - **Comparison against a simulated null** (e.g. expressing an observed value as a
   percentile of random panels of the same m, n): depends on a null model.
 - **Inclusion filtering** (e.g. ≥5 judges, ≥6 competitors): a threshold, and a
