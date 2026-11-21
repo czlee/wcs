@@ -7,6 +7,7 @@
 	import { LEVELS } from '#lib/levels.js';
 	import { meanCI, boxStats, CI_LABEL } from '#lib/stats.js';
 	import { fx, minus, link, date } from '#lib/format.js';
+	import Term from './Term.svelte';
 
 	/** @typedef {{id: string, level: string, event: string, date: string, name: string, m: number, n: number, v: (number | null)[]}} Row */
 	/**
@@ -106,7 +107,7 @@
 <div class="chart" class:fill bind:this={wrap}>
 	<div class="panels">
 		<figure>
-			<figcaption>{CI_LABEL} (provisional), by level</figcaption>
+			<figcaption>{CI_LABEL} (<Term tip="Scoresheets aren’t independent: the same judges sit on many panels, and several divisions come from the same event. The error bars assume independence, so they’re probably too narrow.">provisional</Term>), by level</figcaption>
 			<div class="plot" bind:clientWidth={mw} bind:clientHeight={mh}>
 			<svg viewBox="0 0 {W} {H}" role="img" aria-label="{meta.label} ({meta.higher ? 'higher' : 'lower'} means more agreement): mean by level">
 				{#each ticks(barY) as t (t)}
