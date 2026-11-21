@@ -9,7 +9,8 @@
 
 	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus?: string}} */
 	let { sheet, focus } = $props();
-	// With `focus` (a metric key), only that metric's working is shown; without it, the whole family's.
+	// With `focus` (a metric key), only that metric's working is shown, except that τ̄ and τ distance
+	// go together: whichever isn't in focus is shown dimmed. Without it, the whole family's.
 	const on = (/** @type {string[]} */ ...ks) => !focus || ks.includes(focus);
 	const m = $derived(sheet.judges.length), n = $derived(sheet.competitors.length);
 	const pairs = $derived(judgePairs(m));
@@ -83,7 +84,8 @@
 <Check label="τ̄" tex={String.raw`\bar\tau`} js={tauBar} py={sheet.py.mean_pairwise_tau} />
 {/if}
 
-{#if on('tau_distance')}
+{#if on('mean_pairwise_tau', 'tau_distance')}
+<div class:dim={focus === 'mean_pairwise_tau'}>
 <h4>Kendall τ distance</h4>
 <p>
 	The τ distance is <Tex tex={String.raw`\frac{1 - \bar\tau}{2}`} />. It’s the same information as
@@ -94,6 +96,7 @@
 </p>
 <Tex display tex={String.raw`\tau\text{ distance} = \frac{1 - \bar\tau}{2} = \frac{1 - ${tp(+fx(tauBar))}}{2} = ${fx((1 - tauBar) / 2)}`} />
 <Check label="τ distance" tex={String.raw`\tau\text{ distance}`} js={(1 - tauBar) / 2} py={sheet.py.tau_distance} />
+</div>
 {/if}
 
 {#if on('footrule_mean')}

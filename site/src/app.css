@@ -117,3 +117,8 @@ svg text { fill: var(--text-2); font-family: var(--font); font-variant-numeric: 
 @media (max-width: 600px) {
 	svg text { font-size: 11px; }
 }
+
+/* In a worked example focused on one metric, the working for its siblings, shown alongside for comparison. */
+.dim { opacity: 0.4; }
+/* Display formulas side by side (each its own .tex-display, so each can be dimmed). */
+.eqs { display: flex; flex-wrap: wrap; column-gap: 2em; align-items: baseline; }

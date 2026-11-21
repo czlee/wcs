@@ -2,7 +2,7 @@
 	// A scoresheet's ranks: one row per competitor (in the scoresheet's order), one
 	// column per judge, then any extra computed columns. Cells are shaded by rank
 	// (1st darkest). `highlight` picks out judges' columns; `rowHighlight`, competitors' rows.
-	/** @typedef {{label: string, values: (string|number)[], foot?: string, title?: string, strong?: boolean}} Extra */
+	/** @typedef {{label: string, values: (string|number)[], foot?: string, title?: string, strong?: boolean, dim?: boolean}} Extra */
 	/**
 	 * @type {{sheet: {judges: string[], competitors: string[], R: number[][]}, extras?: Extra[],
 	 *   highlight?: number[], rowHighlight?: number[], caption?: string}}
@@ -24,7 +24,7 @@
 				{#each sheet.judges as j, k (k)}
 					<th class="judge" class:hl={highlight.includes(k)} title={j}><span class="jn">J{k + 1}</span><span class="name">{j}</span></th>
 				{/each}
-				{#each extras as e, k (k)}<th class="num extra" title={e.title}>{e.label}</th>{/each}
+				{#each extras as e, k (k)}<th class="num extra" class:dim={e.dim} title={e.title}>{e.label}</th>{/each}
 			</tr>
 		</thead>
 		<tbody>
@@ -34,7 +34,7 @@
 					{#each sheet.R as row, k (k)}
 						<td class="rank num" class:hl={highlight.includes(k)} style:--shade={shade(row[i])}>{row[i]}</td>
 					{/each}
-					{#each extras as e, k (k)}<td class="num extra" class:strong={e.strong}>{e.values[i]}</td>{/each}
+					{#each extras as e, k (k)}<td class="num extra" class:strong={e.strong} class:dim={e.dim}>{e.values[i]}</td>{/each}
 				</tr>
 			{/each}
 		</tbody>
@@ -42,7 +42,7 @@
 			<tfoot>
 				<tr>
 					<td class="comp" colspan={m + 1}>{m} judges × {n} competitors</td>
-					{#each extras as e, k (k)}<td class="num extra">{e.foot ?? ''}</td>{/each}
+					{#each extras as e, k (k)}<td class="num extra" class:dim={e.dim}>{e.foot ?? ''}</td>{/each}
 				</tr>
 			</tfoot>
 		{/if}
