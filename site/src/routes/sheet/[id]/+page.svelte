@@ -1,4 +1,5 @@
 <script>
+	import Term from '#lib/components/Term.svelte';
 	import SheetMeta from '#lib/components/SheetMeta.svelte';
 	import RankMatrix from '#lib/components/RankMatrix.svelte';
 	import WorkedConcordance from '#lib/components/WorkedConcordance.svelte';
@@ -6,7 +7,7 @@
 	import WorkedTop from '#lib/components/WorkedTop.svelte';
 	import WorkedSpread from '#lib/components/WorkedSpread.svelte';
 	import { FAMILIES, METRICS } from '#lib/families.js';
-	import { FORMATS } from '#lib/levels.js';
+	import { FORMATS, LEVEL_LABEL } from '#lib/levels.js';
 	import { allMetrics, TOLERANCE } from '#lib/metrics.js';
 	import { link, fx, minus } from '#lib/format.js';
 
@@ -14,6 +15,23 @@
 	const s = $derived(data.sheet);
 	const fmt = $derived(FORMATS[/** @type {'jnj'|'strictly'} */ (s.format)]);
 	const js = $derived(/** @type {Record<string, number>} */ (allMetrics(s.R)));
+	const pct = $derived(data.percentiles);
+	const group = $derived(`${LEVEL_LABEL[s.level]} ${fmt.label}`);
+
+	/** 40 → "40th", 1 → "1st", 12 → "12th". */
+	function ordinal(/** @type {number} */ n) {
+		const t = n % 100, u = n % 10;
+		return n + (t >= 11 && t <= 13 ? 'th' : u === 1 ? 'st' : u === 2 ? 'nd' : u === 3 ? 'rd' : 'th');
+	}
+
+	/** The tooltip for a percentile: how many finals it compares against, and how. */
+	function pctTip(/** @type {string} */ k) {
+		const p = pct[k];
+		const minN = METRICS[k].minN;
+		return `More agreement than ${Math.round(p.pct)}% of the ${p.of} ${group} finals` +
+			(minN ? ` with at least ${minN} competitors` : '') +
+			` on this metric (100th = the most agreement).`;
+	}
 	const WORKED = { concordance: WorkedConcordance, order: WorkedOrder, top: WorkedTop, spread: WorkedSpread };
 </script>
 
@@ -31,10 +49,11 @@
 <p>
 	Recalculated in your browser from the ranks above, and checked against the analysis
 	(<code>compute_metrics.py</code>), whose values are the ones in the charts. The working for each is below.
+	The percentile compares this final with the other {group} finals: 100th is the most agreement, whichever way the metric runs.
 </p>
 <div class="table-wrap">
 	<table>
-		<thead><tr><th>Metric</th><th></th><th class="num">This page</th><th class="num">Analysis</th><th></th></tr></thead>
+		<thead><tr><th>Metric</th><th></th><th class="num">This page</th><th class="num">Analysis</th><th></th><th class="num">Percentile</th></tr></thead>
 		<tbody>
 			{#each FAMILIES as f (f.id)}
 				{#each f.metrics as k (k)}
@@ -45,6 +64,12 @@
 						<td class="num">{minus(fx(js[k], 6))}</td>
 						<td class="num">{minus(fx(s.py[k], 6))}</td>
 						<td class:ok class:bad={!ok}>{ok ? '✓' : '✗'}</td>
+						{#if pct[k]}
+							<td class="num"><Term tip={pctTip(k)}>{ordinal(Math.round(pct[k].pct))}</Term></td>
+						{:else}
+							{@const tip = `Not ranked: finals with fewer than ${METRICS[k].minN} competitors are left out of this metric’s charts`}
+							<td class="num muted"><Term {tip} plain>–</Term></td>
+						{/if}
 					</tr>
 				{/each}
 			{/each}

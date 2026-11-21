@@ -51,3 +51,57 @@ export function fallbackSheet(/** @type {string} */ format) {
 			sheets.find((s) => s.format === format)
 	);
 }
+
+/** Whether a scoresheet's field is big enough for it to count for a metric (its `minN`). */
+const counts = (/** @type {Sheet} */ s, /** @type {string} */ k) => s.competitors.length >= (METRICS[k].minN ?? 0);
+
+/**
+ * For each format, level and metric, the precomputed values of the scoresheets
+ * that appear in that metric's charts, oriented so that larger means more
+ * agreement and sorted ascending.
+ * @type {Map<string, number[]>}
+ */
+const groups = new Map();
+for (const s of sheets) {
+	for (const k of METRIC_KEYS) {
+		if (!counts(s, k)) continue;
+		const key = `${s.format}/${s.level}/${k}`;
+		if (!groups.has(key)) groups.set(key, []);
+		groups.get(key)?.push(METRICS[k].higher ? s.py[k] : -s.py[k]);
+	}
+}
+for (const g of groups.values()) g.sort((a, b) => a - b);
+
+/** Index of the first element of sorted `a` that is ≥ x (or > x if `strict`). */
+function bisect(/** @type {number[]} */ a, /** @type {number} */ x, strict = false) {
+	let lo = 0, hi = a.length;
+	while (lo < hi) {
+		const mid = (lo + hi) >> 1;
+		if (strict ? a[mid] <= x : a[mid] < x) lo = mid + 1;
+		else hi = mid;
+	}
+	return lo;
+}
+
+/**
+ * A scoresheet's percentile rank for each metric among the scoresheets of the same
+ * format and level, from the precomputed values: 100 is the most agreement,
+ * whichever direction the metric runs. Ties take the mid-rank: the percentage of
+ * the group with less agreement, plus half of those tied with it (itself
+ * included). Values within 1e-9 count as tied, so floating-point noise doesn't
+ * split ties. A metric is missing where the scoresheet is left out of its charts.
+ * @returns {Record<string, {pct: number, of: number}>}
+ */
+export function percentiles(/** @type {Sheet} */ s) {
+	/** @type {Record<string, {pct: number, of: number}>} */
+	const out = {};
+	for (const k of METRIC_KEYS) {
+		const g = groups.get(`${s.format}/${s.level}/${k}`);
+		if (!g || !counts(s, k)) continue;
+		const x = METRICS[k].higher ? s.py[k] : -s.py[k];
+		const below = bisect(g, x - 1e-9);
+		const tied = bisect(g, x + 1e-9, true) - below;
+		out[k] = { pct: (100 * (below + tied / 2)) / g.length, of: g.length };
+	}
+	return out;
+}
