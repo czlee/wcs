@@ -84,7 +84,7 @@
 {#each FAMILIES as f (f.id)}
 	{@const Worked = WORKED[/** @type {keyof typeof WORKED} */ (f.id)]}
 	<h2 id={f.id}>{f.title}</h2>
-	<p class="small muted">What these metrics mean and how they compare across levels: <a href={link(`${fmt.path}#${f.id}`)}>{fmt.label} results</a>.</p>
+	<p class="small muted">What these metrics mean and how they compare across levels: <a href={link(`${fmt.longPath}#${f.id}`)}>{fmt.label} results, long-form</a>.</p>
 	<Worked sheet={s} />
 {/each}
 

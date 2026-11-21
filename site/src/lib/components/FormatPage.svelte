@@ -47,9 +47,8 @@
 	onMount(pickRandom);
 </script>
 
-<p class="callout small trial">
-	<strong>Trying out a new layout:</strong> the same results, one metric at a time, with more controls.
-	<a href={link(data.format === 'strictly' ? '/explore/strictly/' : '/explore/')}>Open the explorer</a>.
+<p class="small muted alt">
+	This is the long-form version: every metric on one page. <a href={link(fmt.path)}>Back to the explorer</a>, one metric at a time.
 </p>
 
 <h1>How much do WCS judges disagree? <span class="fmt" style:--c={fmt.colour}>{fmt.label} finals</span></h1>
@@ -59,7 +58,7 @@
 	rankings into the result. This page looks at the rankings before they’re combined: how different are
 	the judges’ rankings from each other, and does that vary by division level? It covers
 	<strong>{rows.length} {fmt.label} finals</strong> from {date(data.info.first_event)} to {date(data.info.last_event)}.
-	{#if other}<a href={link(other.path)}>{other.label} finals are on their own page.</a>{/if}
+	{#if other}<a href={link(other.longPath)}>{other.label} finals are on their own page.</a>{/if}
 </p>
 <p class="lede">
 	Every number here can be checked. Each scoresheet links to its published source, and this page
@@ -107,7 +106,7 @@
 {/each}
 
 <style>
-	.trial { margin-top: 1em; }
+	.alt { margin-top: 1em; }
 	.fmt { color: color-mix(in srgb, var(--c) 80%, var(--text)); white-space: nowrap; }
 	.byline { margin-top: -0.4em; color: var(--text-2); font-size: 0.9rem; }
 	.byline .credit { color: var(--text-3); }

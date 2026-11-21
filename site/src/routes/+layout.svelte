@@ -12,20 +12,17 @@
 
 	// Strictly pages take the Strictly colour as their accent, so everything that reads --accent follows.
 	const strictly = $derived((page.data.sheet?.format ?? page.data.format) === 'strictly');
-	// The explorer draws its own top bar (with the DRAFT tag) and, on a large screen, fills the window.
-	const explore = $derived(!!page.route.id?.startsWith('/explore'));
+	// The explorer draws its own top bar in place of the nav and, on a large screen, fills the window.
+	const explore = $derived(!!page.data.explorer);
 
 	/** @type {{children: import('svelte').Snippet, data: any}} */
 	let { children, data } = $props();
 	const nav = [
-		{ href: '/', route: '/', label: 'Jack & Jill' },
-		{ href: '/strictly/', route: '/strictly', label: 'Strictly' },
-		{ href: '/sheets/', route: '/sheets', label: 'All scoresheets' },
-		{ href: '/explore/', route: '/explore', label: 'Explorer (trial)' }
+		{ href: '/', routes: ['/', '/strictly'], label: 'Explore' },
+		{ href: '/long-form/', routes: ['/long-form', '/long-form/strictly'], label: 'Long-form' },
+		{ href: '/sheets/', routes: ['/sheets'], label: 'All scoresheets' }
 	];
-	// The explorer's Strictly page counts as "Explorer", not "Strictly".
-	const current = (/** @type {string} */ route) =>
-		route === '/explore' ? page.route.id?.startsWith('/explore') : page.route.id === route;
+	const current = (/** @type {string[]} */ routes) => routes.includes(page.route.id ?? '');
 </script>
 
 <svelte:head>
@@ -34,7 +31,7 @@
 </svelte:head>
 
 <div class="shell" class:explore>
-{#if DRAFT && !explore}
+{#if DRAFT}
 	<div class="draft-banner" role="note">
 		<strong>DRAFT</strong> · Work in progress: numbers, wording and layout may change.
 	</div>
@@ -45,7 +42,7 @@
 	<nav>
 		<a class="brand" href={link('/')}>WCS judge divergence{#if DRAFT}<span class="draft-tag">DRAFT</span>{/if}</a>
 		{#each nav as item (item.href)}
-			<a href={link(item.href)} aria-current={current(item.route) ? 'page' : undefined}>{item.label}</a>
+			<a href={link(item.href)} aria-current={current(item.routes) ? 'page' : undefined}>{item.label}</a>
 		{/each}
 	</nav>
 </header>
@@ -58,7 +55,7 @@
 <footer>
 	<p>
 		Analysis by Chuan-Zheng Lee. Exploratory, not adjusted for panel or field size; see the
-		<a href={link('/#limitations')}>limitations</a>. This site doesn’t rate individual judges.
+		<a href={link('/long-form/#limitations')}>limitations</a>. This site doesn’t rate individual judges.
 	</p>
 	<p>
 		The method and design decisions are mine; the code, including the data processing and this

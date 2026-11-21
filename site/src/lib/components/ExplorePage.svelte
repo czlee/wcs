@@ -24,7 +24,6 @@
 	const other = $derived(Object.values(FORMATS).find((f) => f.id !== data.format));
 	const rows = $derived(data.rows);
 	const WORKED = { concordance: WorkedConcordance, order: WorkedOrder, top: WorkedTop, spread: WorkedSpread };
-	const EXPLORE_PATH = { jnj: '/explore/', strictly: '/explore/strictly/' };
 	/** Matches the layout's app-mode media query (src/routes/+layout.svelte). */
 	const APP_QUERY = '(min-width: 900px) and (min-height: 600px)';
 
@@ -120,7 +119,7 @@
 		<a class="brand" href={link('/')}>WCS judge divergence{#if DRAFT}<span class="draft-tag">DRAFT</span>{/if}</a>
 		<div class="formats" role="group" aria-label="Dance format">
 			{#each Object.values(FORMATS) as f (f.id)}
-				<a href="{link(EXPLORE_PATH[/** @type {'jnj'|'strictly'} */ (f.id)])}?metric={key}" aria-current={f.id === data.format ? 'page' : undefined}
+				<a href="{link(f.path)}?metric={key}" aria-current={f.id === data.format ? 'page' : undefined}
 					style:--c={f.colour}>{f.label}</a>
 			{/each}
 		</div>
@@ -128,7 +127,7 @@
 		<span class="spacer"></span>
 		<button type="button" class="warn" onclick={() => (limitsOpen = true)}>⚠ Exploratory: read the limitations</button>
 		<button type="button" class="link-btn" onclick={() => (aboutOpen = true)}>About</button>
-		<a class="small" href={link(fmt.path)}>Long-form page</a>
+		<a class="small" href={link(fmt.longPath)}>Long-form page</a>
 		<a class="small" href={link('/sheets/')}>All scoresheets</a>
 	</header>
 
@@ -231,7 +230,7 @@
 		judges’ rankings from each other, and does that vary by division level? It covers
 		<strong>{rows.length} {fmt.label} finals</strong> from {date(data.info.first_event)} to
 		{date(data.info.last_event)}.{#if other}
-			{' '}<a href="{link(EXPLORE_PATH[/** @type {'jnj'|'strictly'} */ (other.id)])}?metric={key}">{other.label} finals</a> are a click away in the top bar.{/if}
+			{' '}<a href="{link(other.path)}?metric={key}">{other.label} finals</a> are a click away in the top bar.{/if}
 	</p>
 	<p>
 		There are many ways to measure how far apart rankings are, and they don’t all answer the same question.

@@ -9,8 +9,11 @@ export const LEVELS = [
 ];
 export const LEVEL_LABEL = Object.fromEntries(LEVELS.map((l) => [l.id, l.label]));
 
-/** Dance formats: each has its own page and colour, and the two never share a chart. */
+/**
+ * Dance formats: each has its own pages and colour, and the two never share a chart.
+ * `path` is its explorer (the main results page); `longPath` its long-form page.
+ */
 export const FORMATS = {
-	jnj: { id: 'jnj', label: 'Jack & Jill', path: '/', colour: 'var(--jnj)' },
-	strictly: { id: 'strictly', label: 'Strictly', path: '/strictly/', colour: 'var(--strictly)' }
+	jnj: { id: 'jnj', label: 'Jack & Jill', path: '/', longPath: '/long-form/', colour: 'var(--jnj)' },
+	strictly: { id: 'strictly', label: 'Strictly', path: '/strictly/', longPath: '/long-form/strictly/', colour: 'var(--strictly)' }
 };
