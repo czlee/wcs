@@ -10,6 +10,9 @@
 	import { link, date } from '#lib/format.js';
 	import { page } from '$app/state';
 
+	// Strictly pages take the Strictly colour as their accent, so everything that reads --accent follows.
+	const strictly = $derived((page.data.sheet?.format ?? page.data.format) === 'strictly');
+
 	/** @type {{children: import('svelte').Snippet, data: any}} */
 	let { children, data } = $props();
 	const nav = [
@@ -39,7 +42,7 @@
 	</nav>
 </header>
 
-<main>
+<main class:strictly>
 	{@render children()}
 </main>
 

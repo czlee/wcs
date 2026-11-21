@@ -101,6 +101,9 @@ th { text-align: left; font-weight: 600; color: var(--text-2); border-bottom-col
 th.num { text-align: right; }
 tfoot td { font-weight: 600; border-top: 1px solid var(--border); }
 
+/* Strictly pages: the Strictly colour becomes the accent, as if it were the primary colour. */
+main.strictly { --accent: var(--strictly); }
+
 .callout {
 	border-left: 3px solid var(--accent); background: var(--surface-2);
 	padding: 0.6em 0.9em; margin: 1em 0; max-width: 72ch;
