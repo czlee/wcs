@@ -145,10 +145,12 @@ LEVEL_CODES: dict[str, str] = {
 _FINALS_WORDS_RE = re.compile(r"\b(finals?|финал)\b", re.IGNORECASE)
 
 # Matches dance styles that are definitively not WCS — mirrors the constant in download.py.
-NON_WCS_STYLE_RE = re.compile(
-    r"\b(?:salsa|bachata|zouk|lindy|hustle|country|silc|brazuka|ceroc|modern\s+jive|shag)",
-    re.IGNORECASE,
-)
+_NON_WCS_STYLES = r"salsa|bachata|zouk|lindy|hustle|country|silc|brazuka|ceroc|modern\s+jive|shag"
+NON_WCS_STYLE_RE = re.compile(rf"\b(?:{_NON_WCS_STYLES})", re.IGNORECASE)
+# Division names only: also excludes Blues.  Not applied to event names, because some
+# WCS events have "Blues" in the name (e.g. danceconvention.net "Cash&Blues", a WCS
+# festival whose J&J divisions are WCS), so an event-level match would drop real WCS.
+NON_WCS_DIVISION_RE = re.compile(rf"\b(?:{_NON_WCS_STYLES}|blues\b)", re.IGNORECASE)
 # For raw-slug normalisation: shorten known format keywords even in fallback tokens.
 _STRICTLY_NORM_RE = re.compile(r"\bstrictly(?:\s+swing)?\b", re.IGNORECASE)
 
@@ -678,7 +680,7 @@ def main() -> None:
 
             level = normalise_level(division_blob)
             fmt = normalise_format(division_blob)
-            if NON_WCS_STYLE_RE.search(division_blob):
+            if NON_WCS_DIVISION_RE.search(division_blob):
                 skips.append((event_name, division_blob, "non-WCS dance style", url))
                 continue
             division_audit.append((site, division_blob, level, fmt, url))

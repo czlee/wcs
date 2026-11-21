@@ -155,7 +155,7 @@ if __name__ == "__main__":
 
     from parsers.base import PrelimsError
     from extract import (
-        IntegrityError, NON_WCS_STYLE_RE, SITE_ALIASES,
+        IntegrityError, NON_WCS_DIVISION_RE, NON_WCS_STYLE_RE, SITE_ALIASES,
         detect_parser, detect_parser_by_content,
         isolate_division_blob, load_manifest, looks_like_non_finals,
         normalise_format, normalise_level, parse_targets,
@@ -236,7 +236,7 @@ if __name__ == "__main__":
             blob = isolate_division_blob(site, scoresheet.competition_name, event_name, div_arg)
             level = normalise_level(blob)
             fmt = normalise_format(blob)
-            if NON_WCS_STYLE_RE.search(blob):
+            if NON_WCS_DIVISION_RE.search(blob):
                 continue
             div_audit.append((site, blob, level, fmt, url))
 

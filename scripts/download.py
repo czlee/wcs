@@ -44,10 +44,12 @@ ROUND_KEYWORDS = re.compile(
 # (when the event name contains the keyword) or individual divisions (when only a
 # division name does).  "country" catches Country Swing / Line Dance; "silc" catches
 # the Ceroc/Modern-Jive SILC Stars competition format.
-NON_WCS_STYLE_RE = re.compile(
-    r"\b(?:salsa|bachata|zouk|lindy|hustle|country|silc|brazuka|ceroc|modern\s+jive|shag)",
-    re.IGNORECASE,
-)
+_NON_WCS_STYLES = r"salsa|bachata|zouk|lindy|hustle|country|silc|brazuka|ceroc|modern\s+jive|shag"
+NON_WCS_STYLE_RE = re.compile(rf"\b(?:{_NON_WCS_STYLES})", re.IGNORECASE)
+# Division names only: also excludes Blues.  Not applied to event names, because some
+# WCS events have "Blues" in the name (e.g. danceconvention.net "Cash&Blues", a WCS
+# festival whose J&J divisions are WCS), so an event-level match would drop real WCS.
+NON_WCS_DIVISION_RE = re.compile(rf"\b(?:{_NON_WCS_STYLES}|blues\b)", re.IGNORECASE)
 
 
 @dataclass
@@ -314,7 +316,7 @@ def discover_scoring_dance(
             href = a.get("href", "")
             url = f"https://scoring.dance{href}" if href.startswith("/") else href
             division = re.sub(r"\s+finals?$", "", name, flags=re.IGNORECASE).strip()
-            if NON_WCS_STYLE_RE.search(division):
+            if NON_WCS_DIVISION_RE.search(division):
                 logging.info(f"scoring.dance: skipping non-WCS division {division!r} in {event_name!r}")
                 continue
             finals.append(DiscoveredFinal(
@@ -430,7 +432,7 @@ def discover_eepro(
                 # Keep only relevant competition types (J&J variants, Strictly, All-American)
                 if not re.search(r"jj|jack|strictly|american", result_type):
                     continue
-                if NON_WCS_STYLE_RE.search(link_text):
+                if NON_WCS_DIVISION_RE.search(link_text):
                     logging.info(f"eepro.com: skipping non-WCS division {link_text!r} in {event_name!r}")
                     continue
 
@@ -598,7 +600,7 @@ def discover_danceconvention(
                     # Format A / D: skip entries where the "division name" is actually a round keyword
                     if ROUND_KEYWORDS.match(division_name.strip()):
                         continue
-                if NON_WCS_STYLE_RE.search(division_name):
+                if NON_WCS_DIVISION_RE.search(division_name):
                     logging.info(f"danceconvention.net: skipping non-WCS division {division_name!r} in {event_name!r}")
                     continue
                 finals.append(DiscoveredFinal(
