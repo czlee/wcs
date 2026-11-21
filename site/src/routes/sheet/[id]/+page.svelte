@@ -47,13 +47,13 @@
 
 <h2>All twelve metrics</h2>
 <p>
-	Recalculated in your browser from the ranks above, and checked against the analysis
-	(<code>compute_metrics.py</code>), whose values are the ones in the charts. The working for each is below.
+	Recalculated in your browser from the ranks above, as an independent check on the analysis code.
+	A <span class="ok">✓</span> means the result matches the precomputed value used in the charts. The working for each is below.
 	The percentile compares this final with the other {group} finals: 100th is the most agreement, whichever way the metric runs.
 </p>
 <div class="table-wrap">
 	<table>
-		<thead><tr><th>Metric</th><th></th><th class="num">This page</th><th class="num">Analysis</th><th></th><th class="num">Percentile</th></tr></thead>
+		<thead><tr><th>Metric</th><th></th><th class="num">Value</th><th></th><th class="num">Percentile</th></tr></thead>
 		<tbody>
 			{#each FAMILIES as f (f.id)}
 				{#each f.metrics as k (k)}
@@ -62,8 +62,12 @@
 						<td><a href="#{f.id}">{METRICS[k].label}</a></td>
 						<td class="muted small">{METRICS[k].higher ? 'higher' : 'lower'} = more agreement</td>
 						<td class="num">{minus(fx(js[k], 6))}</td>
-						<td class="num">{minus(fx(s.py[k], 6))}</td>
-						<td class:ok class:bad={!ok}>{ok ? '✓' : '✗'}</td>
+						{#if ok}
+							{@const tip = `Recalculated in your browser; matches the precomputed value used in the charts (${minus(fx(s.py[k], 6))})`}
+							<td class="ok"><Term {tip} plain>✓</Term></td>
+						{:else}
+							<td class="bad">✗ precomputed: {minus(fx(s.py[k], 6))}</td>
+						{/if}
 						{#if pct[k]}
 							<td class="num"><Term tip={pctTip(k)}>{ordinal(Math.round(pct[k].pct))}</Term></td>
 						{:else}

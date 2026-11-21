@@ -1,25 +1,28 @@
 <script>
 	// The final value of a metric as computed in this page, and whether it matches
-	// the value scripts/compute_metrics.py computed (the one in the charts).
+	// the value scripts/compute_metrics.py computed (the one in the charts). A match
+	// is a bare tick explained on hover; a mismatch is spelt out.
 	import { TOLERANCE } from '#lib/metrics.js';
 	import { fx } from '#lib/format.js';
 	import Tex from './Tex.svelte';
+	import Term from './Term.svelte';
 	/** @type {{label: string, tex?: string, js: number, py: number}} */
 	let { label, tex, js, py } = $props();
 	const ok = $derived(Math.abs(js - py) <= TOLERANCE);
+	const tip = $derived(`Recalculated in your browser; matches the precomputed value used in the charts (${fx(py, 6)})`);
 </script>
 
 <p class="check">
 	<strong>{#if tex}<Tex tex={`${tex} = ${fx(js)}`} />{:else}{label} = {fx(js)}{/if}</strong>
 	{#if ok}
-		<span class="ok" title="Python value: {py}">✓ matches the analysis (compute_metrics.py: {fx(py, 6)})</span>
+		<span class="ok"><Term {tip} plain>✓</Term></span>
 	{:else}
-		<span class="bad">✗ doesn’t match the analysis (compute_metrics.py: {py})</span>
+		<span class="bad">✗ doesn’t match the precomputed value used in the charts ({py})</span>
 	{/if}
 </p>
 
 <style>
 	.check { margin: 0.6em 0; }
-	.ok { color: var(--ok); font-size: 0.85rem; margin-left: 0.4em; }
+	.ok { color: var(--ok); margin-left: 0.3em; }
 	.bad { color: var(--bad); font-weight: 600; margin-left: 0.4em; }
 </style>
