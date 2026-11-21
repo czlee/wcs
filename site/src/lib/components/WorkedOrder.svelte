@@ -7,8 +7,10 @@
 	import { tp } from '#lib/tex.js';
 	import { agreeBg, disagreeBg } from './agree.js';
 
-	/** @type {{sheet: import('#lib/server/data.js').Sheet}} */
-	let { sheet } = $props();
+	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus?: string}} */
+	let { sheet, focus } = $props();
+	// With `focus` (a metric key), only that metric's working is shown; without it, the whole family's.
+	const on = (/** @type {string[]} */ ...ks) => !focus || ks.includes(focus);
 	const m = $derived(sheet.judges.length), n = $derived(sheet.competitors.length);
 	const pairs = $derived(judgePairs(m));
 	const tau = (/** @type {number} */ a, /** @type {number} */ b) => kendallTau(sheet.R[a], sheet.R[b]).tau;
@@ -28,6 +30,7 @@
 	const order = $derived(sheet.competitors.map((_, i) => i).toSorted((x, y) => sheet.R[selTau[0]][x] - sheet.R[selTau[0]][y]));
 </script>
 
+{#if on('mean_pairwise_tau', 'tau_distance')}
 <h4>Kendall’s τ, step by step</h4>
 <p>
 	Take two judges and any two competitors. If both judges put the same one of the two ahead, that
@@ -78,7 +81,9 @@
 </PairMatrix>
 <p>The analysis averages <Tex tex={String.raw`\tau`} /> over all {pairs.length} pairs of judges:</p>
 <Check label="τ̄" tex={String.raw`\bar\tau`} js={tauBar} py={sheet.py.mean_pairwise_tau} />
+{/if}
 
+{#if on('tau_distance')}
 <h4>Kendall τ distance</h4>
 <p>
 	The τ distance is <Tex tex={String.raw`\frac{1 - \bar\tau}{2}`} />. It’s the same information as
@@ -89,7 +94,9 @@
 </p>
 <Tex display tex={String.raw`\tau\text{ distance} = \frac{1 - \bar\tau}{2} = \frac{1 - ${tp(+fx(tauBar))}}{2} = ${fx((1 - tauBar) / 2)}`} />
 <Check label="τ distance" tex={String.raw`\tau\text{ distance}`} js={(1 - tauBar) / 2} py={sheet.py.tau_distance} />
+{/if}
 
+{#if on('footrule_mean')}
 <h4>Spearman’s footrule</h4>
 <p>
 	The footrule adds up how many places apart two judges put each competitor, and divides by the largest
@@ -124,6 +131,7 @@
 </PairMatrix>
 <p>Again, the analysis averages this over all {pairs.length} pairs:</p>
 <Check label="Mean footrule" js={frBar} py={sheet.py.footrule_mean} />
+{/if}
 
 <style>
 	.grid { font-size: 0.75rem; }

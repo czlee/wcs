@@ -11,20 +11,28 @@
 	/** @typedef {{id: string, level: string, event: string, date: string, name: string, m: number, n: number, v: (number | null)[]}} Row */
 	/**
 	 * @type {{rows: Row[], index: number, meta: {label: string, higher: boolean, chance?: boolean}, colour: string,
-	 *   format: string}}
+	 *   format: string, highlight?: string, fill?: boolean, onpoint?: (id: string) => void}}
 	 */
-	let { rows: allRows, index, meta, colour, format } = $props();
+	// `onpoint`, where given, is called with a point's scoresheet id when it's clicked;
+	// otherwise a click opens that scoresheet's page.
+	// `highlight`, a scoresheet id, rings that scoresheet's point (the explorer's worked example).
+	// With `fill`, the charts take the size of their container (which must have a height) and
+	// draw at true pixel size; otherwise they keep a fixed shape and scale with the width.
+	let { rows: allRows, index, meta, colour, format, highlight, fill = false, onpoint } = $props();
 	// Scoresheets with no value for this metric (a field below its minN) are left out.
 	const rows = $derived(allRows.filter((r) => r.v[index] != null));
 	const val = (/** @type {Row} */ r) => /** @type {number} */ (r.v[index]);
 
-	const W = 460, H = 240;
+	let mw = $state(0), mh = $state(0);
+	const W = $derived(fill && mw > 200 ? mw : 460);
+	const H = $derived(fill && mh > 120 ? mh : 240);
+	const R = $derived(fill ? 3 : 2.4);
 	// The right margin holds the agreement strip: a green-to-red bar showing which
 	// way along the y-axis the judges agree more, labelled at both ends.
 	const M = { t: 12, r: 30, b: 40, l: 46 };
-	const STRIP = { x: W - 24, w: 6 };
+	const STRIP = $derived({ x: W - 24, w: 6 });
 	const gid = $props.id();
-	const x = scaleBand().domain(LEVELS.map((l) => l.id)).range([M.l, W - M.r]).padding(0.28);
+	const x = $derived(scaleBand().domain(LEVELS.map((l) => l.id)).range([M.l, W - M.r]).padding(0.28));
 
 	const byLevel = $derived(LEVELS.map((l) => {
 		const pts = rows.filter((r) => r.level === l.id);
@@ -95,10 +103,11 @@
 	</g>
 {/snippet}
 
-<div class="chart" bind:this={wrap}>
+<div class="chart" class:fill bind:this={wrap}>
 	<div class="panels">
 		<figure>
 			<figcaption>{CI_LABEL} (provisional), by level</figcaption>
+			<div class="plot" bind:clientWidth={mw} bind:clientHeight={mh}>
 			<svg viewBox="0 0 {W} {H}" role="img" aria-label="{meta.label} ({meta.higher ? 'higher' : 'lower'} means more agreement): mean by level">
 				{#each ticks(barY) as t (t)}
 					<line class="grid" x1={M.l} x2={W - M.r} y1={barY(t)} y2={barY(t)} />
@@ -126,9 +135,11 @@
 				{#if meta.chance}<text class="chance" x={W - M.r - 2} y={barY(0) - 3} text-anchor="end">chance</text>{/if}
 				{@render agreeStrip('bar')}
 			</svg>
+			</div>
 		</figure>
 		<figure>
 			<figcaption>Every scoresheet, with quartiles</figcaption>
+			<div class="plot">
 			<svg viewBox="0 0 {W} {H}" role="img" aria-label="{meta.label} ({meta.higher ? 'higher' : 'lower'} means more agreement): distribution by level">
 				{#each ticks(boxY) as t (t)}
 					<line class="grid" x1={M.l} x2={W - M.r} y1={boxY(t)} y2={boxY(t)} />
@@ -151,11 +162,15 @@
 					{/if}
 					{#if mounted}
 						{#each d.pts as r (r.id)}
-							<circle class="pt" cx={bx + bw / 2 + jitter(r.id) * bw * 0.9} cy={boxY(val(r))} r="2.4" fill={colour}
+							<circle class="pt" cx={bx + bw / 2 + jitter(r.id) * bw * 0.9} cy={boxY(val(r))} r={R} fill={colour}
 								role="link" tabindex="-1" aria-label={r.name}
 								onmouseenter={(e) => show(e, pointLines(r))} onmouseleave={hide}
-								onclick={() => goto(link(`/sheet/${r.id}/`))} onkeydown={() => {}} />
+								onclick={() => (onpoint ? onpoint(r.id) : goto(link(`/sheet/${r.id}/`)))} onkeydown={() => {}} />
 						{/each}
+						{@const hr = highlight ? d.pts.find((r) => r.id === highlight) : undefined}
+						{#if hr}
+							<circle class="ring" cx={bx + bw / 2 + jitter(hr.id) * bw * 0.9} cy={boxY(val(hr))} r={R + 3.6} />
+						{/if}
 					{/if}
 					<text class="lvl" x={bx + bw / 2} y={H - M.b + 15} text-anchor="middle">{d.level.short}</text>
 					<text class="n" x={bx + bw / 2} y={H - M.b + 29} text-anchor="middle">n={d.box.n}</text>
@@ -166,6 +181,7 @@
 				{/if}
 				{@render agreeStrip('box')}
 			</svg>
+			</div>
 		</figure>
 	</div>
 	{#if tip}
@@ -182,6 +198,14 @@
 	figure { margin: 0; min-width: 0; }
 	figcaption { font-size: 0.8rem; color: var(--text-3); }
 	svg { width: 100%; height: auto; display: block; overflow: visible; }
+	.fill, .fill .panels { height: 100%; }
+	.fill .panels { grid-template-rows: minmax(0, 1fr); }
+	.fill figure { display: flex; flex-direction: column; min-height: 0; }
+	.fill .plot { position: relative; flex: 1; min-height: 0; }
+	.fill svg { position: absolute; inset: 0; height: 100%; }
+	.fill figcaption { font-size: 0.85rem; margin-bottom: 0.2em; }
+	.fill .tick, .fill .n, .fill .chance, .fill .strip-label { font-size: 11px; }
+	.fill .lvl { font-size: 12.5px; }
 	.grid { stroke: var(--grid); }
 	.axis { stroke: var(--text-3); }
 	.chance-line { stroke: var(--text-3); stroke-dasharray: 3 3; }
@@ -197,6 +221,7 @@
 	.whisker { stroke: var(--text-3); stroke-width: 1; }
 	.median { stroke-width: 2.5; }
 	.pt { fill-opacity: 0.38; cursor: pointer; }
+	.ring { fill: none; stroke: var(--text); stroke-width: 1.8; pointer-events: none; }
 	.pt:hover { fill-opacity: 1; stroke: var(--text); stroke-width: 1; }
 	.tip {
 		position: absolute; transform: translate(-50%, calc(-100% - 8px)); pointer-events: none; z-index: 20;

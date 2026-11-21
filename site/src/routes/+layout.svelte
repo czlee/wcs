@@ -12,14 +12,20 @@
 
 	// Strictly pages take the Strictly colour as their accent, so everything that reads --accent follows.
 	const strictly = $derived((page.data.sheet?.format ?? page.data.format) === 'strictly');
+	// The explorer draws its own top bar (with the DRAFT tag) and, on a large screen, fills the window.
+	const explore = $derived(!!page.route.id?.startsWith('/explore'));
 
 	/** @type {{children: import('svelte').Snippet, data: any}} */
 	let { children, data } = $props();
 	const nav = [
 		{ href: '/', route: '/', label: 'Jack & Jill' },
 		{ href: '/strictly/', route: '/strictly', label: 'Strictly' },
-		{ href: '/sheets/', route: '/sheets', label: 'All scoresheets' }
+		{ href: '/sheets/', route: '/sheets', label: 'All scoresheets' },
+		{ href: '/explore/', route: '/explore', label: 'Explorer (trial)' }
 	];
+	// The explorer's Strictly page counts as "Explorer", not "Strictly".
+	const current = (/** @type {string} */ route) =>
+		route === '/explore' ? page.route.id?.startsWith('/explore') : page.route.id === route;
 </script>
 
 <svelte:head>
@@ -27,22 +33,25 @@
 	{#if DRAFT}<meta name="robots" content="noindex, nofollow" />{/if}
 </svelte:head>
 
-{#if DRAFT}
+<div class="shell" class:explore>
+{#if DRAFT && !explore}
 	<div class="draft-banner" role="note">
 		<strong>DRAFT</strong> · Work in progress: numbers, wording and layout may change.
 	</div>
 {/if}
 
+{#if !explore}
 <header>
 	<nav>
 		<a class="brand" href={link('/')}>WCS judge divergence{#if DRAFT}<span class="draft-tag">DRAFT</span>{/if}</a>
 		{#each nav as item (item.href)}
-			<a href={link(item.href)} aria-current={page.route.id === item.route ? 'page' : undefined}>{item.label}</a>
+			<a href={link(item.href)} aria-current={current(item.route) ? 'page' : undefined}>{item.label}</a>
 		{/each}
 	</nav>
 </header>
+{/if}
 
-<main class:strictly>
+<main class:strictly class:wide={explore}>
 	{@render children()}
 </main>
 
@@ -63,6 +72,7 @@
 		<a href="https://github.com/czlee/wcs">czlee/wcs</a>.
 	</p>
 </footer>
+</div>
 
 <style>
 	header { border-bottom: 1px solid var(--border); }
@@ -79,6 +89,19 @@
 	nav a[aria-current='page'] { color: var(--text); font-weight: 600; }
 	nav .brand { color: var(--text); font-weight: 700; margin-right: auto; }
 	main { padding-bottom: 3em; }
-	footer { border-top: 1px solid var(--border); color: var(--text-3); font-size: 0.8rem; padding-block: 1em 2em; }
+	/* The explorer uses the full width for its charts (prose inside keeps its own measure). */
+	main.wide { max-width: none; }
+	.explore footer { font-size: 0.72rem; padding-block: 0.3em 0.4em; }
+	.explore footer p { margin: 0.15em 0; }
+	/* On a large screen the explorer is an app: the window, with no page scroll. */
+	@media (min-width: 900px) and (min-height: 600px) {
+		.shell.explore { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+		/* Auto side margins would shrink flex items to their content: stretch them instead. */
+		.shell.explore > :global(*) { width: 100%; margin-inline: 0; }
+		.explore main { flex: 1; min-height: 0; padding-bottom: 0; }
+	}
+	/* The footer runs the full width on every page, which keeps it to a few lines. */
+	footer { max-width: none; border-top: 1px solid var(--border); color: var(--text-3); font-size: 0.75rem; padding-block: 0.5em 0.8em; }
+	footer p { margin: 0.25em 0; max-width: none; }
 	footer a { color: var(--text-2); }
 </style>

@@ -47,6 +47,11 @@
 	onMount(pickRandom);
 </script>
 
+<p class="callout small trial">
+	<strong>Trying out a new layout:</strong> the same results, one metric at a time, with more controls.
+	<a href={link(data.format === 'strictly' ? '/explore/strictly/' : '/explore/')}>Open the explorer</a>.
+</p>
+
 <h1>How much do WCS judges disagree? <span class="fmt" style:--c={fmt.colour}>{fmt.label} finals</span></h1>
 <p class="byline">By Chuan-Zheng Lee<span class="credit">, with implementation by Claude</span></p>
 <p class="lede">
@@ -102,6 +107,7 @@
 {/each}
 
 <style>
+	.trial { margin-top: 1em; }
 	.fmt { color: color-mix(in srgb, var(--c) 80%, var(--text)); white-space: nowrap; }
 	.byline { margin-top: -0.4em; color: var(--text-2); font-size: 0.9rem; }
 	.byline .credit { color: var(--text-3); }

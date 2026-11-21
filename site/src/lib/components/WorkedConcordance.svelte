@@ -9,8 +9,10 @@
 	import { tn } from '#lib/tex.js';
 	import { agreeBg } from './agree.js';
 
-	/** @type {{sheet: import('#lib/server/data.js').Sheet}} */
-	let { sheet } = $props();
+	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus?: string}} */
+	let { sheet, focus } = $props();
+	// With `focus` (a metric key), only that metric's working is shown; without it, the whole family's.
+	const on = (/** @type {string[]} */ ...ks) => !focus || ks.includes(focus);
 	const w = $derived(kendallW(sheet.R));
 	const m = $derived(w.m), n = $derived(w.n);
 	const rhoBar = $derived((m * w.W - 1) / (m - 1));
@@ -24,6 +26,7 @@
 	const sp = $derived(spearman(sheet.R[selected[0]], sheet.R[selected[1]]));
 </script>
 
+{#if on('kendall_w')}
 <h4>Kendall’s W, step by step</h4>
 <p>
 	Add up the ranks each competitor got from the {m} judges. If the judges agreed completely, these
@@ -53,7 +56,9 @@
 	here <Tex tex={String.raw`\tfrac{1}{${m}} = ${fx(1 / m, 3)}`} />. So a bigger panel gets a lower
 	<Tex tex="W" /> from chance alone, and <Tex tex="W" /> isn’t directly comparable across panel sizes.
 </p>
+{/if}
 
+{#if on('mean_pairwise_rho')}
 <h4>Mean pairwise Spearman ρ</h4>
 <p>
 	<Term tip="Spearman’s rank correlation: 1 if two rankings are identical, −1 if one is the reverse of the other, about 0 if unrelated.">Spearman’s <Tex tex={String.raw`\rho`} /></Term>
@@ -103,6 +108,7 @@
 	<Tex display tex={String.raw`\frac{mW - 1}{m - 1} = \frac{${m} \times ${fx(w.W, 6)} - 1}{${m} - 1} = ${fx(rhoBar)}`} />
 	the same as the mean above.
 </aside>
+{/if}
 
 <style>
 	.aside {

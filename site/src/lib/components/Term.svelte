@@ -29,11 +29,12 @@
 		};
 		addEventListener('pointerdown', close);
 		addEventListener('keydown', close);
-		addEventListener('scroll', close, { passive: true });
+		// Capture, so scrolling any container (the modal, a .table-wrap) closes it too: scroll doesn't bubble.
+		addEventListener('scroll', close, { capture: true, passive: true });
 		return () => {
 			removeEventListener('pointerdown', close);
 			removeEventListener('keydown', close);
-			removeEventListener('scroll', close);
+			removeEventListener('scroll', close, { capture: true });
 		};
 	});
 </script>

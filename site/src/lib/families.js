@@ -3,8 +3,9 @@
  * true when a higher value means the judges agree more. `minN`, where set, is the
  * smallest field a scoresheet needs to appear in that metric's charts (its value
  * is still shown on its own page). `chance` marks a metric whose 0 is chance-level
- * agreement.
- * @type {Record<string, {key: string, label: string, short: string, higher: boolean, minN?: number, chance?: boolean}>}
+ * agreement. `hidden` keeps a metric out of the explorer's random first pick (it can
+ * still be chosen by hand).
+ * @type {Record<string, {key: string, label: string, short: string, higher: boolean, minN?: number, chance?: boolean, hidden?: boolean}>}
  */
 export const METRICS = {
 	kendall_w: { key: 'kendall_w', label: "Kendall's W", short: 'W', higher: true },
@@ -15,8 +16,8 @@ export const METRICS = {
 	// Top 3 needs n ≥ 6 (= 2 × 3): in a final of 5, any two top-3 sets must share a competitor.
 	overlap_at_3_cc: { key: 'overlap_at_3_cc', label: 'Mean overlap @ 3, chance-corrected', short: 'overlap@3 (corrected)', higher: true, minN: 6, chance: true },
 	jaccard_at_3_cc: { key: 'jaccard_at_3_cc', label: 'Mean Jaccard @ 3, chance-corrected', short: 'Jaccard@3 (corrected)', higher: true, minN: 6, chance: true },
-	overlap_at_3: { key: 'overlap_at_3', label: 'Mean overlap @ 3', short: 'overlap@3', higher: true, minN: 6 },
-	jaccard_at_3: { key: 'jaccard_at_3', label: 'Mean Jaccard @ 3', short: 'Jaccard@3', higher: true, minN: 6 },
+	overlap_at_3: { key: 'overlap_at_3', label: 'Mean overlap @ 3', short: 'overlap@3', higher: true, minN: 6, hidden: true },
+	jaccard_at_3: { key: 'jaccard_at_3', label: 'Mean Jaccard @ 3', short: 'Jaccard@3', higher: true, minN: 6, hidden: true },
 	mean_abs_rank_dev_mean: { key: 'mean_abs_rank_dev_mean', label: 'Mean abs. rank deviation from the mean', short: 'MAD (mean)', higher: false },
 	mean_abs_rank_dev_median: { key: 'mean_abs_rank_dev_median', label: 'Mean abs. rank deviation from the median', short: 'MAD (median)', higher: false },
 	sd_rank: { key: 'sd_rank', label: 'SD of ranks', short: 'SD', higher: false }
@@ -54,3 +55,6 @@ export const FAMILIES = [
 ];
 
 export const METRIC_KEYS = FAMILIES.flatMap((f) => f.metrics);
+
+/** The family each metric belongs to. */
+export const FAMILY_OF = Object.fromEntries(FAMILIES.flatMap((f) => f.metrics.map((k) => [k, f])));

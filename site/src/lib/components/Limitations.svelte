@@ -2,10 +2,12 @@
 	// The limitations box near the top of every results page. The footer links to
 	// #limitations; arriving that way opens it.
 	import { date } from '#lib/format.js';
-	/** @type {{info: {first_event: string, last_event: string, counts: Record<string, Record<string, number>>}}} */
-	let { info } = $props();
+	// With `bare`, just the list (for a dialog): no collapsible box and no #limitations anchor.
+	/** @type {{info: {first_event: string, last_event: string, counts: Record<string, Record<string, number>>}, bare?: boolean}} */
+	let { info, bare = false } = $props();
 	let open = $state(false);
 	$effect(() => {
+		if (bare) return;
 		const check = () => { if (location.hash === '#limitations') open = true; };
 		check();
 		addEventListener('hashchange', check);
@@ -18,8 +20,7 @@
 	);
 </script>
 
-<details class="limits" id="limitations" bind:open>
-	<summary><strong>Before you read anything into this:</strong> Reasons these comparisons might mislead (a.k.a. limitations)</summary>
+{#snippet items()}
 	<ul>
 		<li>
 			<strong>This is exploratory.</strong> It describes how much judges’ rankings differ, by level. It
@@ -63,7 +64,16 @@
 			that you can check the numbers against the published scoresheets.
 		</li>
 	</ul>
-</details>
+{/snippet}
+
+{#if bare}
+	<div class="bare">{@render items()}</div>
+{:else}
+	<details class="limits" id="limitations" bind:open>
+		<summary><strong>Before you read anything into this:</strong> Reasons these comparisons might mislead (a.k.a. limitations)</summary>
+		{@render items()}
+	</details>
+{/if}
 
 <style>
 	.limits {
@@ -72,6 +82,7 @@
 	}
 	.limits summary { cursor: pointer; color: var(--warn-text); }
 	.limits[open] summary { margin-bottom: 0.3em; }
-	.limits ul { margin: 0.3em 0; padding-left: 1.2em; }
-	.limits li + li { margin-top: 0.3em; }
+	ul { margin: 0.3em 0; padding-left: 1.2em; }
+	li + li { margin-top: 0.3em; }
+	.bare li + li { margin-top: 0.5em; }
 </style>
