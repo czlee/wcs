@@ -9,10 +9,10 @@
 	import Limitations from './Limitations.svelte';
 	import MetricChart from './MetricChart.svelte';
 	import Modal from './Modal.svelte';
-	import WorkedConcordance from './WorkedConcordance.svelte';
-	import WorkedOrder from './WorkedOrder.svelte';
+	import WorkedSquared from './WorkedSquared.svelte';
+	import WorkedHeadToHead from './WorkedHeadToHead.svelte';
 	import WorkedTop from './WorkedTop.svelte';
-	import WorkedSpread from './WorkedSpread.svelte';
+	import WorkedGaps from './WorkedGaps.svelte';
 	import { FAMILIES, FAMILY_OF, METRICS, METRIC_KEYS } from '#lib/families.js';
 	import { ABOUT } from '#lib/about.js';
 	import { FORMATS } from '#lib/levels.js';
@@ -23,7 +23,7 @@
 	const fmt = $derived(FORMATS[/** @type {'jnj'|'strictly'} */ (data.format)]);
 	const other = $derived(Object.values(FORMATS).find((f) => f.id !== data.format));
 	const rows = $derived(data.rows);
-	const WORKED = { concordance: WorkedConcordance, order: WorkedOrder, top: WorkedTop, spread: WorkedSpread };
+	const WORKED = { l2: WorkedSquared, l1: WorkedGaps, 'head-to-head': WorkedHeadToHead, top: WorkedTop };
 	/** Matches the layout's app-mode media query (src/routes/+layout.svelte). */
 	const APP_QUERY = '(min-width: 900px) and (min-height: 600px)';
 

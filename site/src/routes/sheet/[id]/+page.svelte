@@ -2,10 +2,10 @@
 	import Term from '#lib/components/Term.svelte';
 	import SheetMeta from '#lib/components/SheetMeta.svelte';
 	import RankMatrix from '#lib/components/RankMatrix.svelte';
-	import WorkedConcordance from '#lib/components/WorkedConcordance.svelte';
-	import WorkedOrder from '#lib/components/WorkedOrder.svelte';
+	import WorkedSquared from '#lib/components/WorkedSquared.svelte';
+	import WorkedHeadToHead from '#lib/components/WorkedHeadToHead.svelte';
 	import WorkedTop from '#lib/components/WorkedTop.svelte';
-	import WorkedSpread from '#lib/components/WorkedSpread.svelte';
+	import WorkedGaps from '#lib/components/WorkedGaps.svelte';
 	import { FAMILIES, METRICS } from '#lib/families.js';
 	import { FORMATS, LEVEL_LABEL } from '#lib/levels.js';
 	import { allMetrics, TOLERANCE } from '#lib/metrics.js';
@@ -32,7 +32,7 @@
 			(minN ? ` with at least ${minN} competitors` : '') +
 			` on this metric (100th = the most agreement).`;
 	}
-	const WORKED = { concordance: WorkedConcordance, order: WorkedOrder, top: WorkedTop, spread: WorkedSpread };
+	const WORKED = { l2: WorkedSquared, l1: WorkedGaps, 'head-to-head': WorkedHeadToHead, top: WorkedTop };
 </script>
 
 <svelte:head>

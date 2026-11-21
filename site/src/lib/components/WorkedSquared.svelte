@@ -4,7 +4,7 @@
 	import Check from './Check.svelte';
 	import Term from './Term.svelte';
 	import Tex from './Tex.svelte';
-	import { kendallW, spearman, judgePairs } from '#lib/metrics.js';
+	import { kendallW, spearman, judgePairs, spread } from '#lib/metrics.js';
 	import { fx, nice, signed, minus } from '#lib/format.js';
 	import { tn } from '#lib/tex.js';
 	import { agreeBg } from './agree.js';
@@ -24,7 +24,17 @@
 	let selected = $state([0, 1]);
 	$effect(() => { if (selected[1] >= m) selected = [0, 1]; });
 	const sp = $derived(spearman(sheet.R[selected[0]], sheet.R[selected[1]]));
+	const s = $derived(spread(sheet.R));
+	const f3 = (/** @type {number} */ v) => nice(v, 3);
+	// Mean over competitors of the variance of their ranks, and what W says it must be.
+	const meanVar = $derived(s.perCompetitor.reduce((t, c) => t + c.sd ** 2, 0) / n);
+	const varFromW = $derived(((n * n - 1) / 12) * (1 - w.W));
 </script>
+
+<p class="lede small">
+	All three metrics here are built from <strong>squared</strong> rank gaps, so one big disagreement counts
+	for more than several small ones adding up to the same number of places.
+</p>
 
 {#if on('kendall_w')}
 <h4>Kendall’s W, step by step</h4>
@@ -110,7 +120,43 @@
 </aside>
 {/if}
 
+{#if on('sd_rank')}
+<h4>SD of ranks</h4>
+<p>
+	This looks at each competitor in turn: how far apart are the {m} ranks they got? For a competitor with
+	ranks <Tex tex={String.raw`r_1, \dots, r_m`} /> and mean <Tex tex={String.raw`\bar r`} />, the standard
+	deviation is
+</p>
+<Tex display tex={String.raw`\text{SD} = \sqrt{\frac{1}{m}\sum_{j=1}^{m} (r_j - \bar r)^2}`} />
+<p>
+	(dividing by <Tex tex="m" />, not <Tex tex="m - 1" />). The metric is the average over the {n} competitors.
+	It’s in places, so lower means more agreement.
+</p>
+<RankMatrix
+	{sheet}
+	extras={[
+		{ label: 'Mean', values: s.perCompetitor.map((c) => f3(c.mean)) },
+		{ label: 'SD', title: 'Standard deviation (population, ÷ m)', values: s.perCompetitor.map((c) => f3(c.sd)), foot: f3(s.sd), strong: true }
+	]}
+/>
+<p class="small muted">The bottom row of the last column is its average over competitors.</p>
+<Check label="SD of ranks" js={s.sd} py={sheet.py.sd_rank} />
+<p>
+	Because it’s in places and isn’t scaled to the field size, it isn’t comparable across finals of different
+	sizes: being 2 places apart in a field of {n} means more than in a field of 20.
+</p>
+<aside class="aside small">
+	<strong>How this relates to W:</strong> the squared SDs (the variances) carry the same information as
+	<Tex tex="W" />. For rankings without ties, their average over competitors is exactly
+	<Tex tex={String.raw`\tfrac{n^2 - 1}{12}(1 - W)`} />:
+	<Tex display tex={String.raw`\tfrac{${n}^2 - 1}{12} \times (1 - ${fx(w.W, 6)}) = ${fx(varFromW)}, \quad \text{and the mean variance here is } ${fx(meanVar)}.`} />
+	The metric averages the SDs rather than the variances, so it isn’t exactly a rescaling of <Tex tex="W" />,
+	but it’s close.
+</aside>
+{/if}
+
 <style>
+	.lede { color: var(--text-2); }
 	.aside {
 		border-left: 3px solid var(--border); background: var(--surface-2); color: var(--text-2);
 		padding: 0.5em 0.9em; margin: 0.8em 0; max-width: 72ch;

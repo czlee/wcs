@@ -1,5 +1,6 @@
 /**
- * The twelve metrics, grouped into families of related measures. `higher` is
+ * The twelve metrics, grouped into families by what they count as disagreement:
+ * squared rank gaps (ℓ₂), plain rank gaps (ℓ₁), head-to-head order, or the top N. `higher` is
  * true when a higher value means the judges agree more. `minN`, where set, is the
  * smallest field a scoresheet needs to appear in that metric's charts (its value
  * is still shown on its own page). `chance` marks a metric whose 0 is chance-level
@@ -34,23 +35,23 @@ export const METRICS = {
  */
 export const FAMILIES = [
 	{
-		id: 'concordance', title: 'Panel-wide concordance', metrics: ['kendall_w', 'mean_pairwise_rho'],
-		charts: [['kendall_w'], ['mean_pairwise_rho']]
+		id: 'l2', title: 'Rank gaps squared (ℓ₂)', metrics: ['kendall_w', 'mean_pairwise_rho', 'sd_rank'],
+		charts: [['kendall_w'], ['mean_pairwise_rho'], ['sd_rank']]
 	},
 	{
-		id: 'order', title: 'Distance between two judges’ rankings', metrics: ['mean_pairwise_tau', 'tau_distance', 'footrule_mean'],
-		charts: [['mean_pairwise_tau', 'tau_distance'], ['footrule_mean']],
+		id: 'l1', title: 'Rank gaps (ℓ₁)', metrics: ['footrule_mean', 'mean_abs_rank_dev_median', 'mean_abs_rank_dev_mean'],
+		charts: [['footrule_mean'], ['mean_abs_rank_dev_median', 'mean_abs_rank_dev_mean']],
+		switch: { label: 'Deviation from the median or the mean', options: ['MAD (median)', 'MAD (mean)'] }
+	},
+	{
+		id: 'head-to-head', title: 'Head-to-head order', metrics: ['mean_pairwise_tau', 'tau_distance'],
+		charts: [['mean_pairwise_tau', 'tau_distance']],
 		switch: { label: 'Kendall τ or τ distance', options: ['τ̄', 'τ distance'] }
 	},
 	{
-		id: 'top', title: 'Agreement on the top places', metrics: ['overlap_at_3_cc', 'jaccard_at_3_cc', 'overlap_at_3', 'jaccard_at_3'],
+		id: 'top', title: 'Top-N agreement', metrics: ['overlap_at_3_cc', 'jaccard_at_3_cc', 'overlap_at_3', 'jaccard_at_3'],
 		charts: [['overlap_at_3_cc', 'overlap_at_3'], ['jaccard_at_3_cc', 'jaccard_at_3']],
 		switch: { label: 'Chance correction', options: ['Corrected', 'Uncorrected'] }
-	},
-	{
-		id: 'spread', title: 'Spread of each competitor’s ranks', metrics: ['mean_abs_rank_dev_mean', 'mean_abs_rank_dev_median', 'sd_rank'],
-		charts: [['mean_abs_rank_dev_median', 'mean_abs_rank_dev_mean', 'sd_rank']],
-		switch: { label: 'Measure of spread', options: ['MAD (median)', 'MAD (mean)', 'SD'] }
 	}
 ];
 
