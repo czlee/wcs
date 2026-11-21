@@ -2,7 +2,7 @@
 
 **Goal:** Quantify how much judges on the same panel disagree in WCS competition finals, and find what predicts higher or lower divergence (division level, panel size, field size, etc.).
 
-See `plan.md` for the full project plan and open questions.
+See `plan.md` for the full project plan and open questions, and `ideas.md` for unplanned ideas (explorer filters, x-axis options, data to collect).
 
 ---
 
