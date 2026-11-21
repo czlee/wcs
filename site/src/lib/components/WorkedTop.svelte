@@ -75,10 +75,10 @@
 	final. If each judge’s top {N} were a random {N} of the {n} competitors, the number in both,
 	<Tex tex="i" />, would follow a hypergeometric distribution, with expected values
 </p>
-<Tex display tex={String.raw`E[\text{overlap}] = \frac{${N}}{n} = \frac{${N}}{${n}} = ${fx(chance.overlap)}`} />
-<Tex display tex={String.raw`E[\text{Jaccard}] = \sum_i \frac{\binom{${N}}{i}\binom{n-${N}}{${N}-i}}{\binom{n}{${N}}} \cdot \frac{i}{${2 * N} - i} = ${chance.terms.map((c) => `${fx(c.p)} \\cdot ${fx(c.jaccard)}`).join(' + ')} = ${fx(chance.jaccard)}`} />
+<Tex display tex={String.raw`\mathbb{E}[\text{overlap}] = \frac{${N}}{n} = \frac{${N}}{${n}} = ${fx(chance.overlap)}`} />
+<Tex display tex={String.raw`\mathbb{E}[\text{Jaccard}] = \sum_i \frac{\binom{${N}}{i}\binom{n-${N}}{${N}-i}}{\binom{n}{${N}}} \cdot \frac{i}{${2 * N} - i} = ${chance.terms.map((c) => `${fx(c.p)} \\cdot ${fx(c.jaccard)}`).join(' + ')} = ${fx(chance.jaccard)}`} />
 <p>The corrected value scales each mean so that 0 is chance-level agreement and 1 is identical top {N}s:</p>
-<Tex display tex={String.raw`\text{corrected} = \frac{x - E[x]}{1 - E[x]}`} />
+<Tex display tex={String.raw`\text{corrected} = \frac{x - \mathbb{E}[x]}{1 - \mathbb{E}[x]}`} />
 <Tex display tex={String.raw`\text{overlap} = \frac{${tx(overlap)} - ${fx(chance.overlap)}}{1 - ${fx(chance.overlap)}} = ${tx(overlapCC)} \qquad \text{Jaccard} = \frac{${tx(jaccard)} - ${fx(chance.jaccard)}}{1 - ${fx(chance.jaccard)}} = ${tx(jaccardCC)}`} />
 <Check label="Mean overlap @ {N}, chance-corrected" js={overlapCC} py={sheet.py.overlap_at_3_cc} />
 <Check label="Mean Jaccard @ {N}, chance-corrected" js={jaccardCC} py={sheet.py.jaccard_at_3_cc} />
