@@ -49,12 +49,17 @@ USER_AGENT = "Mozilla/5.0 (wcs-judge-divergence research)"
 
 MANUAL_FIELDS = [
     "event_id", "event_name", "site", "event_date", "url",
-    "registry_candidate", "country_iso2", "us_state_iso", "notes",
+    "registry_candidate", "country_iso2", "us_state_iso", "filled_by", "notes",
 ]
+# filled_by -> the `source` recorded in regions.json, so that rows an agent researched
+# are distinguishable from rows a human has filled or verified.
+MANUAL_SOURCES = {"agent": "manual-agent", "human": "manual-human"}
 MANUAL_README = (
     "Worklist for events whose region could not be resolved automatically. "
     "Fill country_iso2 (ISO 3166-1 alpha-2, e.g. US, HU, NZ) on each blank row; "
     "for US events also fill us_state_iso (ISO 3166-2, e.g. US-CA). "
+    "Set filled_by to 'agent' or 'human' on every filled row (change 'agent' to 'human' "
+    "once a person has checked it), and give the evidence in notes. "
     "Use event_name/url/registry_candidate for context. Re-run build_regions.py when done. "
     "Filled rows are authoritative and are never overwritten."
 )
@@ -351,6 +356,16 @@ def _is_filled(row):
     return True
 
 
+def manual_source(row):
+    """The `source` value for a filled manual row; raises if filled_by is missing or invalid."""
+    filled_by = (row.get("filled_by") or "").strip().lower()
+    if filled_by not in MANUAL_SOURCES:
+        raise ValueError(
+            f"{MANUAL_PATH.name}: filled row {row.get('event_id')} has filled_by="
+            f"{filled_by!r}; expected one of {sorted(MANUAL_SOURCES)}")
+    return MANUAL_SOURCES[filled_by]
+
+
 def load_manual():
     """Read lookups/regions-manual.csv -> {event_id: row dict}. Skips the README row."""
     manual = {}
@@ -415,22 +430,29 @@ def resolve_all(events, index, token_counts):
             source = kind
             wsdc_registered = True
 
-        # 3: scoring.dance JSON-LD fallback (no state available from this source)
-        if country is None and site == "scoring.dance" and ev["raw_file"]:
+        # 3: scoring.dance JSON-LD: fallback, and cross-check on the registry match (no
+        # state available from this source). If the two disagree on country, trust neither
+        # (either can be wrong) and leave the event for the manual worklist.
+        conflict = ""
+        if site == "scoring.dance" and ev["raw_file"]:
             raw_path = RAW_DIR / ev["raw_file"]
             if raw_path.exists():
                 _, country_raw = extract_scoring_dance_location(
                     raw_path.read_text(encoding="utf-8", errors="replace"))
                 c = canonicalize_country(country_raw)
-                if c:
+                if c and country is None:
                     country, source = c, "scoring-dance-jsonld"
+                elif c and c != country:
+                    conflict = f"conflict: registry says {country}, scoring.dance says {c}"
+                    country = state = source = None
+                    wsdc_registered = False
 
         # 4: manual override / completion. A filled manual row is authoritative.
         man = manual.get(eid)
         if man and _is_filled(man):
             country = (man.get("country_iso2") or "").strip()
             state = (man.get("us_state_iso") or "").strip() or None
-            source = "manual"
+            source = manual_source(man)
             matched = None
 
         # Determine whether the event is fully resolved (US requires a state).
@@ -459,7 +481,8 @@ def resolve_all(events, index, token_counts):
                 "registry_candidate": matched or base.get("registry_candidate", ""),
                 "country_iso2": base.get("country_iso2", "") or (country or ""),
                 "us_state_iso": base.get("us_state_iso", "") or (state or ""),
-                "notes": base.get("notes", ""),
+                "filled_by": base.get("filled_by", ""),
+                "notes": base.get("notes", "") or conflict,
             }
 
     # Preserve every already-filled manual row, even for events no longer present, so a

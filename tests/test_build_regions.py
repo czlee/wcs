@@ -5,6 +5,8 @@ matcher's acceptance rule, ISO-code canonicalisation, and the registry/JSON-LD p
 ``build_regions`` is importable thanks to the ``sys.path`` trick in ``tests/conftest.py``.
 """
 
+import pytest
+
 import build_regions as br
 
 
@@ -163,3 +165,62 @@ def test_extract_scoring_dance_location():
 
 def test_extract_scoring_dance_location_absent():
     assert br.extract_scoring_dance_location("<html>no jsonld here</html>") == (None, None)
+
+
+# ---------------------------------------------------------------------------
+# manual worklist provenance
+# ---------------------------------------------------------------------------
+
+def _resolve_manual(monkeypatch, **fields):
+    """Resolve one event against an empty registry and a single manual row."""
+    row = {"event_id": "dc-1", "country_iso2": "NZ", "us_state_iso": "", **fields}
+    monkeypatch.setattr(br, "load_manual", lambda: {"dc-1": row})
+    events = {"dc-1": {"event_id": "dc-1", "event_name": "Some Event",
+                       "site": "danceconvention.net", "event_date": "", "url": "",
+                       "raw_file": ""}}
+    return br.resolve_all(events, {}, {})
+
+
+@pytest.mark.parametrize("filled_by, source", [
+    ("agent", "manual-agent"), ("human", "manual-human"), (" Human ", "manual-human"),
+])
+def test_manual_source_records_who_filled_the_row(monkeypatch, filled_by, source):
+    regions, rows = _resolve_manual(monkeypatch, filled_by=filled_by)
+    assert regions["dc-1"]["source"] == source
+    assert rows["dc-1"]["filled_by"] == filled_by  # preserved verbatim in the worklist
+
+
+@pytest.mark.parametrize("fields", [{}, {"filled_by": ""}, {"filled_by": "someone"}])
+def test_filled_manual_row_requires_valid_filled_by(monkeypatch, fields):
+    with pytest.raises(ValueError, match="dc-1"):
+        _resolve_manual(monkeypatch, **fields)
+
+
+def test_unfilled_manual_row_does_not_require_filled_by(monkeypatch):
+    regions, rows = _resolve_manual(monkeypatch, country_iso2="")
+    assert "dc-1" not in regions
+    assert rows["dc-1"]["filled_by"] == ""
+
+
+# ---------------------------------------------------------------------------
+# registry vs scoring.dance country cross-check
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("jsonld_country, resolved", [("Italy", False), ("Poland", True)])
+def test_country_conflict_goes_to_worklist(monkeypatch, tmp_path, jsonld_country, resolved):
+    (tmp_path / "raw.html").write_text(
+        '"location":{"@type":"Place","name":"X","country":"%s"}' % jsonld_country)
+    monkeypatch.setattr(br, "RAW_DIR", tmp_path)
+    monkeypatch.setattr(br, "load_manual", dict)
+    events = {"sd-1": {"event_id": "sd-1", "event_name": "Baltic Swing 2026",
+                       "site": "scoring.dance", "event_date": "", "url": "",
+                       "raw_file": "raw.html"}}
+    index = _index("Baltic Swing")  # Poland
+    regions, rows = br.resolve_all(events, index, br.registry_token_counts(index))
+    assert ("sd-1" in regions) == resolved
+    if resolved:
+        assert regions["sd-1"]["source"] == "wsdc-registry-exact"
+    else:
+        assert rows["sd-1"]["registry_candidate"] == "Baltic Swing"
+        assert rows["sd-1"]["country_iso2"] == ""
+        assert rows["sd-1"]["notes"] == "conflict: registry says PL, scoring.dance says IT"

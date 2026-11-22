@@ -4,7 +4,7 @@
     "site": "danceconvention.net",
     "country": "US",
     "state": "US-CA",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -13,7 +13,7 @@
     "site": "danceconvention.net",
     "country": "RU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -22,7 +22,7 @@
     "site": "danceconvention.net",
     "country": "AU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -49,7 +49,7 @@
     "site": "danceconvention.net",
     "country": "RU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -58,7 +58,7 @@
     "site": "danceconvention.net",
     "country": "KR",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -76,7 +76,7 @@
     "site": "danceconvention.net",
     "country": "MY",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -85,7 +85,7 @@
     "site": "danceconvention.net",
     "country": "AU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -121,7 +121,7 @@
     "site": "danceconvention.net",
     "country": "RU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -130,7 +130,7 @@
     "site": "danceconvention.net",
     "country": "RU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -157,7 +157,7 @@
     "site": "danceconvention.net",
     "country": "NZ",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -193,7 +193,7 @@
     "site": "danceconvention.net",
     "country": "MY",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -202,7 +202,7 @@
     "site": "danceconvention.net",
     "country": "RU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -229,7 +229,7 @@
     "site": "danceconvention.net",
     "country": "US",
     "state": "US-OH",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -256,7 +256,7 @@
     "site": "danceconvention.net",
     "country": "RU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -265,7 +265,7 @@
     "site": "danceconvention.net",
     "country": "US",
     "state": "US-CA",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -274,7 +274,7 @@
     "site": "danceconvention.net",
     "country": "RU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -283,7 +283,7 @@
     "site": "danceconvention.net",
     "country": "RU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -301,7 +301,7 @@
     "site": "danceconvention.net",
     "country": "AU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -319,7 +319,7 @@
     "site": "danceconvention.net",
     "country": "AU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -328,7 +328,7 @@
     "site": "danceconvention.net",
     "country": "KR",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -364,7 +364,7 @@
     "site": "danceconvention.net",
     "country": "US",
     "state": "US-TX",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -373,7 +373,7 @@
     "site": "danceconvention.net",
     "country": "RU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -400,7 +400,7 @@
     "site": "danceconvention.net",
     "country": "LV",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -427,7 +427,7 @@
     "site": "danceconvention.net",
     "country": "NZ",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -436,7 +436,7 @@
     "site": "danceconvention.net",
     "country": "AU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -445,7 +445,7 @@
     "site": "danceconvention.net",
     "country": "RU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -481,7 +481,7 @@
     "site": "danceconvention.net",
     "country": "US",
     "state": "US-TX",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -499,7 +499,7 @@
     "site": "danceconvention.net",
     "country": "RU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -517,7 +517,7 @@
     "site": "danceconvention.net",
     "country": "AU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -535,7 +535,7 @@
     "site": "danceconvention.net",
     "country": "RU",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -544,7 +544,7 @@
     "site": "eepro.com",
     "country": "US",
     "state": "US-AZ",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -553,7 +553,7 @@
     "site": "eepro.com",
     "country": "US",
     "state": "US-AZ",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -567,6 +567,15 @@
     "wsdc_registered": true
   },
   "ee-asc2025": {
+    "event_name": "Atlanta Swing Classic",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-GA",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Atlanta Swing Classic",
+    "wsdc_registered": true
+  },
+  "ee-asc2026": {
     "event_name": "Atlanta Swing Classic",
     "site": "eepro.com",
     "country": "US",
@@ -593,12 +602,21 @@
     "matched_name": "Austin Swing Dance Championships",
     "wsdc_registered": true
   },
+  "ee-asdc2026": {
+    "event_name": "Austin Swing Dance Championships",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-TX",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Austin Swing Dance Championships",
+    "wsdc_registered": true
+  },
   "ee-bigapple2024": {
     "event_name": "Big Apple CDF",
     "site": "eepro.com",
     "country": "US",
     "state": "US-NJ",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -607,7 +625,16 @@
     "site": "eepro.com",
     "country": "US",
     "state": "US-NJ",
-    "source": "manual",
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "ee-bigapple2026": {
+    "event_name": "Big Apple Dance Festival",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-NJ",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -629,6 +656,15 @@
     "matched_name": "The Boston Tea Party",
     "wsdc_registered": true
   },
+  "ee-btp2026": {
+    "event_name": "Boston Tea Party",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-MA",
+    "source": "wsdc-registry-exact",
+    "matched_name": "The Boston Tea Party",
+    "wsdc_registered": true
+  },
   "ee-capital2024": {
     "event_name": "Capital Swing",
     "site": "eepro.com",
@@ -639,6 +675,15 @@
     "wsdc_registered": true
   },
   "ee-capital2025": {
+    "event_name": "Capital Swing",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-CA",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Capital Swing Convention",
+    "wsdc_registered": true
+  },
+  "ee-capital2026": {
     "event_name": "Capital Swing",
     "site": "eepro.com",
     "country": "US",
@@ -701,12 +746,21 @@
     "matched_name": "Derby City Swing",
     "wsdc_registered": true
   },
+  "ee-derby2026": {
+    "event_name": "Derby City Swing",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-KY",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Derby City Swing",
+    "wsdc_registered": true
+  },
   "ee-dmg2024": {
     "event_name": "Dance Mardi Gras",
     "site": "eepro.com",
     "country": "US",
     "state": "US-LA",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -715,9 +769,18 @@
     "site": "eepro.com",
     "country": "US",
     "state": "US-LA",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
+  },
+  "ee-flowfest2026": {
+    "event_name": "New York Flow Festival",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-NY",
+    "source": "wsdc-registry-exact",
+    "matched_name": "New York Flow Festival",
+    "wsdc_registered": true
   },
   "ee-freedom2024": {
     "event_name": "Freedom Swing Dance Challenge",
@@ -737,12 +800,30 @@
     "matched_name": "Freedom Swing Dance Challenge",
     "wsdc_registered": true
   },
+  "ee-freedom2026": {
+    "event_name": "Freedom Swing Dance Challenge",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-DE",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Freedom Swing Dance Challenge",
+    "wsdc_registered": true
+  },
+  "ee-gateway2026": {
+    "event_name": "Gateway Swing Classic",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-MO",
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
   "ee-gndc2024": {
     "event_name": "The USA Grand National Dance Championship",
     "site": "eepro.com",
     "country": "US",
     "state": "US-GA",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -751,7 +832,16 @@
     "site": "eepro.com",
     "country": "US",
     "state": "US-GA",
-    "source": "manual",
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "ee-grandnationals2026": {
+    "event_name": "GNDC",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-GA",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -764,12 +854,30 @@
     "matched_name": "Halloween SwingThing",
     "wsdc_registered": true
   },
+  "ee-hst2026": {
+    "event_name": "Halloween Swingthing",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-CA",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Halloween SwingThing",
+    "wsdc_registered": true
+  },
+  "ee-htown2026": {
+    "event_name": "H-Town Throw Down",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-TX",
+    "source": "wsdc-registry-exact",
+    "matched_name": "H-Town Throw Down 2027",
+    "wsdc_registered": true
+  },
   "ee-jjorama2024": {
     "event_name": "Jack & Jill O'Rama",
     "site": "eepro.com",
     "country": "US",
     "state": "US-CA",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -778,7 +886,16 @@
     "site": "eepro.com",
     "country": "US",
     "state": "US-CA",
-    "source": "manual",
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "ee-jjorama2026": {
+    "event_name": "Jack & Jill O'Rama",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-CA",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -800,7 +917,25 @@
     "matched_name": "Liberty Swing Dance Championships",
     "wsdc_registered": true
   },
+  "ee-libertyswing2026": {
+    "event_name": "Liberty Swing",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-NJ",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Liberty Swing Dance Championships",
+    "wsdc_registered": true
+  },
   "ee-madjam2024": {
+    "event_name": "MADjam",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-VA",
+    "source": "wsdc-registry-exact",
+    "matched_name": "MADjam (Mid Atlantic Dance Jam)",
+    "wsdc_registered": true
+  },
+  "ee-madjam2026": {
     "event_name": "MADjam",
     "site": "eepro.com",
     "country": "US",
@@ -827,7 +962,34 @@
     "matched_name": "Michigan Classic",
     "wsdc_registered": true
   },
+  "ee-michiganclassic2026": {
+    "event_name": "Michigan Classic",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-MI",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Michigan Classic",
+    "wsdc_registered": true
+  },
+  "ee-mm2026": {
+    "event_name": "Midnight Madness",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-TX",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Midnight Madness WCS 2026",
+    "wsdc_registered": true
+  },
   "ee-mwf2025": {
+    "event_name": "Midwest Westie Fest",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-KS",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Midwest Westie Fest 2026",
+    "wsdc_registered": true
+  },
+  "ee-mwf2026": {
     "event_name": "Midwest Westie Fest",
     "site": "eepro.com",
     "country": "US",
@@ -841,7 +1003,7 @@
     "site": "eepro.com",
     "country": "US",
     "state": "US-MA",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -850,11 +1012,20 @@
     "site": "eepro.com",
     "country": "US",
     "state": "US-TX",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
   "ee-nsc2025": {
+    "event_name": "Northeast Swing Clasic",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-RI",
+    "source": "wsdc-registry-fuzzy",
+    "matched_name": "Northeast Swing Classic",
+    "wsdc_registered": true
+  },
+  "ee-nsc2026": {
     "event_name": "Northeast Swing Clasic",
     "site": "eepro.com",
     "country": "US",
@@ -868,9 +1039,36 @@
     "site": "eepro.com",
     "country": "US",
     "state": "US-FL",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
+  },
+  "ee-orangeblossom2026": {
+    "event_name": "Orange Blossom",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-FL",
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "ee-paradise2026": {
+    "event_name": "Paradise Dance Festival",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-CA",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Paradise dance Festival",
+    "wsdc_registered": true
+  },
+  "ee-parisswingclassic2026": {
+    "event_name": "Paris Swing Classic",
+    "site": "eepro.com",
+    "country": "FR",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Paris Swing Classic",
+    "wsdc_registered": true
   },
   "ee-phillyswing2024": {
     "event_name": "Philly Swing Classic",
@@ -882,6 +1080,15 @@
     "wsdc_registered": true
   },
   "ee-phillyswing2025": {
+    "event_name": "Philly Swing Classic",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-DE",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Philly Swing Classic",
+    "wsdc_registered": true
+  },
+  "ee-phillyswing2026": {
     "event_name": "Philly Swing Classic",
     "site": "eepro.com",
     "country": "US",
@@ -908,12 +1115,39 @@
     "matched_name": "Phoenix 4th of July",
     "wsdc_registered": true
   },
+  "ee-phoenix2026": {
+    "event_name": "Phoenix 4th Of July",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-AZ",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Phoenix 4th of July",
+    "wsdc_registered": true
+  },
+  "ee-retaliation2026": {
+    "event_name": "Retaliation Swing",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-WA",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Retaliation Swing",
+    "wsdc_registered": true
+  },
   "ee-sass2025": {
     "event_name": "SASS",
     "site": "eepro.com",
     "country": "US",
     "state": "US-NY",
-    "source": "manual",
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "ee-sass2026": {
+    "event_name": "SASS",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-NY",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -922,7 +1156,16 @@
     "site": "eepro.com",
     "country": "US",
     "state": "US-CT",
-    "source": "manual",
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "ee-sis2026": {
+    "event_name": "Swingin' Into Spring",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-CT",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -962,12 +1205,21 @@
     "matched_name": "Summer Hummer",
     "wsdc_registered": true
   },
+  "ee-summerhummer2026": {
+    "event_name": "Summer Hummer",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-MA",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Summer Hummer",
+    "wsdc_registered": true
+  },
   "ee-swingcouver2025": {
     "event_name": "Swingcouver",
     "site": "eepro.com",
     "country": "US",
     "state": "US-OR",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -981,6 +1233,15 @@
     "wsdc_registered": true
   },
   "ee-swingcrush2025": {
+    "event_name": "Swing Crush",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-TX",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Swing Crush",
+    "wsdc_registered": true
+  },
+  "ee-swingcrush2026": {
     "event_name": "Swing Crush",
     "site": "eepro.com",
     "country": "US",
@@ -1007,12 +1268,21 @@
     "matched_name": "Swing Fling",
     "wsdc_registered": true
   },
+  "ee-swingfling2026": {
+    "event_name": "Swing Fling",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-VA",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Swing Fling",
+    "wsdc_registered": true
+  },
   "ee-swinglebell2024": {
     "event_name": "Swinglebell Rock",
     "site": "eepro.com",
     "country": "US",
     "state": "US-NJ",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -1021,7 +1291,7 @@
     "site": "eepro.com",
     "country": "US",
     "state": "US-NJ",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -1035,6 +1305,15 @@
     "wsdc_registered": true
   },
   "ee-swingover2025": {
+    "event_name": "Swingover",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-FL",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Swingover 2027",
+    "wsdc_registered": true
+  },
+  "ee-swingover2026": {
     "event_name": "Swingover",
     "site": "eepro.com",
     "country": "US",
@@ -1061,7 +1340,25 @@
     "matched_name": "Swingtacular: The Galactic Open",
     "wsdc_registered": true
   },
+  "ee-swingtacular2026": {
+    "event_name": "Swingtacular",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-CA",
+    "source": "wsdc-registry-fuzzy",
+    "matched_name": "Swingtacular: The Galactic Open",
+    "wsdc_registered": true
+  },
   "ee-swingtime2025": {
+    "event_name": "SwingTime",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-CO",
+    "source": "wsdc-registry-fuzzy",
+    "matched_name": "SwingTime Denver",
+    "wsdc_registered": true
+  },
+  "ee-swingtime2026": {
     "event_name": "SwingTime",
     "site": "eepro.com",
     "country": "US",
@@ -1075,7 +1372,7 @@
     "site": "eepro.com",
     "country": "US",
     "state": "US-CA",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -1084,7 +1381,7 @@
     "site": "eepro.com",
     "country": "US",
     "state": "US-CA",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -1106,6 +1403,15 @@
     "matched_name": "TULSA SPRING SWING",
     "wsdc_registered": true
   },
+  "ee-tulsa2026": {
+    "event_name": "Tulsa Spring Swing",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-OK",
+    "source": "wsdc-registry-exact",
+    "matched_name": "TULSA SPRING SWING",
+    "wsdc_registered": true
+  },
   "ee-westieweekend2025": {
     "event_name": "Westie Weekend",
     "site": "eepro.com",
@@ -1115,7 +1421,25 @@
     "matched_name": "Westie Weekend",
     "wsdc_registered": true
   },
+  "ee-westieweekend2026": {
+    "event_name": "Westie Weekend",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-MD",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Westie Weekend",
+    "wsdc_registered": true
+  },
   "ee-www2025": {
+    "event_name": "Wild Wild Westie",
+    "site": "eepro.com",
+    "country": "US",
+    "state": "US-TX",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Wild Wild Westie",
+    "wsdc_registered": true
+  },
+  "ee-www2026": {
     "event_name": "Wild Wild Westie",
     "site": "eepro.com",
     "country": "US",
@@ -1237,7 +1561,7 @@
     "site": "scoring.dance",
     "country": "SI",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -1399,7 +1723,7 @@
     "site": "scoring.dance",
     "country": "US",
     "state": "US-OR",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -1480,7 +1804,7 @@
     "site": "scoring.dance",
     "country": "US",
     "state": "US-HI",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": true
   },
@@ -1561,7 +1885,7 @@
     "site": "scoring.dance",
     "country": "BE",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -1687,7 +2011,7 @@
     "site": "scoring.dance",
     "country": "US",
     "state": "US-OR",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -1705,7 +2029,7 @@
     "site": "scoring.dance",
     "country": "US",
     "state": "US-CA",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -1741,7 +2065,7 @@
     "site": "scoring.dance",
     "country": "US",
     "state": "US-OR",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -1795,7 +2119,7 @@
     "site": "scoring.dance",
     "country": "ES",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -1876,7 +2200,7 @@
     "site": "scoring.dance",
     "country": "SI",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -1894,7 +2218,7 @@
     "site": "scoring.dance",
     "country": "US",
     "state": "US-HI",
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": true
   },
@@ -2096,6 +2420,15 @@
     "matched_name": null,
     "wsdc_registered": false
   },
+  "sd-272": {
+    "event_name": "Monterey Swinfest  2026",
+    "site": "scoring.dance",
+    "country": "US",
+    "state": "US-CA",
+    "source": "wsdc-registry-fuzzy",
+    "matched_name": "Monterey Swing Fest",
+    "wsdc_registered": true
+  },
   "sd-274": {
     "event_name": "Boogie By the Bay",
     "site": "scoring.dance",
@@ -2168,6 +2501,15 @@
     "matched_name": "Rock The Barn",
     "wsdc_registered": true
   },
+  "sd-291": {
+    "event_name": "Swing In Capital 2026",
+    "site": "scoring.dance",
+    "country": "IT",
+    "state": null,
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
   "sd-292": {
     "event_name": "UpTown Swing 2025",
     "site": "scoring.dance",
@@ -2193,6 +2535,15 @@
     "state": null,
     "source": "wsdc-registry-exact",
     "matched_name": "Mooseland Swing 2026",
+    "wsdc_registered": true
+  },
+  "sd-297": {
+    "event_name": "Rose City Swing 2026",
+    "site": "scoring.dance",
+    "country": "US",
+    "state": "US-OR",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Rose City Swing",
     "wsdc_registered": true
   },
   "sd-304": {
@@ -2245,7 +2596,7 @@
     "site": "scoring.dance",
     "country": "BE",
     "state": null,
-    "source": "manual",
+    "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
   },
@@ -2256,6 +2607,15 @@
     "state": null,
     "source": "wsdc-registry-exact",
     "matched_name": "Westie's Angels",
+    "wsdc_registered": true
+  },
+  "sd-315": {
+    "event_name": "City Of Angels 2026",
+    "site": "scoring.dance",
+    "country": "US",
+    "state": "US-CA",
+    "source": "wsdc-registry-exact",
+    "matched_name": "City of Angels WCS",
     "wsdc_registered": true
   },
   "sd-316": {
@@ -2294,6 +2654,15 @@
     "matched_name": null,
     "wsdc_registered": false
   },
+  "sd-321": {
+    "event_name": "All Star SwingJam 2026",
+    "site": "scoring.dance",
+    "country": "US",
+    "state": "US-CA",
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
   "sd-323": {
     "event_name": "Global Grand Prix WCS 2025",
     "site": "scoring.dance",
@@ -2321,6 +2690,15 @@
     "matched_name": "Autumn Swing Challenge",
     "wsdc_registered": true
   },
+  "sd-327": {
+    "event_name": "Easter Swing 2026",
+    "site": "scoring.dance",
+    "country": "US",
+    "state": "US-WA",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Easter Swing",
+    "wsdc_registered": true
+  },
   "sd-328": {
     "event_name": "Santa Swing 2025",
     "site": "scoring.dance",
@@ -2339,6 +2717,69 @@
     "matched_name": "Flowstate | West Coast Swing & Zouk Festival",
     "wsdc_registered": true
   },
+  "sd-332": {
+    "event_name": "SOswing Convention 2026",
+    "site": "scoring.dance",
+    "country": "US",
+    "state": "US-OR",
+    "source": "wsdc-registry-exact",
+    "matched_name": "SOswing",
+    "wsdc_registered": true
+  },
+  "sd-333": {
+    "event_name": "Asia WCS Open  2026",
+    "site": "scoring.dance",
+    "country": "SG",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Asia WCS Open 2027",
+    "wsdc_registered": true
+  },
+  "sd-334": {
+    "event_name": "Avignon City Swing 2026",
+    "site": "scoring.dance",
+    "country": "FR",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Avignon City Swing",
+    "wsdc_registered": true
+  },
+  "sd-335": {
+    "event_name": "Euro Dance Festival 2026",
+    "site": "scoring.dance",
+    "country": "DE",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-336": {
+    "event_name": "Swing Resolution 2026",
+    "site": "scoring.dance",
+    "country": "GB",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "SWING RESOLUTION",
+    "wsdc_registered": true
+  },
+  "sd-337": {
+    "event_name": "West in Lyon 2026",
+    "site": "scoring.dance",
+    "country": "FR",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "West In Lyon",
+    "wsdc_registered": true
+  },
+  "sd-338": {
+    "event_name": "Westy Nantes 2026",
+    "site": "scoring.dance",
+    "country": "FR",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "WESTY NANTES",
+    "wsdc_registered": true
+  },
   "sd-339": {
     "event_name": "New Year's Swing Fling",
     "site": "scoring.dance",
@@ -2347,6 +2788,15 @@
     "source": "wsdc-registry-fuzzy",
     "matched_name": "New Years Swing Fling",
     "wsdc_registered": true
+  },
+  "sd-340": {
+    "event_name": "Korean Open 2026",
+    "site": "scoring.dance",
+    "country": "KR",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
   },
   "sd-342": {
     "event_name": "Winter White 2025",
@@ -2375,6 +2825,15 @@
     "matched_name": "SwingVester",
     "wsdc_registered": true
   },
+  "sd-351": {
+    "event_name": "Latin Dreams 2026",
+    "site": "scoring.dance",
+    "country": "NL",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
   "sd-352": {
     "event_name": "Westie Gala 2025/2026",
     "site": "scoring.dance",
@@ -2382,6 +2841,663 @@
     "state": null,
     "source": "wsdc-registry-exact",
     "matched_name": "Westie Gala",
+    "wsdc_registered": true
+  },
+  "sd-354": {
+    "event_name": "Budafest 2026",
+    "site": "scoring.dance",
+    "country": "HU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "BudaFest Open WCS Championships",
+    "wsdc_registered": true
+  },
+  "sd-356": {
+    "event_name": "SwingIn Festival 2026",
+    "site": "scoring.dance",
+    "country": "DE",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "SwingIn Festival",
+    "wsdc_registered": true
+  },
+  "sd-357": {
+    "event_name": "Prague Alchemy Swing",
+    "site": "scoring.dance",
+    "country": "CZ",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Prague Alchemy Swing",
+    "wsdc_registered": true
+  },
+  "sd-360": {
+    "event_name": "Lisbon Westie Fest 2026",
+    "site": "scoring.dance",
+    "country": "PT",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Lisbon Westie Fest",
+    "wsdc_registered": true
+  },
+  "sd-361": {
+    "event_name": "Arousa Westie Fest 2026",
+    "site": "scoring.dance",
+    "country": "ES",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Arousa Westie Fest",
+    "wsdc_registered": true
+  },
+  "sd-362": {
+    "event_name": "Trinity Swing 2026",
+    "site": "scoring.dance",
+    "country": "IE",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Trinity Swing",
+    "wsdc_registered": true
+  },
+  "sd-363": {
+    "event_name": "Swingtzerland 2026",
+    "site": "scoring.dance",
+    "country": "CH",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Swingtzerland",
+    "wsdc_registered": true
+  },
+  "sd-364": {
+    "event_name": "Neverland Swing 2026",
+    "site": "scoring.dance",
+    "country": "NL",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-365": {
+    "event_name": "Milan Swing Vibes 2026",
+    "site": "scoring.dance",
+    "country": "IT",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Milan Swing Vibes",
+    "wsdc_registered": true
+  },
+  "sd-366": {
+    "event_name": "Winter Coast Swing 2026",
+    "site": "scoring.dance",
+    "country": "FI",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Winter Coast Swing",
+    "wsdc_registered": true
+  },
+  "sd-368": {
+    "event_name": "Valentine Swing 2026",
+    "site": "scoring.dance",
+    "country": "SE",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-369": {
+    "event_name": "Dutch Open 2026",
+    "site": "scoring.dance",
+    "country": "NL",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-370": {
+    "event_name": "Grand Party Sofia 2026",
+    "site": "scoring.dance",
+    "country": "BG",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Grand Party Sofia (GPS)",
+    "wsdc_registered": true
+  },
+  "sd-372": {
+    "event_name": "BeeMAD 2026",
+    "site": "scoring.dance",
+    "country": "ES",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "BeeMAD",
+    "wsdc_registered": true
+  },
+  "sd-373": {
+    "event_name": "King Swing 2026",
+    "site": "scoring.dance",
+    "country": "PL",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-375": {
+    "event_name": "Aloha Open 2026",
+    "site": "scoring.dance",
+    "country": "US",
+    "state": "US-HI",
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": true
+  },
+  "sd-376": {
+    "event_name": "Mediterranean Open 2026",
+    "site": "scoring.dance",
+    "country": "ES",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Mediterranean Open WCS",
+    "wsdc_registered": true
+  },
+  "sd-378": {
+    "event_name": "D-Town Swing 2026",
+    "site": "scoring.dance",
+    "country": "DE",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-379": {
+    "event_name": "WCS Festival Düsseldorf 2026",
+    "site": "scoring.dance",
+    "country": "DE",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-380": {
+    "event_name": "5280 Westival 2026",
+    "site": "scoring.dance",
+    "country": "US",
+    "state": "US-CO",
+    "source": "wsdc-registry-exact",
+    "matched_name": "5280 Westival",
+    "wsdc_registered": true
+  },
+  "sd-381": {
+    "event_name": "Westie Spring Thing 2026",
+    "site": "scoring.dance",
+    "country": "HU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Westie Spring Thing",
+    "wsdc_registered": true
+  },
+  "sd-382": {
+    "event_name": "UK West Coast Swing Championships 2026",
+    "site": "scoring.dance",
+    "country": "GB",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "UK West Coast Swing Championships",
+    "wsdc_registered": true
+  },
+  "sd-383": {
+    "event_name": "Spring Time Swing 2026",
+    "site": "scoring.dance",
+    "country": "DE",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-384": {
+    "event_name": "The Bend Connection 2026",
+    "site": "scoring.dance",
+    "country": "US",
+    "state": "US-OR",
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-387": {
+    "event_name": "French Connection 2026",
+    "site": "scoring.dance",
+    "country": "FR",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "French Connection WCS",
+    "wsdc_registered": true
+  },
+  "sd-389": {
+    "event_name": "Detonation Dance 2026",
+    "site": "scoring.dance",
+    "country": "GB",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Detonation Dance",
+    "wsdc_registered": true
+  },
+  "sd-391": {
+    "event_name": "French Open 2026",
+    "site": "scoring.dance",
+    "country": "FR",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-392": {
+    "event_name": "Rolling Swing 2026",
+    "site": "scoring.dance",
+    "country": "FR",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Rolling Swing",
+    "wsdc_registered": true
+  },
+  "sd-393": {
+    "event_name": "Manneken Swing 2026",
+    "site": "scoring.dance",
+    "country": "BE",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Manneken Swing",
+    "wsdc_registered": true
+  },
+  "sd-394": {
+    "event_name": "Sea Sun & Swing Camp 2026",
+    "site": "scoring.dance",
+    "country": "FR",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-395": {
+    "event_name": "Med In Swing 2026",
+    "site": "scoring.dance",
+    "country": "FR",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-396": {
+    "event_name": "Westie Joy 2026",
+    "site": "scoring.dance",
+    "country": "RO",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Westie Joy",
+    "wsdc_registered": true
+  },
+  "sd-398": {
+    "event_name": "Festival City Swing Edinburgh 2026",
+    "site": "scoring.dance",
+    "country": "GB",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-399": {
+    "event_name": "Warsaw Summer Nights Westival 2026",
+    "site": "scoring.dance",
+    "country": "PL",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Warsaw Summer Nights Westival",
+    "wsdc_registered": true
+  },
+  "sd-403": {
+    "event_name": "SwingLab Berlin",
+    "site": "scoring.dance",
+    "country": "DE",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "SwingLab Berlin",
+    "wsdc_registered": true
+  },
+  "sd-404": {
+    "event_name": "Slovenian Open 2026",
+    "site": "scoring.dance",
+    "country": "SI",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-405": {
+    "event_name": "Nanaimo Dance Fusion 2026",
+    "site": "scoring.dance",
+    "country": "CA",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-406": {
+    "event_name": "Sea to Sky 2026",
+    "site": "scoring.dance",
+    "country": "US",
+    "state": "US-WA",
+    "source": "wsdc-registry-fuzzy",
+    "matched_name": "Sea to Sky Seattle",
+    "wsdc_registered": true
+  },
+  "sd-407": {
+    "event_name": "Nordic WCS Championships 2026",
+    "site": "scoring.dance",
+    "country": "SE",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-408": {
+    "event_name": "Boogie By the Bay 2026",
+    "site": "scoring.dance",
+    "country": "US",
+    "state": "US-CA",
+    "source": "wsdc-registry-exact",
+    "matched_name": "Boogie By The Bay",
+    "wsdc_registered": true
+  },
+  "sd-409": {
+    "event_name": "Swing of Music 2026",
+    "site": "scoring.dance",
+    "country": "AT",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-410": {
+    "event_name": "My Swing 2026",
+    "site": "scoring.dance",
+    "country": "MY",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "MY Swing 2026",
+    "wsdc_registered": true
+  },
+  "sd-412": {
+    "event_name": "Baltic Swing 2026",
+    "site": "scoring.dance",
+    "country": "PL",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-414": {
+    "event_name": "Calgary Town Open 2026",
+    "site": "scoring.dance",
+    "country": "CA",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Calgary Town Open",
+    "wsdc_registered": true
+  },
+  "sd-415": {
+    "event_name": "Hungarian Open 2026",
+    "site": "scoring.dance",
+    "country": "HU",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-418": {
+    "event_name": "Bristol Swing Fiesta 2026",
+    "site": "scoring.dance",
+    "country": "GB",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Bristol Swing Fiesta",
+    "wsdc_registered": true
+  },
+  "sd-419": {
+    "event_name": "BaroqueSwing Ludwigsburg 2026",
+    "site": "scoring.dance",
+    "country": "DE",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-420": {
+    "event_name": "Infinite Swing Munich 2026",
+    "site": "scoring.dance",
+    "country": "DE",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-422": {
+    "event_name": "SaunaSwing 2026",
+    "site": "scoring.dance",
+    "country": "FI",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "SaunaSwing",
+    "wsdc_registered": true
+  },
+  "sd-423": {
+    "event_name": "Westie Harbor 2026",
+    "site": "scoring.dance",
+    "country": "SE",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Westie Harbor",
+    "wsdc_registered": true
+  },
+  "sd-424": {
+    "event_name": "Rock The Barn 2026",
+    "site": "scoring.dance",
+    "country": "SE",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Rock The Barn",
+    "wsdc_registered": true
+  },
+  "sd-425": {
+    "event_name": "German Open 2026",
+    "site": "scoring.dance",
+    "country": "DE",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "German Open WCS",
+    "wsdc_registered": true
+  },
+  "sd-428": {
+    "event_name": "Global Grand Prix WCS 2026",
+    "site": "scoring.dance",
+    "country": "FR",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Global Grand Prix -- West Coast Swing Championships",
+    "wsdc_registered": true
+  },
+  "sd-429": {
+    "event_name": "Spooky Westie Weekend 2026",
+    "site": "scoring.dance",
+    "country": "SG",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Spooky Westie Weekend",
+    "wsdc_registered": true
+  },
+  "sd-433": {
+    "event_name": "Scandinavian Open 2026 [SNOW]",
+    "site": "scoring.dance",
+    "country": "SE",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-435": {
+    "event_name": "Warsaw Halloween Swing 2026",
+    "site": "scoring.dance",
+    "country": "PL",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Warsaw Halloween Swing",
+    "wsdc_registered": true
+  },
+  "sd-436": {
+    "event_name": "Swing Creation Hamburg",
+    "site": "scoring.dance",
+    "country": "DE",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Swing Creation Hamburg",
+    "wsdc_registered": true
+  },
+  "sd-437": {
+    "event_name": "UpTown Swing 2026",
+    "site": "scoring.dance",
+    "country": "SE",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "UpTown Swing",
+    "wsdc_registered": true
+  },
+  "sd-438": {
+    "event_name": "Bavarian Open 2026",
+    "site": "scoring.dance",
+    "country": "DE",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Bavarian Open West Coast Swing Championships",
+    "wsdc_registered": true
+  },
+  "sd-440": {
+    "event_name": "Swingside Invitational 2026",
+    "site": "scoring.dance",
+    "country": "BE",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-441": {
+    "event_name": "WCSParty 2026",
+    "site": "scoring.dance",
+    "country": "AT",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-443": {
+    "event_name": "Norwegian Open 2026",
+    "site": "scoring.dance",
+    "country": "NO",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Norwegian Open WCS",
+    "wsdc_registered": true
+  },
+  "sd-444": {
+    "event_name": "Midland Swing Open 2026",
+    "site": "scoring.dance",
+    "country": "GB",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Midland Swing Open",
+    "wsdc_registered": true
+  },
+  "sd-445": {
+    "event_name": "Finnfest 2026",
+    "site": "scoring.dance",
+    "country": "FI",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-447": {
+    "event_name": "Mooseland Swing 2026",
+    "site": "scoring.dance",
+    "country": "SE",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Mooseland Swing 2026",
+    "wsdc_registered": true
+  },
+  "sd-450": {
+    "event_name": "Augsburg Westie Station 2026",
+    "site": "scoring.dance",
+    "country": "DE",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Augsburg Westie Station",
+    "wsdc_registered": true
+  },
+  "sd-452": {
+    "event_name": "River Swing Nights - 2026 - WSDC Trial Event",
+    "site": "scoring.dance",
+    "country": "DE",
+    "state": null,
+    "source": "scoring-dance-jsonld",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "sd-453": {
+    "event_name": "Milan Modern Swing 2026",
+    "site": "scoring.dance",
+    "country": "IT",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Milan Modern Swing",
+    "wsdc_registered": true
+  },
+  "sd-454": {
+    "event_name": "Westie Pink City 2026",
+    "site": "scoring.dance",
+    "country": "FR",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Westie Pink City",
+    "wsdc_registered": true
+  },
+  "sd-455": {
+    "event_name": "Autumn Swing Challenge 2026",
+    "site": "scoring.dance",
+    "country": "HU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Autumn Swing Challenge",
+    "wsdc_registered": true
+  },
+  "sd-456": {
+    "event_name": "Westie's Angels 2026",
+    "site": "scoring.dance",
+    "country": "FR",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Westie's Angels",
+    "wsdc_registered": true
+  },
+  "sd-457": {
+    "event_name": "Flowstate 2026",
+    "site": "scoring.dance",
+    "country": "GB",
+    "state": null,
+    "source": "wsdc-registry-fuzzy",
+    "matched_name": "Flowstate | West Coast Swing & Zouk Festival",
+    "wsdc_registered": true
+  },
+  "sd-463": {
+    "event_name": "Mountain Magic Dance Convention 2026",
+    "site": "scoring.dance",
+    "country": "US",
+    "state": "US-NV",
+    "source": "wsdc-registry-fuzzy",
+    "matched_name": "Mouintain Magic Dance Convention",
     "wsdc_registered": true
   }
 }
