@@ -7,7 +7,7 @@ import { METRICS, METRIC_KEYS } from '#lib/families.js';
 
 /**
  * @typedef {{id: string, format: string, level: string, event: string, date: string, name: string,
- *   site: string, url: string, judges: string[], competitors: string[], R: number[][],
+ *   country: string | null, state: string | null, site: string, url: string, judges: string[], competitors: string[], R: number[][],
  *   py: Record<string, number>}} Sheet
  */
 
@@ -22,7 +22,7 @@ export const sheet = (/** @type {string} */ id) => byId.get(id);
 /** A short description of a scoresheet for lists, tooltips and the chart points. */
 export const summary = (/** @type {Sheet} */ s) => ({
 	id: s.id, format: s.format, level: s.level, event: s.event, date: s.date, name: s.name,
-	m: s.judges.length, n: s.competitors.length
+	country: s.country, state: s.state, m: s.judges.length, n: s.competitors.length
 });
 
 /**

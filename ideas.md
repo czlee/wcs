@@ -11,7 +11,7 @@ For now the y-axis is always a divergence metric. These ideas are about how the 
 Field size and panel size are done: see "Results site: filters" in `plan.md`. Still ideas (each would be another entry in `site/src/lib/dimensions.js`):
 
 - **Date.** We already have this as `event_date`. It could be a date range or a year picker. Coverage at present is 2024 to November 2026.
-- **Region.** We don't have this yet. It needs Phase 4A (`lookups/regions.json`, keyed on `event_id`/`event_name`; see `plan.md`). We'd want coarse buckets (e.g. North America / Europe / Oceania / …) so that each group has a usable n.
+- **Region.** Each event's country and US state are in `lookups/regions.json` (Phase 4A), and exported to the site (`country`, `state` in `sheets.json`), where so far only the explorer's scoresheet box uses them. Some were filled by an agent and not checked. We'd want coarse buckets (e.g. North America / Europe / Oceania / …) so that each group has a usable n.
 - Another dimension we already have: source site (`site`), which is mostly useful as a check for parser artefacts.
 - Later: competition format (spotlights / clusters / all-skate), if Phase 4B ever happens.
 

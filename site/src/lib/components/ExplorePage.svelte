@@ -10,6 +10,7 @@
 	import FilterBar from './FilterBar.svelte';
 	import MetricChart from './MetricChart.svelte';
 	import Modal from './Modal.svelte';
+	import SheetPicker from './SheetPicker.svelte';
 	import WorkedSquared from './WorkedSquared.svelte';
 	import WorkedHeadToHead from './WorkedHeadToHead.svelte';
 	import WorkedTop from './WorkedTop.svelte';
@@ -45,10 +46,6 @@
 	/** The metric and filters as a query string, for links to the other format. */
 	const query = $derived(queryString(setFilterParams(new URLSearchParams({ metric: key }), filters)));
 
-	const randomMetric = () => {
-		const others = PICKABLE.filter((k) => k !== key);
-		key = others[Math.floor(Math.random() * others.length)];
-	};
 	const step = (/** @type {number} */ d) => (key = ORDER[(ORDER.indexOf(key) + d + ORDER.length) % ORDER.length]);
 
 	let workedOpen = $state(false);
@@ -100,33 +97,44 @@
 	};
 
 	// The scoresheet "How is this calculated?" works through: one chosen at random on load
-	// (the fallback until it arrives), or the one whose point was clicked in the box plot.
+	// (the fallback until it arrives), the one picked in the "Example scoresheet" box, or the
+	// one whose point was clicked in the box plot.
 	let sheet = $derived(/** @type {import('#lib/server/data.js').Sheet} */ (data.fallback));
-	let clicked = $state(false);
+	let source = $state(/** @type {'random' | 'picked' | 'clicked'} */ ('random'));
 	let loading = $state(false);
+	let request = 0;
+	// Whether it loaded, and no other was asked for meanwhile.
 	async function loadSheet(/** @type {string} */ id) {
+		const mine = ++request;
 		loading = true;
 		try {
 			const res = await fetch(link(`/sheet/${id}/data.json`));
-			if (res.ok) { sheet = await res.json(); return true; }
-			return false;
+			const loaded = res.ok ? await res.json() : undefined;
+			if (!loaded || mine !== request) return false;
+			sheet = loaded;
+			return true;
 		} finally {
-			loading = false;
+			if (mine === request) loading = false;
 		}
 	}
 	async function pickRandomSheet() {
 		// Drawn from the finals on show, if there are any.
 		const ids = (filtered.length ? filtered : rows).map((/** @type {any} */ r) => r.id).filter((/** @type {string} */ id) => id !== sheet.id);
-		if (ids.length && await loadSheet(ids[Math.floor(Math.random() * ids.length)])) clicked = false;
+		if (ids.length && await loadSheet(ids[Math.floor(Math.random() * ids.length)])) source = 'random';
+	}
+	async function pickSheet(/** @type {string} */ id) {
+		if (await loadSheet(id)) source = 'picked';
 	}
 	// A click on a point in the box plot shows that scoresheet's calculation.
 	async function showSheet(/** @type {string} */ id) {
 		if (id !== sheet.id && !(await loadSheet(id))) return;
-		clicked = true;
+		source = 'clicked';
 		workedOpen = true;
 	}
-	const sheetCharted = $derived(sheet.competitors.length >= (meta.minN ?? 0) &&
-		matches({ m: sheet.judges.length, n: sheet.competitors.length }, filters));
+	/** Why a scoresheet isn't in the charts on show, or '' if it is. */
+	const uncharted = (/** @type {import('#lib/dimensions.js').Countable} */ r) =>
+		r.n < (meta.minN ?? 0) ? 'has too few finalists for this metric' : matches(r, filters) ? '' : 'is outside the filters';
+	const sheetCharted = $derived(!uncharted({ m: sheet.judges.length, n: sheet.competitors.length }));
 </script>
 
 <svelte:window onkeydown={onKey} />
@@ -176,20 +184,18 @@
 
 		<section class="view">
 			<div class="head">
-				<div>
+				<div class="heading">
 					<p class="kicker">{family.title}</p>
-					<h1 class="metric">{meta.label}</h1>
+					<div class="title">
+						<h1 class="metric">{meta.label}</h1>
+						<button type="button" class="btn primary" onclick={() => (workedOpen = true)}>How is this calculated?</button>
+					</div>
 					<p class="direction small">
 						<span class="dot" class:ok={meta.higher} class:bad={!meta.higher}></span>
 						{meta.higher ? 'Higher' : 'Lower'} means more agreement{#if meta.minN}{' · '}finals of {meta.minN} or more competitors{/if}
 					</p>
 				</div>
-				<div class="controls">
-					<button type="button" class="btn" onclick={() => step(-1)} aria-label="Previous metric" title="Previous metric (←)">←</button>
-					<button type="button" class="btn" onclick={() => step(1)} aria-label="Next metric" title="Next metric (→)">→</button>
-					<button type="button" class="btn" onclick={randomMetric}>Random metric</button>
-					<button type="button" class="btn primary" onclick={() => (workedOpen = true)}>How is this calculated?</button>
-				</div>
+				<SheetPicker {rows} selected={mounted ? sheet.id : undefined} {uncharted} onpick={pickSheet} />
 			</div>
 
 			<div class="filters"><FilterBar bind:filters /></div>
@@ -205,7 +211,10 @@
 				<div class="panel">
 					<h2>What it measures</h2>
 					<p>{about.what}</p>
-					<p>{about.reading}</p>
+					<p>
+						{about.reading}
+						<button type="button" class="link-btn" onclick={() => (workedOpen = true)}>Learn more</button>
+					</p>
 				</div>
 				<div class="panel">
 					<h2>Caveats for this metric</h2>
@@ -229,8 +238,8 @@
 		<strong>{sheet.name}</strong> ({date(sheet.date)}){#if mounted && sheetCharted}, ringed in the box plot{/if}
 	</p>
 	<p class="sheet-links small">
-		{clicked ? 'The scoresheet you clicked.' : 'A scoresheet chosen at random.'} To see another, close this and click its
-		point in the box plot, or
+		{{ random: 'A scoresheet chosen at random.', picked: 'The scoresheet you chose.', clicked: 'The scoresheet you clicked.' }[source]}
+		To see another, close this and choose an event or click a point in the box plot, or
 		<button class="link-btn" onclick={pickRandomSheet} disabled={loading}>{loading ? 'loading…' : 'pick one at random'}</button>. ·
 		<a href={link(`/sheet/${sheet.id}/`)}>All metrics for this scoresheet</a>
 	</p>
@@ -261,7 +270,8 @@
 	<p>
 		Every number can be checked. Each scoresheet links to its published source, and “How is this
 		calculated?” recalculates the metric in your browser, step by step, and checks the result against the
-		analysis. Click a point in the box plot for that scoresheet’s working, or a bar to list its finals.
+		analysis. Choose an example scoresheet at the top right to ring it in the box plot and work through it;
+		or click a point in the box plot for its working, or a bar to list its finals.
 	</p>
 	<p class="callout small">
 		<strong>This is exploratory.</strong> Panel and field sizes differ between levels, and most of these
@@ -314,7 +324,10 @@
 	.dot { display: inline-block; width: 0.6em; height: 0.6em; border-radius: 50%; margin-right: 0.2em; }
 	.dot.ok { background: var(--ok); }
 	.dot.bad { background: var(--bad); }
-	.controls { display: flex; flex-wrap: wrap; gap: 0.4em; }
+	/* The title wraps before the scoresheet box is pushed under it. */
+	.heading { flex: 1 1 18em; }
+	.title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2em 0.9em; }
+	.title .btn { font-size: 0.75rem; padding: 0.175em 0.75em; }
 	.filters { margin-bottom: 0.6em; }
 	.btn.primary { font-weight: 600; border-color: var(--accent); color: var(--accent); }
 
