@@ -5,23 +5,27 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import { LEVELS } from '#lib/levels.js';
-	import { meanCI, boxStats, CI_LABEL } from '#lib/stats.js';
+	import { meanCI, boxStats, CI_LABEL, MIN_CELL } from '#lib/stats.js';
+	import { matches, noFilters, setFilterParams, queryString } from '#lib/dimensions.js';
 	import { fx, minus, link, date } from '#lib/format.js';
 	import Term from './Term.svelte';
 
 	/** @typedef {{id: string, level: string, event: string, date: string, name: string, m: number, n: number, v: (number | null)[]}} Row */
 	/**
 	 * @type {{rows: Row[], index: number, meta: {label: string, higher: boolean, chance?: boolean}, colour: string,
-	 *   format: string, highlight?: string, fill?: boolean, onpoint?: (id: string) => void}}
+	 *   format: string, filters?: import('#lib/dimensions.js').Filters, highlight?: string, fill?: boolean, onpoint?: (id: string) => void}}
 	 */
+	// `filters` picks which scoresheets are drawn. The axes come from all of `rows`, so
+	// views with different filters can be compared by eye.
 	// `onpoint`, where given, is called with a point's scoresheet id when it's clicked;
 	// otherwise a click opens that scoresheet's page.
 	// `highlight`, a scoresheet id, rings that scoresheet's point (the explorer's worked example).
 	// With `fill`, the charts take the size of their container (which must have a height) and
 	// draw at true pixel size; otherwise they keep a fixed shape and scale with the width.
-	let { rows: allRows, index, meta, colour, format, highlight, fill = false, onpoint } = $props();
+	let { rows: allRows, index, meta, colour, format, filters = noFilters(), highlight, fill = false, onpoint } = $props();
 	// Scoresheets with no value for this metric (a field below its minN) are left out.
-	const rows = $derived(allRows.filter((r) => r.v[index] != null));
+	const unfiltered = $derived(allRows.filter((r) => r.v[index] != null));
+	const rows = $derived(unfiltered.filter((r) => matches(r, filters)));
 	const val = (/** @type {Row} */ r) => /** @type {number} */ (r.v[index]);
 
 	let mw = $state(0), mh = $state(0);
@@ -35,19 +39,30 @@
 	const gid = $props.id();
 	const x = $derived(scaleBand().domain(LEVELS.map((l) => l.id)).range([M.l, W - M.r]).padding(0.28));
 
-	const byLevel = $derived(LEVELS.map((l) => {
-		const pts = rows.filter((r) => r.level === l.id);
+	const cells = (/** @type {Row[]} */ from) => LEVELS.map((l) => {
+		const pts = from.filter((r) => r.level === l.id);
 		const vals = pts.map(val);
-		return { level: l, pts, ci: meanCI(vals), box: boxStats(vals) };
-	}));
+		const small = pts.length < MIN_CELL;
+		const ci = meanCI(vals);
+		// Too few scoresheets for the interval to mean much: show the mean alone.
+		if (small) ci.lo = ci.hi = NaN;
+		return { level: l, pts, ci, small, box: boxStats(vals), colour: small ? 'var(--text-3)' : colour };
+	});
+	const byLevel = $derived(cells(rows));
+	const byLevelAll = $derived(cells(unfiltered));
+	const smallNote = `Fewer than ${MIN_CELL} scoresheets, so shown in grey`;
+	const sheetsHref = (/** @type {string} */ level) =>
+		link(`/sheets/?${queryString(setFilterParams(new URLSearchParams({ format, level }), filters))}`);
 
 	const barY = $derived.by(() => {
-		const lo = Math.min(0, ...byLevel.map((d) => d.ci.lo).filter(Number.isFinite));
-		const hi = Math.max(0, ...byLevel.map((d) => d.ci.hi).filter(Number.isFinite));
+		// Fixed by the unfiltered bars, unless a filtered bar or interval needs more room.
+		const ends = [...byLevelAll, ...byLevel].flatMap((d) => [d.ci.mean, d.ci.lo, d.ci.hi]).filter(Number.isFinite);
+		const lo = Math.min(0, ...ends);
+		const hi = Math.max(0, ...ends);
 		return scaleLinear().domain([lo, hi]).nice(5).range([H - M.b, M.t]);
 	});
 	const boxY = $derived.by(() => {
-		const vals = rows.map(val);
+		const vals = unfiltered.map(val);
 		return scaleLinear().domain([Math.min(...vals), Math.max(...vals)]).nice(5).range([H - M.b, M.t]);
 	});
 
@@ -104,6 +119,12 @@
 	</g>
 {/snippet}
 
+{#snippet empty()}
+	{#if !rows.length}
+		<text class="empty" x={(M.l + W - M.r) / 2} y={(M.t + H - M.b) / 2} text-anchor="middle">No finals match these filters</text>
+	{/if}
+{/snippet}
+
 <div class="chart" class:fill bind:this={wrap}>
 	<div class="panels">
 		<figure>
@@ -117,11 +138,11 @@
 				{#each byLevel as d (d.level.id)}
 					{@const bx = /** @type {number} */ (x(d.level.id))}
 					{#if d.ci.n}
-						<a href={link(`/sheets/?format=${format}&level=${d.level.id}`)} aria-label="{d.level.label}: mean {fx(d.ci.mean)}, {d.ci.n} scoresheets. List them"
-							onmouseenter={(e) => show(e, [`${d.level.label}: mean ${minus(fx(d.ci.mean))}`, `interval ${minus(fx(d.ci.lo))} to ${minus(fx(d.ci.hi))}`, `${d.ci.n} scoresheets — click to list them`])}
+						<a href={sheetsHref(d.level.id)} aria-label="{d.level.label}: mean {fx(d.ci.mean)}, {d.ci.n} scoresheets. List them"
+							onmouseenter={(e) => show(e, [`${d.level.label}: mean ${minus(fx(d.ci.mean))}`, d.small ? smallNote : `interval ${minus(fx(d.ci.lo))} to ${minus(fx(d.ci.hi))}`, `${d.ci.n} scoresheets — click to list them`])}
 							onmouseleave={hide} onfocus={(e) => show(e, [`${d.level.label}: mean ${minus(fx(d.ci.mean))}`, `${d.ci.n} scoresheets`])} onblur={hide}>
 							<rect class="hit" x={bx - 4} y={M.t} width={x.bandwidth() + 8} height={H - M.b - M.t} />
-							<path d={bar(bx, x.bandwidth(), barY(0), barY(d.ci.mean))} fill={colour} />
+							<path d={bar(bx, x.bandwidth(), barY(0), barY(d.ci.mean))} fill={d.colour} />
 							{#if Number.isFinite(d.ci.lo)}
 								<line class="err" x1={bx + x.bandwidth() / 2} x2={bx + x.bandwidth() / 2} y1={barY(d.ci.lo)} y2={barY(d.ci.hi)} />
 								<line class="err" x1={bx + x.bandwidth() * 0.3} x2={bx + x.bandwidth() * 0.7} y1={barY(d.ci.lo)} y2={barY(d.ci.lo)} />
@@ -135,6 +156,7 @@
 				<line class="axis" x1={M.l} x2={W - M.r} y1={barY(0)} y2={barY(0)} />
 				{#if meta.chance}<text class="chance" x={W - M.r - 2} y={barY(0) - 3} text-anchor="end">chance</text>{/if}
 				{@render agreeStrip('bar')}
+				{@render empty()}
 			</svg>
 			</div>
 		</figure>
@@ -151,19 +173,19 @@
 					{@const bw = x.bandwidth()}
 					{#if d.box.n}
 						<g class="box" role="presentation"
-							onmouseenter={(e) => show(e, [`${d.level.label}, ${d.box.n} scoresheets`, `median ${minus(fx(d.box.median))}`, `quartiles ${minus(fx(d.box.q1))} to ${minus(fx(d.box.q3))}`, `whiskers ${minus(fx(d.box.lowWhisker))} to ${minus(fx(d.box.highWhisker))}`])}
+							onmouseenter={(e) => show(e, [`${d.level.label}, ${d.box.n} scoresheets`, `median ${minus(fx(d.box.median))}`, `quartiles ${minus(fx(d.box.q1))} to ${minus(fx(d.box.q3))}`, `whiskers ${minus(fx(d.box.lowWhisker))} to ${minus(fx(d.box.highWhisker))}`, ...(d.small ? [smallNote] : [])])}
 							onmouseleave={hide}>
 							<line class="whisker" x1={bx + bw / 2} x2={bx + bw / 2} y1={boxY(d.box.lowWhisker)} y2={boxY(d.box.q1)} />
 							<line class="whisker" x1={bx + bw / 2} x2={bx + bw / 2} y1={boxY(d.box.q3)} y2={boxY(d.box.highWhisker)} />
 							<line class="whisker" x1={bx + bw * 0.3} x2={bx + bw * 0.7} y1={boxY(d.box.lowWhisker)} y2={boxY(d.box.lowWhisker)} />
 							<line class="whisker" x1={bx + bw * 0.3} x2={bx + bw * 0.7} y1={boxY(d.box.highWhisker)} y2={boxY(d.box.highWhisker)} />
-							<rect x={bx} y={boxY(d.box.q3)} width={bw} height={Math.max(1, boxY(d.box.q1) - boxY(d.box.q3))} fill={colour} fill-opacity="0.16" stroke={colour} stroke-width="1.5" rx="2" />
-							<line class="median" x1={bx} x2={bx + bw} y1={boxY(d.box.median)} y2={boxY(d.box.median)} stroke={colour} />
+							<rect x={bx} y={boxY(d.box.q3)} width={bw} height={Math.max(1, boxY(d.box.q1) - boxY(d.box.q3))} fill={d.colour} fill-opacity="0.16" stroke={d.colour} stroke-width="1.5" rx="2" />
+							<line class="median" x1={bx} x2={bx + bw} y1={boxY(d.box.median)} y2={boxY(d.box.median)} stroke={d.colour} />
 						</g>
 					{/if}
 					{#if mounted}
 						{#each d.pts as r (r.id)}
-							<circle class="pt" cx={bx + bw / 2 + jitter(r.id) * bw * 0.9} cy={boxY(val(r))} r={R} fill={colour}
+							<circle class="pt" cx={bx + bw / 2 + jitter(r.id) * bw * 0.9} cy={boxY(val(r))} r={R} fill={d.colour}
 								role="link" tabindex="-1" aria-label={r.name}
 								onmouseenter={(e) => show(e, pointLines(r))} onmouseleave={hide}
 								onclick={() => (onpoint ? onpoint(r.id) : goto(link(`/sheet/${r.id}/`)))} onkeydown={() => {}} />
@@ -181,6 +203,7 @@
 					<text class="chance" x={W - M.r - 2} y={boxY(0) - 3} text-anchor="end">chance</text>
 				{/if}
 				{@render agreeStrip('box')}
+				{@render empty()}
 			</svg>
 			</div>
 		</figure>
@@ -215,6 +238,7 @@
 	.strip-label { font-size: 10px; font-weight: 600; }
 	.strip-label.ok { fill: var(--ok); }
 	.strip-label.bad { fill: var(--bad); }
+	.empty { font-size: 14px; fill: var(--text-2); }
 	.lvl { font-size: 11.5px; fill: var(--text-2); }
 	.err { stroke: var(--text); stroke-width: 1.3; }
 	.hit { fill: transparent; }

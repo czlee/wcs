@@ -56,7 +56,7 @@ export function fallbackSheet(/** @type {string} */ format) {
 const counts = (/** @type {Sheet} */ s, /** @type {string} */ k) => s.competitors.length >= (METRICS[k].minN ?? 0);
 
 /**
- * For each format, level and metric, the precomputed values of the scoresheets
+ * For each format and metric, the precomputed values of the scoresheets
  * that appear in that metric's charts, oriented so that larger means more
  * agreement and sorted ascending.
  * @type {Map<string, number[]>}
@@ -65,7 +65,7 @@ const groups = new Map();
 for (const s of sheets) {
 	for (const k of METRIC_KEYS) {
 		if (!counts(s, k)) continue;
-		const key = `${s.format}/${s.level}/${k}`;
+		const key = `${s.format}/${k}`;
 		if (!groups.has(key)) groups.set(key, []);
 		groups.get(key)?.push(METRICS[k].higher ? s.py[k] : -s.py[k]);
 	}
@@ -85,7 +85,7 @@ function bisect(/** @type {number[]} */ a, /** @type {number} */ x, strict = fal
 
 /**
  * A scoresheet's percentile rank for each metric among the scoresheets of the same
- * format and level, from the precomputed values: 100 is the most agreement,
+ * format (at every level), from the precomputed values: 100 is the most agreement,
  * whichever direction the metric runs. Ties take the mid-rank: the percentage of
  * the group with less agreement, plus half of those tied with it (itself
  * included). Values within 1e-9 count as tied, so floating-point noise doesn't
@@ -96,7 +96,7 @@ export function percentiles(/** @type {Sheet} */ s) {
 	/** @type {Record<string, {pct: number, of: number}>} */
 	const out = {};
 	for (const k of METRIC_KEYS) {
-		const g = groups.get(`${s.format}/${s.level}/${k}`);
+		const g = groups.get(`${s.format}/${k}`);
 		if (!g || !counts(s, k)) continue;
 		const x = METRICS[k].higher ? s.py[k] : -s.py[k];
 		const below = bisect(g, x - 1e-9);

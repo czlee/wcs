@@ -8,9 +8,9 @@ For now the y-axis is always a divergence metric. These ideas are about how the 
 
 ### Filters
 
-- **Field size.** This would show at a glance whether field size explains most of the variance *within* a level. It matters because field size changes the metrics directly: a ranking of 5 has far less room to disagree than a ranking of 15, and top-N chance agreement depends on n. We already have this as `num_competitors`. It ranges from 5 to 40, with peaks at 10, 12 and 15, and almost nothing above 16. Bins of 5–7 / 8–10 / 11–13 / 14+ give groups of 652 / 1,009 / 528 / 362 sheets.
-- **Panel size.** We already have this as `num_judges`. Panels are almost all 5, 7 or 9 judges (out of ~2,550 sheets, only ~40 have some other size), so a filter of 5 / 7 / 9 / other would work.
-- **Date.** We already have this as `event_date`. It could be a date range or a year picker. Coverage at present is events that start in 2024–2025.
+Field size and panel size are done: see "Results site: filters" in `plan.md`. Still ideas (each would be another entry in `site/src/lib/dimensions.js`):
+
+- **Date.** We already have this as `event_date`. It could be a date range or a year picker. Coverage at present is 2024 to November 2026.
 - **Region.** We don't have this yet. It needs Phase 4A (`lookups/regions.json`, keyed on `event_id`/`event_name`; see `plan.md`). We'd want coarse buckets (e.g. North America / Europe / Oceania / …) so that each group has a usable n.
 - Another dimension we already have: source site (`site`), which is mostly useful as a check for parser artefacts.
 - Later: competition format (spotlights / clusters / all-skate), if Phase 4B ever happens.

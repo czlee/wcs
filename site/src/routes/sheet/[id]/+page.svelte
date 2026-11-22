@@ -7,7 +7,7 @@
 	import WorkedTop from '#lib/components/WorkedTop.svelte';
 	import WorkedGaps from '#lib/components/WorkedGaps.svelte';
 	import { FAMILIES, METRICS } from '#lib/families.js';
-	import { FORMATS, LEVEL_LABEL } from '#lib/levels.js';
+	import { FORMATS } from '#lib/levels.js';
 	import { allMetrics, TOLERANCE } from '#lib/metrics.js';
 	import { link, fx, minus } from '#lib/format.js';
 
@@ -16,7 +16,7 @@
 	const fmt = $derived(FORMATS[/** @type {'jnj'|'strictly'} */ (s.format)]);
 	const js = $derived(/** @type {Record<string, number>} */ (allMetrics(s.R)));
 	const pct = $derived(data.percentiles);
-	const group = $derived(`${LEVEL_LABEL[s.level]} ${fmt.label}`);
+	const group = $derived(fmt.label);
 
 	/** 40 → "40th", 1 → "1st", 12 → "12th". */
 	function ordinal(/** @type {number} */ n) {
@@ -49,7 +49,7 @@
 <p>
 	Recalculated in your browser from the ranks above, as an independent check on the analysis code.
 	A <span class="ok">✓</span> means the result matches the precomputed value used in the charts. The working for each is below.
-	The percentile compares this final with the other {group} finals: 100th is the most agreement, whichever way the metric runs.
+	The percentile compares this final with the other {group} finals, at every level: 100th is the most agreement, whichever way the metric runs.
 </p>
 <div class="table-wrap">
 	<table>

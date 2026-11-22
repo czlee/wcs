@@ -142,6 +142,21 @@ Tools: Python with `pandas`, `scipy`, `plotly`. Use a Jupyter notebook for the e
 
 ---
 
+## Results site: filters
+
+**Status:** implemented in `site/` (explorer and scoresheet list).
+
+Field size changes the metrics directly (a ranking of 5 has far less room to disagree than a ranking of 15, and top-N chance agreement depends on n), and levels differ in field size. Filtering shows how much of the difference between levels remains among finals of similar size.
+
+- **Dimension registry** (`site/src/lib/dimensions.js`): one definition per dimension (id, label, accessor, ordered bins). Meant to serve x-axis grouping and colour-by too, if those happen (`ideas.md`). No exported data was needed: chart rows already carry the judge and competitor counts.
+- **Finalists:** 5 / 6–7 / 8–10 / 11–13 / 14+, which hold 236 / 310 / 974 / 628 / 378 of the 2,526 sheets (J&J and Strictly, exported 2026-11-22). Finals of 5 are on their own because they're common, their metrics differ from 6–7, and the top-3 charts leave them out.
+- **Judges:** 5 / 7 / 9. The 11 finals with other panel sizes show only when no judges filter is on.
+- Several bins can be chosen; the state is in the URL (`?finalists=8-10,11-13&judges=5,7`).
+- Cells under 10 scoresheets are grey without an interval. Axes come from the unfiltered data, so views can be compared.
+- Percentiles on a scoresheet's page compare it with all finals of its format, at every level, and ignore filters.
+
+---
+
 ## Project File Structure
 
 ```

@@ -4,9 +4,10 @@
 	// chart and box plot filling the space, with what it measures and its caveats
 	// underneath. The intro, the limitations and the working are dialogs. The metric
 	// is in the URL (?metric=…); without one, a random metric that isn't `hidden` is
-	// picked on load. Smaller screens get a plain scrolling page for now.
+	// picked on load. The filters are in the URL too (see lib/dimensions.js). Smaller screens get a plain scrolling page for now.
 	import { onMount } from 'svelte';
 	import Limitations from './Limitations.svelte';
+	import FilterBar from './FilterBar.svelte';
 	import MetricChart from './MetricChart.svelte';
 	import Modal from './Modal.svelte';
 	import WorkedSquared from './WorkedSquared.svelte';
@@ -14,6 +15,7 @@
 	import WorkedTop from './WorkedTop.svelte';
 	import WorkedGaps from './WorkedGaps.svelte';
 	import { FAMILIES, FAMILY_OF, METRICS, METRIC_KEYS } from '#lib/families.js';
+	import { anyFilters, filtersFromParams, matches, noFilters, queryString, setFilterParams } from '#lib/dimensions.js';
 	import { ABOUT } from '#lib/about.js';
 	import { FORMATS } from '#lib/levels.js';
 	import { DRAFT } from '#lib/config.js';
@@ -38,6 +40,11 @@
 	const about = $derived(ABOUT[key]);
 	const Worked = $derived(WORKED[/** @type {keyof typeof WORKED} */ (family.id)]);
 
+	let filters = $state.raw(noFilters());
+	const filtered = $derived(rows.filter((/** @type {any} */ r) => matches(r, filters)));
+	/** The metric and filters as a query string, for links to the other format. */
+	const query = $derived(queryString(setFilterParams(new URLSearchParams({ metric: key }), filters)));
+
 	const randomMetric = () => {
 		const others = PICKABLE.filter((k) => k !== key);
 		key = others[Math.floor(Math.random() * others.length)];
@@ -52,7 +59,9 @@
 	let mounted = $state(false);
 	let app = $state(false);
 	onMount(() => {
-		const k = new URLSearchParams(location.search).get('metric');
+		const params = new URLSearchParams(location.search);
+		filters = filtersFromParams(params);
+		const k = params.get('metric');
 		if (k && k in METRICS) key = k;
 		else key = PICKABLE[Math.floor(Math.random() * PICKABLE.length)];
 		mounted = true;
@@ -67,12 +76,13 @@
 		mq.addEventListener('change', sync);
 		return () => mq.removeEventListener('change', sync);
 	});
-	// Keep the URL in step, so a reload or a shared link shows the same metric.
+	// Keep the URL in step, so a reload or a shared link shows the same view.
 	$effect(() => {
 		if (!mounted) return;
 		const p = new URLSearchParams(location.search);
 		p.set('metric', key);
-		history.replaceState(history.state, '', `?${p}`);
+		setFilterParams(p, filters);
+		history.replaceState(history.state, '', `?${queryString(p)}`);
 	});
 
 	// ← and → step through the metrics, unless a dialog is open or the reader is typing.
@@ -100,8 +110,9 @@
 		}
 	}
 	async function pickRandomSheet() {
-		const ids = rows.map((/** @type {any} */ r) => r.id).filter((/** @type {string} */ id) => id !== sheet.id);
-		if (await loadSheet(ids[Math.floor(Math.random() * ids.length)])) clicked = false;
+		// Drawn from the finals on show, if there are any.
+		const ids = (filtered.length ? filtered : rows).map((/** @type {any} */ r) => r.id).filter((/** @type {string} */ id) => id !== sheet.id);
+		if (ids.length && await loadSheet(ids[Math.floor(Math.random() * ids.length)])) clicked = false;
 	}
 	// A click on a point in the box plot shows that scoresheet's calculation.
 	async function showSheet(/** @type {string} */ id) {
@@ -109,7 +120,8 @@
 		clicked = true;
 		workedOpen = true;
 	}
-	const sheetCharted = $derived(sheet.competitors.length >= (meta.minN ?? 0));
+	const sheetCharted = $derived(sheet.competitors.length >= (meta.minN ?? 0) &&
+		matches({ m: sheet.judges.length, n: sheet.competitors.length }, filters));
 </script>
 
 <svelte:window onkeydown={onKey} />
@@ -119,11 +131,11 @@
 		<a class="brand" href={link('/')}>WCS judge divergence{#if DRAFT}<span class="draft-tag">DRAFT</span>{/if}</a>
 		<div class="formats" role="group" aria-label="Dance format">
 			{#each Object.values(FORMATS) as f (f.id)}
-				<a href="{link(f.path)}?metric={key}" aria-current={f.id === data.format ? 'page' : undefined}
+				<a href="{link(f.path)}?{query}" aria-current={f.id === data.format ? 'page' : undefined}
 					style:--c={f.colour}>{f.label}</a>
 			{/each}
 		</div>
-		<span class="count small muted">{rows.length} finals, {date(data.info.first_event)} to {date(data.info.last_event)}</span>
+		<span class="count small muted">{#if anyFilters(filters)}{filtered.length} of {/if}{rows.length} finals, {date(data.info.first_event)} to {date(data.info.last_event)}</span>
 		<span class="spacer"></span>
 		<button type="button" class="warn" onclick={() => (limitsOpen = true)}>⚠ Exploratory: read the limitations</button>
 		<button type="button" class="link-btn" onclick={() => (aboutOpen = true)}>About</button>
@@ -175,9 +187,11 @@
 				</div>
 			</div>
 
+			<div class="filters"><FilterBar bind:filters /></div>
+
 			<div class="charts">
 				{#key key}
-					<MetricChart {rows} index={METRIC_KEYS.indexOf(key)} {meta} colour={fmt.colour} format={data.format} fill={app}
+					<MetricChart {rows} index={METRIC_KEYS.indexOf(key)} {meta} colour={fmt.colour} format={data.format} {filters} fill={app}
 						highlight={mounted && sheetCharted ? sheet.id : undefined} onpoint={showSheet} />
 				{/key}
 			</div>
@@ -230,12 +244,14 @@
 		judges’ rankings from each other, and does that vary by division level? It covers
 		<strong>{rows.length} {fmt.label} finals</strong> from {date(data.info.first_event)} to
 		{date(data.info.last_event)}.{#if other}
-			{' '}<a href="{link(other.path)}?metric={key}">{other.label} finals</a> are a click away in the top bar.{/if}
+			{' '}<a href="{link(other.path)}?{query}">{other.label} finals</a> are a click away in the top bar.{/if}
 	</p>
 	<p>
 		There are many ways to measure how far apart rankings are, and they don’t all answer the same question.
 		This uses twelve, in four families. Pick one on the left (or step through them with ← and →); the bar
-		chart shows its mean by level, and the box plot shows every final.
+		chart shows its mean by level, and the box plot shows every final. Field and panel sizes differ between
+		levels, so you can narrow the charts to finals with similar numbers of finalists or judges; the vertical
+		axes stay put, so you can compare.
 	</p>
 	<p>
 		Every number can be checked. Each scoresheet links to its published source, and “How is this
@@ -294,6 +310,7 @@
 	.dot.ok { background: var(--ok); }
 	.dot.bad { background: var(--bad); }
 	.controls { display: flex; flex-wrap: wrap; gap: 0.4em; }
+	.filters { margin-bottom: 0.6em; }
 	.btn.primary { font-weight: 600; border-color: var(--accent); color: var(--accent); }
 
 	.panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8em; margin-top: 0.8em; }

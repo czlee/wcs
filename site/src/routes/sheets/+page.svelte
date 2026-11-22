@@ -1,19 +1,23 @@
 <script>
-	// Every scoresheet on the site, filterable by format, level and text. Filters
+	// Every scoresheet on the site, filterable by format, level, text and size. Filters
 	// come from the URL (?format=jnj&level=adv) so the charts can link here.
 	import { onMount } from 'svelte';
 	import { FORMATS, LEVELS, LEVEL_LABEL } from '#lib/levels.js';
+	import FilterBar from '#lib/components/FilterBar.svelte';
+	import { filtersFromParams, matches, noFilters, queryString, setFilterParams } from '#lib/dimensions.js';
 	import { link, date } from '#lib/format.js';
 
 	let { data } = $props();
 	let format = $state('');
 	let level = $state('');
 	let q = $state('');
+	let filters = $state.raw(noFilters());
 	onMount(() => {
 		const p = new URLSearchParams(location.search);
 		format = p.get('format') ?? '';
 		level = p.get('level') ?? '';
 		q = p.get('q') ?? '';
+		filters = filtersFromParams(p);
 	});
 	// Keep the URL in step, so a filtered list can be shared.
 	$effect(() => {
@@ -21,13 +25,14 @@
 		if (format) p.set('format', format);
 		if (level) p.set('level', level);
 		if (q) p.set('q', q);
-		const s = p.toString();
+		setFilterParams(p, filters);
+		const s = queryString(p);
 		history.replaceState(history.state, '', s ? `?${s}` : location.pathname);
 	});
 	const shown = $derived.by(() => {
 		const words = q.toLowerCase().split(/\s+/).filter(Boolean);
 		return data.list.filter((/** @type {any} */ s) =>
-			(!format || s.format === format) && (!level || s.level === level) &&
+			(!format || s.format === format) && (!level || s.level === level) && matches(s, filters) &&
 			words.every((w) => (s.event + ' ' + s.name).toLowerCase().includes(w)));
 	});
 </script>
@@ -57,6 +62,7 @@
 		<input type="search" bind:value={q} placeholder="Event or division name" />
 	</label>
 </div>
+<FilterBar bind:filters />
 <p class="small muted">{shown.length} of {data.list.length} scoresheets</p>
 
 <div class="table-wrap">
