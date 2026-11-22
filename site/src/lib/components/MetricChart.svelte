@@ -44,7 +44,7 @@
 		const vals = pts.map(val);
 		const small = pts.length < MIN_CELL;
 		const ci = meanCI(vals);
-		// Too few scoresheets for the interval to mean much: show the mean alone.
+		// Too few scoresheets for an interval or a box to mean much: show the mean and the points alone.
 		if (small) ci.lo = ci.hi = NaN;
 		return { level: l, pts, ci, small, box: boxStats(vals), colour: small ? 'var(--text-3)' : colour };
 	});
@@ -55,8 +55,11 @@
 		link(`/sheets/?${queryString(setFilterParams(new URLSearchParams({ format, level }), filters))}`);
 
 	const barY = $derived.by(() => {
-		// Fixed by the unfiltered bars, unless a filtered bar or interval needs more room.
-		const ends = [...byLevelAll, ...byLevel].flatMap((d) => [d.ci.mean, d.ci.lo, d.ci.hi]).filter(Number.isFinite);
+		// Fixed by the unfiltered bars, unless a filtered bar or interval needs more room. Grey
+		// bars don't count (they're clipped), so a handful of finals can't stretch the axis.
+		const all = [...byLevelAll, ...byLevel];
+		const big = all.filter((d) => !d.small);
+		const ends = (big.length ? big : all).flatMap((d) => [d.ci.mean, d.ci.lo, d.ci.hi]).filter(Number.isFinite);
 		const lo = Math.min(0, ...ends);
 		const hi = Math.max(0, ...ends);
 		return scaleLinear().domain([lo, hi]).nice(5).range([H - M.b, M.t]);
@@ -131,6 +134,7 @@
 			<figcaption>{CI_LABEL} (<Term tip="Scoresheets aren’t independent: the same judges sit on many panels, and several divisions come from the same event. The error bars assume independence, so they’re probably too narrow.">provisional</Term>), by level</figcaption>
 			<div class="plot" bind:clientWidth={mw} bind:clientHeight={mh}>
 			<svg viewBox="0 0 {W} {H}" role="img" aria-label="{meta.label} ({meta.higher ? 'higher' : 'lower'} means more agreement): mean by level">
+				<defs><clipPath id="{gid}-bars"><rect x={M.l} y={M.t} width={W - M.l - M.r} height={H - M.b - M.t} /></clipPath></defs>
 				{#each ticks(barY) as t (t)}
 					<line class="grid" x1={M.l} x2={W - M.r} y1={barY(t)} y2={barY(t)} />
 					<text class="tick" x={M.l - 6} y={barY(t)} dy="0.32em" text-anchor="end">{tickFmt(t)}</text>
@@ -142,7 +146,7 @@
 							onmouseenter={(e) => show(e, [`${d.level.label}: mean ${minus(fx(d.ci.mean))}`, d.small ? smallNote : `interval ${minus(fx(d.ci.lo))} to ${minus(fx(d.ci.hi))}`, `${d.ci.n} scoresheets — click to list them`])}
 							onmouseleave={hide} onfocus={(e) => show(e, [`${d.level.label}: mean ${minus(fx(d.ci.mean))}`, `${d.ci.n} scoresheets`])} onblur={hide}>
 							<rect class="hit" x={bx - 4} y={M.t} width={x.bandwidth() + 8} height={H - M.b - M.t} />
-							<path d={bar(bx, x.bandwidth(), barY(0), barY(d.ci.mean))} fill={d.colour} />
+							<path d={bar(bx, x.bandwidth(), barY(0), barY(d.ci.mean))} fill={d.colour} clip-path="url(#{gid}-bars)" />
 							{#if Number.isFinite(d.ci.lo)}
 								<line class="err" x1={bx + x.bandwidth() / 2} x2={bx + x.bandwidth() / 2} y1={barY(d.ci.lo)} y2={barY(d.ci.hi)} />
 								<line class="err" x1={bx + x.bandwidth() * 0.3} x2={bx + x.bandwidth() * 0.7} y1={barY(d.ci.lo)} y2={barY(d.ci.lo)} />
@@ -171,9 +175,9 @@
 				{#each byLevel as d (d.level.id)}
 					{@const bx = /** @type {number} */ (x(d.level.id))}
 					{@const bw = x.bandwidth()}
-					{#if d.box.n}
+					{#if d.box.n && !d.small}
 						<g class="box" role="presentation"
-							onmouseenter={(e) => show(e, [`${d.level.label}, ${d.box.n} scoresheets`, `median ${minus(fx(d.box.median))}`, `quartiles ${minus(fx(d.box.q1))} to ${minus(fx(d.box.q3))}`, `whiskers ${minus(fx(d.box.lowWhisker))} to ${minus(fx(d.box.highWhisker))}`, ...(d.small ? [smallNote] : [])])}
+							onmouseenter={(e) => show(e, [`${d.level.label}, ${d.box.n} scoresheets`, `median ${minus(fx(d.box.median))}`, `quartiles ${minus(fx(d.box.q1))} to ${minus(fx(d.box.q3))}`, `whiskers ${minus(fx(d.box.lowWhisker))} to ${minus(fx(d.box.highWhisker))}`])}
 							onmouseleave={hide}>
 							<line class="whisker" x1={bx + bw / 2} x2={bx + bw / 2} y1={boxY(d.box.lowWhisker)} y2={boxY(d.box.q1)} />
 							<line class="whisker" x1={bx + bw / 2} x2={bx + bw / 2} y1={boxY(d.box.q3)} y2={boxY(d.box.highWhisker)} />

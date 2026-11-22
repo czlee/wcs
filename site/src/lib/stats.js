@@ -22,7 +22,7 @@ export function meanCI(/** @type {number[]} */ xs) {
 	return { n: xs.length, mean: mu, lo: mu - half, hi: mu + half };
 }
 
-/** A group with fewer scoresheets than this is drawn in grey, without an interval. */
+/** A group with fewer scoresheets than this is drawn in grey, without an interval or a box. */
 export const MIN_CELL = 10;
 
 /** Quantile by linear interpolation between order statistics (numpy's default, "type 7"). */

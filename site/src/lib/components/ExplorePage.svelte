@@ -76,13 +76,18 @@
 		mq.addEventListener('change', sync);
 		return () => mq.removeEventListener('change', sync);
 	});
-	// Keep the URL in step, so a reload or a shared link shows the same view.
+	// Keep the URL in step, so a reload or a shared link shows the same view. It waits for a
+	// pause, because dragging the slider changes the filters faster than browsers allow.
 	$effect(() => {
 		if (!mounted) return;
-		const p = new URLSearchParams(location.search);
-		p.set('metric', key);
-		setFilterParams(p, filters);
-		history.replaceState(history.state, '', `?${queryString(p)}`);
+		const view = { key, filters };
+		const timer = setTimeout(() => {
+			const p = new URLSearchParams(location.search);
+			p.set('metric', view.key);
+			setFilterParams(p, view.filters);
+			history.replaceState(history.state, '', `?${queryString(p)}`);
+		}, 200);
+		return () => clearTimeout(timer);
 	});
 
 	// ← and → step through the metrics, unless a dialog is open or the reader is typing.
@@ -135,7 +140,7 @@
 					style:--c={f.colour}>{f.label}</a>
 			{/each}
 		</div>
-		<span class="count small muted">{#if anyFilters(filters)}{filtered.length} of {/if}{rows.length} finals, {date(data.info.first_event)} to {date(data.info.last_event)}</span>
+		<span class="count small muted">{anyFilters(filters) ? `${filtered.length} of ` : ''}{rows.length} finals, {date(data.info.first_event)} to {date(data.info.last_event)}</span>
 		<span class="spacer"></span>
 		<button type="button" class="warn" onclick={() => (limitsOpen = true)}>⚠ Exploratory: read the limitations</button>
 		<button type="button" class="link-btn" onclick={() => (aboutOpen = true)}>About</button>

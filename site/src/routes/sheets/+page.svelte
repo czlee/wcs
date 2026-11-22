@@ -19,7 +19,8 @@
 		q = p.get('q') ?? '';
 		filters = filtersFromParams(p);
 	});
-	// Keep the URL in step, so a filtered list can be shared.
+	// Keep the URL in step, so a filtered list can be shared. It waits for a pause, because
+	// dragging the slider changes the filters faster than browsers allow.
 	$effect(() => {
 		const p = new URLSearchParams();
 		if (format) p.set('format', format);
@@ -27,7 +28,8 @@
 		if (q) p.set('q', q);
 		setFilterParams(p, filters);
 		const s = queryString(p);
-		history.replaceState(history.state, '', s ? `?${s}` : location.pathname);
+		const timer = setTimeout(() => history.replaceState(history.state, '', s ? `?${s}` : location.pathname), 200);
+		return () => clearTimeout(timer);
 	});
 	const shown = $derived.by(() => {
 		const words = q.toLowerCase().split(/\s+/).filter(Boolean);
