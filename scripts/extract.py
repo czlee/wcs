@@ -621,7 +621,9 @@ def main() -> None:
         event_name = record["event_name"]
         event_start = date.fromisoformat(record["event_start"])
         event_end = date.fromisoformat(record["event_end"])
-        local_path = Path(record["local_path"])
+        # Resolve by basename: the manifest stores absolute paths from whichever
+        # checkout downloaded the file, which breaks if the directory is renamed.
+        local_path = DATA_DIR / "raw" / Path(record["local_path"]).name
 
         if NON_WCS_STYLE_RE.search(event_name):
             skips.append((event_name, None, "non-WCS event (name)", url))
