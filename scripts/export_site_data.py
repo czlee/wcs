@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Export the in-scope scoresheets as JSON for the results site (site/).
 
-Reads data/metrics.csv (Phase 3) and data/parsed/{id}.json (Phase 2) and writes,
-in site/src/lib/data/:
+Reads data/metrics.csv (Phase 3), data/parsed/{id}.json (Phase 2) and
+lookups/regions.json (Task 4A) and writes, in site/src/lib/data/:
 
   sheets.json   one entry per in-scope scoresheet: metadata, source URL, judge
                 and competitor names, the judge x competitor rank matrix R, and
@@ -31,6 +31,7 @@ from compute_metrics import build_matrix
 PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 PARSED_DIR = DATA_DIR / "parsed"
+REGIONS_PATH = PROJECT_ROOT / "lookups" / "regions.json"
 OUT_DIR = PROJECT_ROOT / "site" / "src" / "lib" / "data"
 
 FORMATS = {"Jack & Jill": "jnj", "Strictly": "strictly"}
@@ -64,10 +65,13 @@ def main() -> None:
     df = df[df["dance_format"].isin(FORMATS) & df["division_level"].isin(LEVELS)]
     df = df.sort_values(["event_date", "event_name", "competition_name", "id"])
 
+    regions = json.loads(REGIONS_PATH.read_text())
+
     sheets = []
     for row in df.itertuples(index=False):
         doc = json.loads((PARSED_DIR / f"{row.id}.json").read_text())
         R = build_matrix(doc)
+        region = regions.get(doc["event_id"], {})
         sheets.append({
             "id": row.id,
             "format": FORMATS[row.dance_format],
@@ -75,6 +79,8 @@ def main() -> None:
             "event": row.event_name,
             "date": row.event_date,
             "name": row.competition_name,
+            "country": region.get("country"),  # ISO 3166-1 alpha-2, e.g. "DE"
+            "state": region.get("state"),      # ISO 3166-2, US only, e.g. "US-CA"
             "site": row.site,
             "url": row.url,
             "judges": doc["judges"],
