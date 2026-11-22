@@ -96,6 +96,9 @@ _SWITCH_RE = re.compile(r"\bswitch\b|\bswitchly\b|\brole[\s-]?rotation\b", re.IG
 _RISING_STAR_RE = re.compile(r"\brising[\s-]?stars?\b", re.IGNORECASE)
 # Strictly no longer includes switchly — that's handled by _SWITCH_RE above.
 _STRICTLY_RE = re.compile(r"\bstrictly\b", re.IGNORECASE)
+# Master's Choice: a Strictly division where only one partner need be 50+ (not the
+# same field as Masters). Some sites omit "Strictly" from the name.
+_MASTERS_CHOICE_RE = re.compile(r"\bmaster'?s?\s*choice\b", re.IGNORECASE)
 _JNJ_RE = re.compile(
     r"\bjack\s*[&'n]*\s*jill\b|\bjack\s+and\s+jill\b|\bjack[-\s]*n[-\s]*jill\b"
     r"|\bj\s*&\s*j\b|\bjnj\b|\bjandj\b",
@@ -162,6 +165,9 @@ def normalise_level(division_blob: str) -> str | None:
     # to Masters proper, so it is left without a level. "Masters Open" is just Masters.
     if re.search(r"\bmaster", low) and re.search(r"\bnovice\b|\bnov\b|\bnewcomer\b", low):
         return None
+    # "Master's Choice" is a different division (one partner 50+), not Masters.
+    if _MASTERS_CHOICE_RE.search(low):
+        return None
     for label, pat in LEVEL_PATTERNS:
         if re.search(pat, low):
             return label
@@ -204,7 +210,7 @@ def normalise_format(division_blob: str) -> str | None:
 
     if _RISING_STAR_RE.search(division_blob):
         return "Rising Star"
-    if _STRICTLY_RE.search(division_blob):
+    if _STRICTLY_RE.search(division_blob) or _MASTERS_CHOICE_RE.search(division_blob):
         return "Strictly"
     if _JNJ_RE.search(division_blob):
         return "Jack & Jill"
