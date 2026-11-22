@@ -17,9 +17,9 @@
 	/**
 	 * `uncharted` says why a scoresheet isn't in the charts on show (a phrase that follows
 	 * "this scoresheet"), or '' if it is.
-	 * @type {{rows: Row[], selected?: string, uncharted: (r: Row) => string, onpick: (id: string) => void}}
+	 * @type {{rows: Row[], selected?: string, uncharted: (r: Row) => string, onpick: (id: string) => void, ondetails: () => void}}
 	 */
-	let { rows, selected, uncharted, onpick } = $props();
+	let { rows, selected, uncharted, onpick, ondetails } = $props();
 	const MAX_SHOWN = 50;
 	const id = $props.id();
 
@@ -128,10 +128,13 @@
 {#snippet marked(/** @type {string} */ text, /** @type {Set<number> | undefined} */ hits)}{#each runs(text, hits) as r, i (i)}{#if r.hit}<mark>{r.text}</mark>{:else}{r.text}{/if}{/each}{/snippet}
 
 <div class="picker">
-	<label for="{id}-input">
-		<svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.2" /></svg>
-		Example scoresheet
-	</label>
+	<div class="top">
+		<label for="{id}-input">
+			<svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.2" /></svg>
+			Highlighted scoresheet
+		</label>
+		<button type="button" class="open" disabled={!current} onclick={ondetails}>details</button>
+	</div>
 	<div class="box">
 		<input bind:this={input} id="{id}-input" type="text" role="combobox" autocomplete="off" spellcheck="false"
 			placeholder="Choose an event…" aria-autocomplete="list" aria-expanded={open} aria-controls="{id}-list"
@@ -176,8 +179,11 @@
 <style>
 	.picker { width: 25em; max-width: 100%; font-size: 0.82rem; }
 	.box { position: relative; margin: 0.2em 0; }
-	label { display: flex; align-items: center; gap: 0.4em; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); }
-	label svg { fill: none; stroke: var(--text); stroke-width: 1.8; }
+	.top { display: flex; align-items: baseline; gap: 0.7em; }
+	.open { font: inherit; padding: 0; border: 0; background: none; color: var(--accent); text-decoration: underline; cursor: pointer; }
+	/* The text, not the ring, sets the label's baseline, which "details" lines up with. */
+	label { display: flex; align-items: baseline; gap: 0.4em; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); }
+	label svg { align-self: center; fill: none; stroke: var(--text); stroke-width: 1.8; }
 	input {
 		box-sizing: border-box; width: 100%; margin: 0; padding: 0.3em 0.55em; font: inherit; font-size: 0.9rem;
 		text-overflow: ellipsis; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px;

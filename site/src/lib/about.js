@@ -16,7 +16,7 @@ export const ABOUT = {
 		what: 'Spearman’s rank correlation between two judges’ rankings, averaged over every pair of judges on the panel. It’s based on the squared differences between the ranks the two judges gave each competitor.',
 		reading: '1 means identical rankings, −1 means one is the reverse of the other, and random judging averages 0, whatever the panel size. Higher is more agreement.',
 		caveats: [
-			'For any one scoresheet it carries the same information as Kendall’s W (ρ̄ = (mW − 1)/(m − 1)), rescaled so that chance is 0 for every panel size.'
+			'For any one scoresheet it carries the same information as Kendall’s W (with m judges, ρ̄ = (mW − 1)/(m − 1)), rescaled so that chance is 0 for every panel size.'
 		]
 	},
 	mean_pairwise_tau: {
@@ -72,7 +72,7 @@ export const ABOUT = {
 	},
 	mean_abs_rank_dev_median: {
 		what: 'For each competitor, the average distance (in places) between each judge’s rank and the median of the ranks they got. Averaged over competitors.',
-		reading: '0 means every judge gave every competitor the same rank. In places, so lower is more agreement. It’s never more than the MAD from the mean.',
+		reading: '0 means every judge gave every competitor the same rank. In places, so lower is more agreement. It’s never more than the mean absolute deviation from the mean.',
 		caveats: [
 			'In places and not scaled to the field size: 2 places apart means more in a final of 8 than in a final of 20, and bigger finals spread further by chance. Field sizes differ between levels.'
 		]
@@ -85,7 +85,7 @@ export const ABOUT = {
 		]
 	},
 	sd_rank: {
-		what: 'For each competitor, the standard deviation of the ranks they got (dividing by the number of judges). Averaged over competitors. It gives more weight than the MADs to one judge who is far from the rest.',
+		what: 'For each competitor, the standard deviation of the ranks they got (dividing by the number of judges). Averaged over competitors. It gives more weight than the mean absolute deviations do to one judge who is far from the rest.',
 		reading: '0 means every judge gave every competitor the same rank. In places, so lower is more agreement.',
 		caveats: [
 			'In places and not scaled to the field size: 2 places apart means more in a final of 8 than in a final of 20, and bigger finals spread further by chance. Field sizes differ between levels.'

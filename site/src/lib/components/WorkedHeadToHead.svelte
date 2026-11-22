@@ -9,7 +9,8 @@
 
 	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus?: string}} */
 	let { sheet, focus } = $props();
-	// τ̄ and τ distance are always shown together; with `focus` on τ̄, the τ distance part is dimmed.
+	// τ distance is worked out from τ̄, so its working includes τ̄'s. With `focus` on τ̄, the τ distance
+	// part is dimmed.
 	const m = $derived(sheet.judges.length), n = $derived(sheet.competitors.length);
 	const pairs = $derived(judgePairs(m));
 	const tau = (/** @type {number} */ a, /** @type {number} */ b) => kendallTau(sheet.R[a], sheet.R[b]).tau;
@@ -24,6 +25,9 @@
 	const order = $derived(sheet.competitors.map((_, i) => i).toSorted((x, y) => sheet.R[selTau[0]][x] - sheet.R[selTau[0]][y]));
 </script>
 
+{#if focus === 'tau_distance'}
+	<p class="lede small">The τ distance is worked out from Kendall’s τ, so this starts with τ and converts it at the end.</p>
+{/if}
 <h4>Kendall’s τ, step by step</h4>
 <p>
 	Take two judges and any two competitors. If both judges put the same one of the two ahead, that
@@ -72,23 +76,27 @@
 		<Tex display tex={String.raw`\tau = \frac{${kt.C} - ${kt.D}}{${kt.pairs}} = ${fx(kt.tau)}`} />
 	{/snippet}
 </PairMatrix>
-<p>The analysis averages <Tex tex={String.raw`\tau`} /> over all {pairs.length} pairs of judges:</p>
+<p>
+	The mean pairwise Kendall τ, written <Tex tex={String.raw`\bar\tau`} />, is the mean of
+	<Tex tex={String.raw`\tau`} /> over all {pairs.length} pairs of judges:
+</p>
 <Check label="τ̄" tex={String.raw`\bar\tau`} js={tauBar} py={sheet.py.mean_pairwise_tau} />
 
 <div class:dim={focus === 'mean_pairwise_tau'}>
-<h4>Kendall τ distance</h4>
+<h4>{focus === 'mean_pairwise_tau' ? 'For comparison: Kendall τ distance' : 'Kendall τ distance'}</h4>
 <p>
 	The τ distance is <Tex tex={String.raw`\frac{1 - \bar\tau}{2}`} />. It’s the same information as
 	<Tex tex={String.raw`\bar\tau`} />, turned around and rescaled: for a single pair of judges,
 	<Tex tex={String.raw`\frac{1 - \tau}{2}`} /> is exactly the share of competitor pairs they order differently
-	(discordant ÷ total). It’s included because “judges disagree on {fx(((1 - tauBar) / 2) * 100, 0)}% of
-	head-to-heads” is easier to read than <Tex tex={String.raw`\bar\tau`} /> itself.
+	(discordant ÷ total). So it can be read as “on average, two judges disagree on
+	{fx(((1 - tauBar) / 2) * 100, 0)}% of head-to-heads”. Lower is more agreement.
 </p>
 <Tex display tex={String.raw`\tau\text{ distance} = \frac{1 - \bar\tau}{2} = \frac{1 - ${tp(+fx(tauBar))}}{2} = ${fx((1 - tauBar) / 2)}`} />
 <Check label="τ distance" tex={String.raw`\tau\text{ distance}`} js={(1 - tauBar) / 2} py={sheet.py.tau_distance} />
 </div>
 
 <style>
+	.lede { color: var(--text-2); }
 	.grid { font-size: 0.75rem; }
 	.grid th, .grid td { padding: 0.1em 0.25em; text-align: center; }
 	.grid .rh { text-align: left; white-space: nowrap; max-width: 9em; overflow: hidden; text-overflow: ellipsis; }

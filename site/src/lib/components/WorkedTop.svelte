@@ -10,7 +10,7 @@
 	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus?: string}} */
 	let { sheet, focus } = $props();
 	// With `focus` (a metric key), the working for the other metrics is still shown alongside
-	// (overlap and Jaccard explain each other), but dimmed.
+	// (overlap and Jaccard explain each other), but dimmed, and a note says which is which.
 	const ov = $derived(!focus || focus.startsWith('overlap'));
 	const jc = $derived(!focus || focus.startsWith('jaccard'));
 	const cc = $derived(!focus || focus.endsWith('_cc'));
@@ -38,10 +38,17 @@
 </script>
 
 <p>
-	These ignore the order within the top places and ask only <em>who</em> made them. For a pair of judges,
-	take the sets <Tex tex="A" /> and <Tex tex="B" /> of competitors each ranked 1st to {N}rd, and count how
-	many are in both.
+	{focus ? 'This metric ignores' : 'These ignore'} the order within the top {N} places and {focus ? 'asks' : 'ask'} only
+	<em>who</em> made them. For a pair of judges, take the sets <Tex tex="A" /> and <Tex tex="B" /> of competitors each
+	ranked 1st to {N}rd, and count how many are in both. There are two ways to turn that into a score: the overlap
+	divides it by {N}, and the Jaccard index divides it by how many are in either set.
 </p>
+{#if focus}
+	<p class="small muted">
+		The metric you’re looking at is the {ov ? 'overlap' : 'Jaccard index'}{cc ? ', corrected for chance (the last step)' : ', without a correction for chance'}.
+		The {ov ? 'Jaccard index' : 'overlap'} {cc ? 'is' : 'and the chance correction are'} dimmed, for comparison.
+	</p>
+{/if}
 {#snippet pair(/** @type {string} */ o, /** @type {string} */ j, inner = false)}
 	<div class="eqs">
 		<div class:dim={inner ? dimO : !ov}><Tex display tex={o} /></div>
@@ -80,6 +87,7 @@
 	{/snippet}
 </PairMatrix>
 <p class="small muted">Cells show how many competitors are in both judges’ top {N}, out of {N}.</p>
+<p>Averaging over all {pairs.length} pairs of judges:</p>
 <div class:dim={!ov}><Check label="Mean overlap @ {N}" js={overlap} py={sheet.py.overlap_at_3} /></div>
 <div class:dim={!jc}><Check label="Mean Jaccard @ {N}" js={jaccard} py={sheet.py.jaccard_at_3} /></div>
 
@@ -87,12 +95,12 @@
 <h4>Correcting for chance</h4>
 <p>
 	Two judges picking their top {N} at random would still share some competitors, and more often in a small
-	final. If each judge’s top {N} were a random {N} of the {n} competitors, the number in both,
+	final. If each judge’s top {N} were a random {N} of the <Tex tex={`n = ${n}`} /> competitors, the number in both,
 	<Tex tex="i" />, would follow a hypergeometric distribution, with expected values
 </p>
 <div class:dim={dimO}><Tex display tex={String.raw`\mathbb{E}[\text{overlap}] = \frac{${N}}{n} = \frac{${N}}{${n}} = ${fx(chance.overlap)}`} /></div>
 <div class:dim={dimJ}><Tex display tex={String.raw`\mathbb{E}[\text{Jaccard}] = \sum_i \frac{\binom{${N}}{i}\binom{n-${N}}{${N}-i}}{\binom{n}{${N}}} \cdot \frac{i}{${2 * N} - i} = ${chance.terms.map((c) => `${fx(c.p)} \\cdot ${fx(c.jaccard)}`).join(' + ')} = ${fx(chance.jaccard)}`} /></div>
-<p>The corrected value scales each mean so that 0 is chance-level agreement and 1 is identical top {N}s:</p>
+<p>The corrected value rescales the mean over judge pairs, <Tex tex="x" />, so that 0 is chance-level agreement and 1 is identical top {N}s:</p>
 <Tex display tex={String.raw`\text{corrected} = \frac{x - \mathbb{E}[x]}{1 - \mathbb{E}[x]}`} />
 {@render pair(String.raw`\text{overlap} = \frac{${tx(overlap)} - ${fx(chance.overlap)}}{1 - ${fx(chance.overlap)}} = ${tx(overlapCC)}`, String.raw`\text{Jaccard} = \frac{${tx(jaccard)} - ${fx(chance.jaccard)}}{1 - ${fx(chance.jaccard)}} = ${tx(jaccardCC)}`, true)}
 <div class:dim={dimO}><Check label="Mean overlap @ {N}, chance-corrected" js={overlapCC} py={sheet.py.overlap_at_3_cc} /></div>
@@ -100,15 +108,16 @@
 <p class="small muted">
 	This is a naive, first-pass correction. Real judges’ top {N}s aren’t random: they’re drawn towards the
 	same strong competitors, more so in some fields than others. So it removes the chance level but not every
-	way field size affects these metrics.
+	way field size affects the result.
 </p>
 </div>
 {#if n < minN}
 	<p class="callout small">
 		With only {n} competitors, any two top-{N} sets must share at least
 		<Tex tex={String.raw`2 \times ${N} - ${n} = ${2 * N - n}`} />
-		{2 * N - n === 1 ? 'competitor' : 'competitors'}, so these metrics can’t reach their full range.
-		Finals of fewer than {minN} are left out of the top-{N} charts.
+		{2 * N - n === 1 ? 'competitor' : 'competitors'}, so {focus ? 'this metric' : 'these metrics'} can’t reach
+		{focus ? 'its' : 'their'} full range. Finals of fewer than {minN} are left out of the charts for
+		{focus ? 'this metric' : 'these metrics'}.
 	</p>
 {/if}
 

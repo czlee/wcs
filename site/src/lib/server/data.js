@@ -9,6 +9,7 @@ import { METRICS, METRIC_KEYS } from '#lib/families.js';
  * @typedef {{id: string, format: string, level: string, event: string, date: string, name: string,
  *   country: string | null, state: string | null, site: string, url: string, judges: string[], competitors: string[], R: number[][],
  *   py: Record<string, number>}} Sheet
+ * @typedef {Sheet & {percentiles: Record<string, import('#lib/percentiles.js').Percentile>}} Profile
  */
 
 /** @type {Sheet[]} */
@@ -90,10 +91,10 @@ function bisect(/** @type {number[]} */ a, /** @type {number} */ x, strict = fal
  * the group with less agreement, plus half of those tied with it (itself
  * included). Values within 1e-9 count as tied, so floating-point noise doesn't
  * split ties. A metric is missing where the scoresheet is left out of its charts.
- * @returns {Record<string, {pct: number, of: number}>}
+ * @returns {Record<string, import('#lib/percentiles.js').Percentile>}
  */
 export function percentiles(/** @type {Sheet} */ s) {
-	/** @type {Record<string, {pct: number, of: number}>} */
+	/** @type {Record<string, import('#lib/percentiles.js').Percentile>} */
 	const out = {};
 	for (const k of METRIC_KEYS) {
 		const g = groups.get(`${s.format}/${k}`);
@@ -105,3 +106,9 @@ export function percentiles(/** @type {Sheet} */ s) {
 	}
 	return out;
 }
+
+/**
+ * A scoresheet with its percentiles: what the explorer's dialogs show.
+ * @returns {Profile}
+ */
+export const profile = (/** @type {Sheet} */ s) => ({ ...s, percentiles: percentiles(s) });

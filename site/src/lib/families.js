@@ -21,7 +21,7 @@ export const METRICS = {
 	jaccard_at_3: { key: 'jaccard_at_3', label: 'Mean Jaccard @ 3', short: 'Jaccard@3', higher: true, minN: 6, hidden: true },
 	mean_abs_rank_dev_mean: { key: 'mean_abs_rank_dev_mean', label: 'Mean abs. rank deviation from the mean', short: 'MAD (mean)', higher: false },
 	mean_abs_rank_dev_median: { key: 'mean_abs_rank_dev_median', label: 'Mean abs. rank deviation from the median', short: 'MAD (median)', higher: false },
-	sd_rank: { key: 'sd_rank', label: 'SD of ranks', short: 'SD', higher: false }
+	sd_rank: { key: 'sd_rank', label: 'Standard deviation of ranks', short: 'standard deviation', higher: false }
 };
 
 /**

@@ -19,7 +19,7 @@
 	// views with different filters can be compared by eye.
 	// `onpoint`, where given, is called with a point's scoresheet id when it's clicked;
 	// otherwise a click opens that scoresheet's page.
-	// `highlight`, a scoresheet id, rings that scoresheet's point (the explorer's worked example).
+	// `highlight`, a scoresheet id, rings that scoresheet's point (the explorer's highlighted scoresheet).
 	// With `fill`, the charts take the size of their container (which must have a height) and
 	// draw at true pixel size; otherwise they keep a fixed shape and scale with the width.
 	let { rows: allRows, index, meta, colour, format, filters = noFilters(), highlight, fill = false, onpoint } = $props();

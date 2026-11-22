@@ -2,7 +2,8 @@
 	// The explorer: one metric at a time for one dance format. On a large screen it's
 	// an app that fills the window: a top bar, a metric rail, then the metric's bar
 	// chart and box plot filling the space, with what it measures and its caveats
-	// underneath. The intro, the limitations and the working are dialogs. The metric
+	// underneath. The intro, the limitations, the working and a scoresheet's profile are
+	// dialogs, which can lead to each other: one is open at a time. The metric
 	// is in the URL (?metric=…); without one, a random metric that isn't `hidden` is
 	// picked on load. The filters are in the URL too (see lib/dimensions.js). Smaller screens get a plain scrolling page for now.
 	import { onMount } from 'svelte';
@@ -10,7 +11,11 @@
 	import FilterBar from './FilterBar.svelte';
 	import MetricChart from './MetricChart.svelte';
 	import Modal from './Modal.svelte';
+	import MetricsTable from './MetricsTable.svelte';
+	import RankMatrix from './RankMatrix.svelte';
+	import SheetMeta from './SheetMeta.svelte';
 	import SheetPicker from './SheetPicker.svelte';
+	import Standing from './Standing.svelte';
 	import WorkedSquared from './WorkedSquared.svelte';
 	import WorkedHeadToHead from './WorkedHeadToHead.svelte';
 	import WorkedTop from './WorkedTop.svelte';
@@ -48,9 +53,10 @@
 
 	const step = (/** @type {number} */ d) => (key = ORDER[(ORDER.indexOf(key) + d + ORDER.length) % ORDER.length]);
 
-	let workedOpen = $state(false);
-	let aboutOpen = $state(false);
-	let limitsOpen = $state(false);
+	/** @typedef {'worked' | 'profile' | 'about' | 'limits'} Dialog */
+	let dialog = $state(/** @type {Dialog | null} */ (null));
+	// A dialog that closes because another has replaced it mustn't close its replacement.
+	const closed = (/** @type {Dialog} */ d) => { if (dialog === d) dialog = null; };
 	const INTRO_SEEN = 'wcs-explore-intro-seen';
 
 	let mounted = $state(false);
@@ -65,7 +71,7 @@
 		pickRandomSheet();
 		// The intro opens by itself on a first visit only.
 		try {
-			if (!localStorage.getItem(INTRO_SEEN)) { aboutOpen = true; localStorage.setItem(INTRO_SEEN, '1'); }
+			if (!localStorage.getItem(INTRO_SEEN)) { dialog = 'about'; localStorage.setItem(INTRO_SEEN, '1'); }
 		} catch { /* storage blocked: skip the intro */ }
 		const mq = matchMedia(APP_QUERY);
 		const sync = () => (app = mq.matches);
@@ -90,16 +96,16 @@
 	// ← and → step through the metrics, unless a dialog is open or the reader is typing.
 	const onKey = (/** @type {KeyboardEvent} */ e) => {
 		if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-		if (workedOpen || aboutOpen || limitsOpen) return;
+		if (dialog) return;
 		if (/** @type {HTMLElement} */ (e.target).closest('input, select, textarea')) return;
 		if (e.key === 'ArrowRight') { step(1); e.preventDefault(); }
 		else if (e.key === 'ArrowLeft') { step(-1); e.preventDefault(); }
 	};
 
-	// The scoresheet "How is this calculated?" works through: one chosen at random on load
-	// (the fallback until it arrives), the one picked in the "Example scoresheet" box, or the
+	// The scoresheet "How is this calculated?" works through, and whose profile can be opened: one chosen at random on load
+	// (the fallback until it arrives), the one picked in the "Highlighted scoresheet" box, or the
 	// one whose point was clicked in the box plot.
-	let sheet = $derived(/** @type {import('#lib/server/data.js').Sheet} */ (data.fallback));
+	let sheet = $derived(/** @type {import('#lib/server/data.js').Profile} */ (data.fallback));
 	let source = $state(/** @type {'random' | 'picked' | 'clicked'} */ ('random'));
 	let loading = $state(false);
 	let request = 0;
@@ -129,7 +135,12 @@
 	async function showSheet(/** @type {string} */ id) {
 		if (id !== sheet.id && !(await loadSheet(id))) return;
 		source = 'clicked';
-		workedOpen = true;
+		dialog = 'worked';
+	}
+	// A click on a metric in a scoresheet's profile shows its working.
+	function showMetric(/** @type {string} */ k) {
+		key = k;
+		dialog = 'worked';
 	}
 	/** Why a scoresheet isn't in the charts on show, or '' if it is. */
 	const uncharted = (/** @type {import('#lib/dimensions.js').Countable} */ r) =>
@@ -138,6 +149,14 @@
 </script>
 
 <svelte:window onkeydown={onKey} />
+
+{#snippet metricOptions()}
+	{#each FAMILIES as f (f.id)}
+		<optgroup label={f.title}>
+			{#each f.metrics as k (k)}<option value={k}>{METRICS[k].label}</option>{/each}
+		</optgroup>
+	{/each}
+{/snippet}
 
 <div class="explorer" class:app>
 	<header class="topbar">
@@ -150,8 +169,8 @@
 		</div>
 		<span class="count small muted">{anyFilters(filters) ? `${filtered.length} of ` : ''}{rows.length} finals, {date(data.info.first_event)} to {date(data.info.last_event)}</span>
 		<span class="spacer"></span>
-		<button type="button" class="warn" onclick={() => (limitsOpen = true)}>⚠ Exploratory: read the limitations</button>
-		<button type="button" class="link-btn" onclick={() => (aboutOpen = true)}>About</button>
+		<button type="button" class="warn" onclick={() => (dialog = 'limits')}>⚠ Exploratory: read the limitations</button>
+		<button type="button" class="link-btn" onclick={() => (dialog = 'about')}>About</button>
 		<a class="small" href={link(fmt.longPath)}>Long-form page</a>
 		<a class="small" href={link('/sheets/')}>All scoresheets</a>
 	</header>
@@ -160,13 +179,7 @@
 		<nav class="rail" aria-label="Metrics">
 			<label class="select">
 				<span class="small muted">Metric</span>
-				<select bind:value={key}>
-					{#each FAMILIES as f (f.id)}
-						<optgroup label={f.title}>
-							{#each f.metrics as k (k)}<option value={k}>{METRICS[k].label}</option>{/each}
-						</optgroup>
-					{/each}
-				</select>
+				<select bind:value={key}>{@render metricOptions()}</select>
 			</label>
 			<div class="list">
 				{#each FAMILIES as f (f.id)}
@@ -185,20 +198,18 @@
 		<section class="view">
 			<div class="head">
 				<div class="heading">
-					<p class="kicker">{family.title}</p>
 					<div class="title">
 						<h1 class="metric">{meta.label}</h1>
-						<button type="button" class="btn primary" onclick={() => (workedOpen = true)}>How is this calculated?</button>
+						<button type="button" class="btn primary" onclick={() => (dialog = 'worked')}>How is this calculated?</button>
 					</div>
 					<p class="direction small">
 						<span class="dot" class:ok={meta.higher} class:bad={!meta.higher}></span>
 						{meta.higher ? 'Higher' : 'Lower'} means more agreement{#if meta.minN}{' · '}finals of {meta.minN} or more competitors{/if}
 					</p>
+					<div class="filters"><FilterBar bind:filters /></div>
 				</div>
-				<SheetPicker {rows} selected={mounted ? sheet.id : undefined} {uncharted} onpick={pickSheet} />
+				<SheetPicker {rows} selected={mounted ? sheet.id : undefined} {uncharted} onpick={pickSheet} ondetails={() => (dialog = 'profile')} />
 			</div>
-
-			<div class="filters"><FilterBar bind:filters /></div>
 
 			<div class="charts">
 				{#key key}
@@ -213,7 +224,7 @@
 					<p>{about.what}</p>
 					<p>
 						{about.reading}
-						<button type="button" class="link-btn" onclick={() => (workedOpen = true)}>Learn more</button>
+						<button type="button" class="link-btn" onclick={() => (dialog = 'worked')}>Learn more</button>
 					</p>
 				</div>
 				<div class="panel">
@@ -223,7 +234,7 @@
 					{/if}
 					<p class="small muted">
 						{about.caveats.length ? 'Also see the' : 'See the'}
-						<button type="button" class="link-btn" onclick={() => (limitsOpen = true)}>limitations</button>
+						<button type="button" class="link-btn" onclick={() => (dialog = 'limits')}>limitations</button>
 						that apply to every metric: panel and field sizes differ between levels, scoresheets aren’t
 						independent, and more.
 					</p>
@@ -233,24 +244,43 @@
 	</div>
 </div>
 
-<Modal bind:open={workedOpen} kicker="How is this calculated?" title={meta.label} wide>
+{#snippet metricHeading()}
+	<select class="pick-metric" aria-label="Metric" bind:value={key}>{@render metricOptions()}</select>
+{/snippet}
+
+<Modal bind:open={() => dialog === 'worked', () => closed('worked')} kicker="How is this calculated?" title={meta.label}
+	heading={metricHeading} view={key} wide>
 	<p class="sheet">
 		<strong>{sheet.name}</strong> ({date(sheet.date)}){#if mounted && sheetCharted}, ringed in the box plot{/if}
+		· <button type="button" class="link-btn" onclick={() => (dialog = 'profile')}>details</button>
 	</p>
 	<p class="sheet-links small">
 		{{ random: 'A scoresheet chosen at random.', picked: 'The scoresheet you chose.', clicked: 'The scoresheet you clicked.' }[source]}
 		To see another, close this and choose an event or click a point in the box plot, or
-		<button class="link-btn" onclick={pickRandomSheet} disabled={loading}>{loading ? 'loading…' : 'pick one at random'}</button>. ·
-		<a href={link(`/sheet/${sheet.id}/`)}>All metrics for this scoresheet</a>
+		<button type="button" class="link-btn" onclick={pickRandomSheet} disabled={loading}>{loading ? 'loading…' : 'pick one at random'}</button>.
 	</p>
+	<Standing {sheet} metric={key} />
 	{#key `${sheet.id}/${key}`}<Worked {sheet} focus={key} />{/key}
 </Modal>
 
-<Modal bind:open={limitsOpen} kicker="Before you read anything into this" title="Reasons these comparisons might mislead">
+<Modal bind:open={() => dialog === 'profile', () => closed('profile')} kicker="Scoresheet profile" title={sheet.name} wide>
+	<SheetMeta {sheet} />
+	<RankMatrix {sheet} caption="Each judge’s ranks (1 = first), competitors in the order on the scoresheet" />
+	<h3>Every metric for this scoresheet</h3>
+	<p class="small">
+		Choose a metric to see its working. A <span class="tick">✓</span> means that recalculating it in your browser
+		gives the value used in the charts. The percentile compares this final with all {fmt.label} finals, at every
+		level and whatever the filters: 100th is the most agreement, whichever way the metric runs. It isn’t adjusted for
+		field or panel size, so for example a small final tends to rank high on the metrics measured in places.
+	</p>
+	<MetricsTable {sheet} percentiles={sheet.percentiles} current={key} onmetric={showMetric} />
+</Modal>
+
+<Modal bind:open={() => dialog === 'limits', () => closed('limits')} kicker="Before you read anything into this" title="Reasons these comparisons might mislead">
 	<Limitations info={data.info} bare />
 </Modal>
 
-<Modal bind:open={aboutOpen} kicker="About" title="How much do WCS judges disagree?">
+<Modal bind:open={() => dialog === 'about', () => closed('about')} kicker="About" title="How much do WCS judges disagree?">
 	<p class="byline">By Chuan-Zheng Lee<span class="credit">, with implementation by Claude</span></p>
 	<p>
 		In a West Coast Swing final, every judge ranks every competitor, and relative placement combines those
@@ -268,17 +298,17 @@
 		axes stay put, so you can compare.
 	</p>
 	<p>
-		Every number can be checked. Each scoresheet links to its published source, and “How is this
-		calculated?” recalculates the metric in your browser, step by step, and checks the result against the
-		analysis. Choose an example scoresheet at the top right to ring it in the box plot and work through it;
-		or click a point in the box plot for its working, or a bar to list its finals.
+		Every number can be checked. “How is this calculated?” recalculates the metric in your browser, step by
+		step, and checks the result against the analysis. Choose a scoresheet to highlight at the top right, to ring it
+		in the box plot and work through it; its “details” show the judges’ rankings, every metric and a link to
+		the published scoresheet. Or click a point in the box plot for its working, or a bar to list its finals.
 	</p>
 	<p class="callout small">
 		<strong>This is exploratory.</strong> Panel and field sizes differ between levels, and most of these
-		metrics depend on them. <button type="button" class="link-btn" onclick={() => { aboutOpen = false; limitsOpen = true; }}>Read the limitations</button>
+		metrics depend on them. <button type="button" class="link-btn" onclick={() => (dialog = 'limits')}>Read the limitations</button>
 		before reading anything into a difference.
 	</p>
-	<p><button type="button" class="btn primary" onclick={() => (aboutOpen = false)}>Start exploring</button></p>
+	<p><button type="button" class="btn primary" onclick={() => (dialog = null)}>Start exploring</button></p>
 </Modal>
 
 <style>
@@ -317,9 +347,8 @@
 	.list button.hidden-metric { font-style: italic; }
 
 	.view { min-width: 0; }
-	.head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 0.6em 1.5em; margin-bottom: 0.6em; }
-	.kicker { margin: 0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); }
-	h1.metric { margin: 0.05em 0 0.1em; font-size: 1.5rem; }
+	.head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: 0.6em 1.5em; margin-bottom: 0.6em; padding-bottom: 0.6em; border-bottom: 1px solid var(--border); }
+	h1.metric { margin: 0 0 0.1em; font-size: 1.5rem; }
 	.direction { margin: 0; color: var(--text-2); }
 	.dot { display: inline-block; width: 0.6em; height: 0.6em; border-radius: 50%; margin-right: 0.2em; }
 	.dot.ok { background: var(--ok); }
@@ -328,7 +357,7 @@
 	.heading { flex: 1 1 18em; }
 	.title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2em 0.9em; }
 	.title .btn { font-size: 0.75rem; padding: 0.175em 0.75em; }
-	.filters { margin-bottom: 0.6em; }
+	.filters { margin-top: 0.5em; }
 	.btn.primary { font-weight: 600; border-color: var(--accent); color: var(--accent); }
 
 	.panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8em; margin-top: 0.8em; }
@@ -339,7 +368,14 @@
 	.panel ul { margin: 0.25em 0; padding-left: 1.2em; }
 	.panel li + li { margin-top: 0.2em; }
 
+	/* The metric's name in the dialog's title, as a dropdown (as wide as its longest option). */
+	.pick-metric {
+		font: inherit; max-width: 100%; margin: 0 0 0 -0.3em; padding: 0.05em 0.5em 0.05em 0.2em; text-overflow: ellipsis;
+		color: inherit; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; cursor: pointer;
+	}
+	.pick-metric:hover { border-color: var(--text-3); }
 	.sheet { margin-bottom: 0.1em; }
+	.tick { color: var(--ok); }
 	.sheet-links { margin-top: 0; color: var(--text-2); }
 	.byline { margin-top: 0.2em; color: var(--text-2); font-size: 0.9rem; }
 	.byline .credit { color: var(--text-3); }

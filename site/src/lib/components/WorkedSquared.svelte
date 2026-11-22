@@ -11,7 +11,8 @@
 
 	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus?: string}} */
 	let { sheet, focus } = $props();
-	// With `focus` (a metric key), only that metric's working is shown; without it, the whole family's.
+	// With `focus` (a metric key), only that metric's working is shown, and it must make sense on
+	// its own; without it, the whole family's.
 	const on = (/** @type {string[]} */ ...ks) => !focus || ks.includes(focus);
 	const w = $derived(kendallW(sheet.R));
 	const m = $derived(w.m), n = $derived(w.n);
@@ -32,14 +33,15 @@
 </script>
 
 <p class="lede small">
-	All three metrics here are built from <strong>squared</strong> rank gaps, so one big disagreement counts
-	for more than several small ones adding up to the same number of places.
+	{focus ? 'This metric is' : 'All three metrics here are'} built from <strong>squared</strong> rank gaps, so one
+	big disagreement counts for more than several small ones adding up to the same number of places.
 </p>
 
 {#if on('kendall_w')}
 <h4>Kendall’s W, step by step</h4>
 <p>
-	Add up the ranks each competitor got from the {m} judges. If the judges agreed completely, these
+	This final has <Tex tex={`m = ${m}`} /> judges and <Tex tex={`n = ${n}`} /> competitors. Add up the ranks each
+	competitor got from the {m} judges. If the judges agreed completely, these
 	rank sums would be as far apart as they can get: one competitor would get {m} firsts (a sum of {m}),
 	the next {m} seconds (a sum of {2 * m}), and so on. If the judges’ rankings had nothing in common, every
 	competitor’s sum would tend towards the same middle value,
@@ -74,7 +76,8 @@
 	<Term tip="Spearman’s rank correlation: 1 if two rankings are identical, −1 if one is the reverse of the other, about 0 if unrelated.">Spearman’s <Tex tex={String.raw`\rho`} /></Term>
 	compares two judges’ rankings. For each competitor, take the difference <Tex tex="d" /> between the two
 	ranks, and add up the squares, <Tex tex={String.raw`\sum d^2`} />. That’s 0 if the rankings are identical,
-	and at most <Tex tex={String.raw`\tfrac{1}{3}\,n(n^2 - 1)`} />, when one ranking is the reverse of the other.
+	and with <Tex tex={`n = ${n}`} /> competitors it’s at most
+	<Tex tex={String.raw`\tfrac{1}{3}\,n(n^2 - 1) = ${sp.denom / 3}`} />, when one ranking is the reverse of the other.
 	ρ divides <Tex tex={String.raw`\sum d^2`} /> by that maximum and rescales it to run from 1 (identical) to
 	−1 (reversed):
 </p>
@@ -104,53 +107,57 @@
 		<Tex display tex={String.raw`\rho = 1 - 2 \times \frac{${sp.d2}}{\tfrac{1}{3} \times ${n} \times (${n}^2 - 1)} = 1 - 2 \times \frac{${sp.d2}}{${sp.denom / 3}} = ${fx(sp.rho)}`} />
 	{/snippet}
 </PairMatrix>
-<p>The metric is the mean of these values over all {pairs.length} pairs of judges:</p>
+<p>The metric, <Tex tex={String.raw`\bar\rho`} />, is the mean of these values over all {pairs.length} pairs of judges:</p>
 <Tex display tex={String.raw`\bar\rho = \frac{1}{${pairs.length}} \sum_{\text{pairs}} \rho = \frac{${fx(pairSum)}}{${pairs.length}} = ${fx(pairMean)}`} />
 <Check label="ρ̄" tex={String.raw`\bar\rho`} js={pairMean} py={sheet.py.mean_pairwise_rho} />
 <p>
-	Unlike <Tex tex="W" />, <Tex tex={String.raw`\bar\rho`} /> averages 0 if the judges rank at random, whatever
-	the panel size, so it’s the fairer of the two for comparing panels of different sizes.
+	If the judges ranked at random, <Tex tex={String.raw`\bar\rho`} /> would average 0, whatever the panel size, so
+	panels of different sizes are compared fairly in that respect.
 </p>
 <aside class="aside small">
-	<strong>A curiosity, and a cross-check:</strong> for rankings without ties, the mean pairwise ρ is exactly
-	<Tex tex={String.raw`\frac{mW - 1}{m - 1}`} />, so for any one scoresheet it carries the same information
-	as <Tex tex="W" />. The analysis code uses this as a shortcut:
+	<strong>A curiosity, and a cross-check:</strong> there’s a shortcut through Kendall’s <Tex tex="W" />, another
+	of the metrics on this site, which measures how much the whole panel agrees on one order. For
+	<Tex tex={`m = ${m}`} /> judges and rankings without ties, <Tex tex={String.raw`\bar\rho`} /> is exactly
+	<Tex tex={String.raw`\frac{mW - 1}{m - 1}`} />, so for any one scoresheet the two carry the same information.
+	Here <Tex tex={`W = ${fx(w.W, 6)}`} />, and the code behind the charts uses the shortcut:
 	<Tex display tex={String.raw`\frac{mW - 1}{m - 1} = \frac{${m} \times ${fx(w.W, 6)} - 1}{${m} - 1} = ${fx(rhoBar)}`} />
 	the same as the mean above.
 </aside>
 {/if}
 
 {#if on('sd_rank')}
-<h4>SD of ranks</h4>
+<h4>Standard deviation of ranks</h4>
 <p>
 	This looks at each competitor in turn: how far apart are the {m} ranks they got? For a competitor with
 	ranks <Tex tex={String.raw`r_1, \dots, r_m`} /> and mean <Tex tex={String.raw`\bar r`} />, the standard
 	deviation is
 </p>
-<Tex display tex={String.raw`\text{SD} = \sqrt{\frac{1}{m}\sum_{j=1}^{m} (r_j - \bar r)^2}`} />
+<Tex display tex={String.raw`\text{standard deviation} = \sqrt{\frac{1}{m}\sum_{j=1}^{m} (r_j - \bar r)^2}`} />
 <p>
-	(dividing by <Tex tex="m" />, not <Tex tex="m - 1" />). The metric is the average over the {n} competitors.
+	(dividing by <Tex tex="m" />, not <Tex tex="m - 1" />). The metric is the average over the
+	<Tex tex={`n = ${n}`} /> competitors.
 	It’s in places, so lower means more agreement.
 </p>
 <RankMatrix
 	{sheet}
 	extras={[
 		{ label: 'Mean', values: s.perCompetitor.map((c) => f3(c.mean)) },
-		{ label: 'SD', title: 'Standard deviation (population, ÷ m)', values: s.perCompetitor.map((c) => f3(c.sd)), foot: f3(s.sd), strong: true }
+		{ label: 'Standard deviation', title: 'Population standard deviation (÷ m)', values: s.perCompetitor.map((c) => f3(c.sd)), foot: f3(s.sd), strong: true }
 	]}
 />
 <p class="small muted">The bottom row of the last column is its average over competitors.</p>
-<Check label="SD of ranks" js={s.sd} py={sheet.py.sd_rank} />
+<Check label="Standard deviation of ranks" js={s.sd} py={sheet.py.sd_rank} />
 <p>
 	Because it’s in places and isn’t scaled to the field size, it isn’t comparable across finals of different
 	sizes: being 2 places apart in a field of {n} means more than in a field of 20.
 </p>
 <aside class="aside small">
-	<strong>How this relates to W:</strong> the squared SDs (the variances) carry the same information as
-	<Tex tex="W" />. For rankings without ties, their average over competitors is exactly
+	<strong>How this relates to Kendall’s W:</strong> Kendall’s <Tex tex="W" /> is another of the metrics on this
+	site, which measures how much the whole panel agrees on one order; here <Tex tex={`W = ${fx(w.W, 6)}`} />. The
+	squared standard deviations (the variances) carry the same information as <Tex tex="W" /> for a given field size. For rankings without ties, their average over competitors is exactly
 	<Tex tex={String.raw`\tfrac{n^2 - 1}{12}(1 - W)`} />:
 	<Tex display tex={String.raw`\tfrac{${n}^2 - 1}{12} \times (1 - ${fx(w.W, 6)}) = ${fx(varFromW)}, \quad \text{and the mean variance here is } ${fx(meanVar)}.`} />
-	The metric averages the SDs rather than the variances, so it isn’t exactly a rescaling of <Tex tex="W" />,
+	The metric averages the standard deviations rather than the variances, so it isn’t exactly a rescaling of <Tex tex="W" />,
 	but it’s close.
 </aside>
 {/if}

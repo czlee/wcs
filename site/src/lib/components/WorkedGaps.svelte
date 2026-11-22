@@ -10,7 +10,8 @@
 	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus?: string}} */
 	let { sheet, focus } = $props();
 	// With `focus` (a metric key), only that metric's working is shown, except that the two MADs
-	// go together: whichever isn't in focus is shown dimmed. Without it, the whole family's.
+	// go together: whichever isn't in focus is shown dimmed, and a note says what it is. Without
+	// it, the whole family's.
 	const on = (/** @type {string[]} */ ...ks) => !focus || ks.includes(focus);
 	const dim = (/** @type {string} */ k) => !!focus && focus !== k;
 	const m = $derived(sheet.judges.length), n = $derived(sheet.competitors.length);
@@ -27,15 +28,15 @@
 </script>
 
 <p class="lede small">
-	All three metrics here count rank gaps in plain places, so a gap of 4 places counts the same as four
-	gaps of 1 place.
+	{focus ? 'This metric counts' : 'All three metrics here count'} rank gaps in plain places, so a gap of 4 places
+	counts the same as four gaps of 1 place.
 </p>
 
 {#if on('footrule_mean')}
 <h4>Spearman’s footrule</h4>
 <p>
 	The footrule adds up how many places apart two judges put each competitor, and divides by the largest
-	total possible, <Tex tex={String.raw`\lfloor n^2/2 \rfloor = \lfloor ${n}^2/2 \rfloor = ${Math.floor((n * n) / 2)}`} />
+	total possible, which for <Tex tex={`n = ${n}`} /> competitors is <Tex tex={String.raw`\lfloor n^2/2 \rfloor = \lfloor ${n}^2/2 \rfloor = ${Math.floor((n * n) / 2)}`} />
 	(when one ranking is the reverse of the other). 0 means identical rankings, 1 means as different as
 	possible. Lower is more agreement.
 </p>
@@ -64,14 +65,14 @@
 		<Tex display tex={String.raw`\text{footrule} = \frac{${ft.total}}{${ft.max}} = ${fx(ft.value)}`} />
 	{/snippet}
 </PairMatrix>
-<p>The analysis averages this over all {pairs.length} pairs of judges:</p>
+<p>The metric is the mean of the footrule over all {pairs.length} pairs of judges:</p>
 <Check label="Mean footrule" js={frBar} py={sheet.py.footrule_mean} />
 {/if}
 
 {#if on(MED, MEAN)}
 <h4>Mean absolute deviation of each competitor’s ranks</h4>
 <p>
-	These look at each competitor in turn: how far apart are the {m} ranks they got? For a competitor with
+	{focus ? 'This looks' : 'These look'} at each competitor in turn: how far apart are the {m} ranks they got? For a competitor with
 	ranks <Tex tex={String.raw`r_1, \dots, r_m`} />, median <Tex tex={String.raw`\tilde r`} /> and mean
 	<Tex tex={String.raw`\bar r`} />, take the average distance from the centre:
 </p>
@@ -80,8 +81,15 @@
 	<div class:dim={dim(MEAN)}><Tex display tex={String.raw`\text{MAD (mean)} = \frac{1}{m}\sum_{j=1}^{m} |r_j - \bar r|`} /></div>
 </div>
 <p>
-	Each metric is then the average over the {n} competitors. Both are in places, so lower means more agreement.
+	{focus ? 'The metric' : 'Each metric'} is then the average over the {n} competitors. It’s in places, so lower means
+	more agreement.
 </p>
+{#if focus}
+	<p class="small muted">
+		There are two versions: the mean absolute deviation (MAD) from the median, and from the mean. The one you’re
+		looking at is from the {focus === MED ? 'median' : 'mean'}; the other is dimmed, for comparison.
+	</p>
+{/if}
 <RankMatrix
 	{sheet}
 	extras={[
@@ -91,14 +99,14 @@
 		{ label: 'MAD (mean)', title: 'Mean absolute deviation from the mean', values: s.perCompetitor.map((c) => f3(c.madMean)), foot: f3(s.madMean), strong: true, dim: dim(MEAN) }
 	]}
 />
-<p class="small muted">The bottom row of each of the last two columns is its average over competitors.</p>
+<p class="small muted">The bottom row of each MAD column is its average over competitors.</p>
 <div class:dim={dim(MED)}><Check label="Mean abs. rank deviation (median)" js={s.madMedian} py={sheet.py.mean_abs_rank_dev_median} /></div>
 <div class:dim={dim(MEAN)}><Check label="Mean abs. rank deviation (mean)" js={s.madMean} py={sheet.py.mean_abs_rank_dev_mean} /></div>
 <p>
 	The median is the natural centre for absolute distances: no other point gives a smaller total. So MAD (mean)
 	is never smaller than MAD (median), and it’s larger when one judge is far from the rest, because that judge
-	pulls the mean (but not the median) towards them. Both are in places and aren’t scaled to the field size, so
-	they aren’t comparable across finals of different sizes: being 2 places apart in a field of {n} means more
+	pulls the mean (but not the median) towards them. Neither is scaled to the field size, so they aren’t
+	comparable across finals of different sizes: being 2 places apart in a field of {n} means more
 	than in a field of 20.
 </p>
 {/if}
