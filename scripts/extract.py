@@ -56,7 +56,7 @@ SKIPS_PATH = DATA_DIR / "extract-skips.html"
 # wins, so order encodes precedence.
 LEVEL_PATTERNS: list[tuple[str, str]] = [
     # Category / age divisions (win over skill rungs — they are the division's
-    # identity, e.g. "Masters Novice" → Masters). Pro-Am is NOT a level — it is
+    # identity). Masters + Novice/Newcomer is the exception (→ no level; see normalise_level). Pro-Am is NOT a level — it is
     # encoded in dance_format instead; level is the amateur's skill rung.
     ("Masters", r"\bmaster"),
     ("Sophisticated", r"\bsophisticated\b"),
@@ -158,6 +158,10 @@ _STRICTLY_NORM_RE = re.compile(r"\bstrictly(?:\s+swing)?\b", re.IGNORECASE)
 def normalise_level(division_blob: str) -> str | None:
     """Return the division level, or None if no level is detectable."""
     low = division_blob.lower()
+    # "Masters Novice" (a lower skill rung within an age division) is not comparable
+    # to Masters proper, so it is left without a level. "Masters Open" is just Masters.
+    if re.search(r"\bmaster", low) and re.search(r"\bnovice\b|\bnov\b|\bnewcomer\b", low):
+        return None
     for label, pat in LEVEL_PATTERNS:
         if re.search(pat, low):
             return label
