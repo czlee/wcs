@@ -23,4 +23,4 @@ For now the y-axis is always a divergence metric. These ideas are about how the 
 
 ## Data collection
 
-- **Grab the 2026 competitions.** At present `events.jsonl` covers events that start in 2024–2025. To add 2026, extend the discovery window in `download.py`, then re-run extract → metrics → `export_site_data.py`.
+- ~~**Grab the 2026 competitions.**~~ Done 2026-11-22: downloaded 2026-01-01 to 2026-11-22 (`download.py --start 2026-01-01 --end 2026-11-22`), then extract → metrics → `export_site_data.py`. `events.jsonl` now covers 2024 to Nov 2026. Re-run the same steps with a later `--end` to top up.
