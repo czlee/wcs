@@ -7,7 +7,9 @@
 	import '../app.css';
 	import favicon from '#lib/assets/favicon.svg';
 	import { DRAFT } from '#lib/config.js';
+	import { explorer } from '#lib/explorer.js';
 	import { link, date } from '#lib/format.js';
+	import { FORMATS } from '#lib/levels.js';
 	import { page } from '$app/state';
 
 	// Strictly pages take the Strictly colour as their accent, so everything that reads --accent follows.
@@ -22,6 +24,13 @@
 		{ href: '/long-form/', routes: ['/long-form', '/long-form/strictly'], label: 'Long-form' },
 		{ href: '/sheets/', routes: ['/sheets'], label: 'All scoresheets' }
 	];
+	const limitationsHref = $derived(`${link(FORMATS[strictly ? 'strictly' : 'jnj'].path)}?dialog=limitations`);
+	// On the explorer, the limitations open over what's on show.
+	function openLimitations(/** @type {MouseEvent} */ e) {
+		if (!explorer.open || e.button || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+		e.preventDefault();
+		explorer.open('limitations');
+	}
 	const current = (/** @type {string[]} */ routes) => routes.includes(page.route.id ?? '');
 </script>
 
@@ -55,7 +64,7 @@
 <footer>
 	<p>
 		Analysis by Chuan-Zheng Lee. Exploratory, not adjusted for panel or field size; see the
-		<a href={link('/long-form/#limitations')}>limitations</a>. This site doesn’t rate individual judges.
+		<a href={limitationsHref} onclick={openLimitations}>limitations</a>. This site doesn’t rate individual judges.
 	</p>
 	<p>
 		The method and design decisions are mine; the code, including the data processing and this

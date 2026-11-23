@@ -26,9 +26,18 @@
 		const b = dialog.getBoundingClientRect();
 		if (e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) open = false;
 	};
+	// `closedby` leaves Esc to this, so that Android's Back goes back through the dialogs (the
+	// explorer gives each a history entry) instead of closing this one outright.
+	const onkeydown = (/** @type {KeyboardEvent} */ e) => {
+		if (!open || e.key !== 'Escape' || e.defaultPrevented) return;
+		e.preventDefault();
+		open = false;
+	};
 </script>
 
-<dialog class:wide bind:this={dialog} onclose={() => (open = false)} {onclick} aria-label={title}>
+<svelte:window {onkeydown} />
+
+<dialog closedby="none" class:wide bind:this={dialog} onclose={() => (open = false)} {onclick} aria-label={title}>
 	<header>
 		<div class="titles">
 			{#if kicker}<p class="kicker">{kicker}</p>{/if}

@@ -1,6 +1,6 @@
 <script>
-	// The limitations box near the top of every results page. The footer links to
-	// #limitations; arriving that way opens it.
+	// The limitations: a box near the top of the long-form pages (arriving at #limitations opens it),
+	// and, `bare`, a dialog of the explorer (which is where the footer's link goes).
 	import { date } from '#lib/format.js';
 	// With `bare`, just the list (for a dialog): no collapsible box and no #limitations anchor.
 	/** @type {{info: {first_event: string, last_event: string, counts: Record<string, Record<string, number>>}, bare?: boolean}} */

@@ -2,6 +2,7 @@
 	// Every scoresheet on the site, filterable by format, level, text and size. Filters
 	// come from the URL (?format=jnj&level=adv) so the charts can link here.
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 	import { FORMATS, LEVELS, LEVEL_LABEL } from '#lib/levels.js';
 	import FilterBar from '#lib/components/FilterBar.svelte';
 	import { filtersFromParams, matches, noFilters, queryString, setFilterParams } from '#lib/dimensions.js';
@@ -28,7 +29,9 @@
 		if (q) p.set('q', q);
 		setFilterParams(p, filters);
 		const s = queryString(p);
-		const timer = setTimeout(() => history.replaceState(history.state, '', s ? `?${s}` : location.pathname), 200);
+		const timer = setTimeout(() => {
+			if (s !== location.search.slice(1)) goto(location.pathname + (s ? `?${s}` : ''), { shallow: true, replace: true });
+		}, 200);
 		return () => clearTimeout(timer);
 	});
 	const shown = $derived.by(() => {

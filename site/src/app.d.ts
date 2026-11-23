@@ -5,7 +5,10 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState {
+			/** How many history entries back the explorer without a dialog is (ExplorePage.svelte). */
+			depth?: number;
+		}
 		// interface Platform {}
 	}
 }

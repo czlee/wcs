@@ -3,10 +3,12 @@
 	// an app that fills the window: a top bar, a metric rail, then the metric's bar
 	// chart and box plot filling the space, with what it measures and its caveats
 	// underneath. The intro, the limitations, the working and a scoresheet's profile are
-	// dialogs, which can lead to each other: one is open at a time. The metric
-	// is in the URL (?metric=…); without one, a random metric that isn't `hidden` is
-	// picked on load. The filters are in the URL too (see lib/dimensions.js). Smaller screens get a plain scrolling page for now.
+	// dialogs, which can lead to each other: one is open at a time. What's
+	// on show, dialogs included, is in the URL (see lib/view.js); without a metric there, a random
+	// one that isn't `hidden` is picked on load. Smaller screens get a plain scrolling page for now.
 	import { onMount } from 'svelte';
+	import { afterNavigate, goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import Limitations from './Limitations.svelte';
 	import FilterBar from './FilterBar.svelte';
 	import MetricChart from './MetricChart.svelte';
@@ -21,10 +23,12 @@
 	import WorkedTop from './WorkedTop.svelte';
 	import WorkedGaps from './WorkedGaps.svelte';
 	import { FAMILIES, FAMILY_OF, METRICS, METRIC_KEYS } from '#lib/families.js';
-	import { anyFilters, filtersFromParams, matches, noFilters, queryString, setFilterParams } from '#lib/dimensions.js';
+	import { anyFilters, matches, noFilters, queryString, setFilterParams } from '#lib/dimensions.js';
 	import { ABOUT } from '#lib/about.js';
 	import { FORMATS } from '#lib/levels.js';
 	import { DRAFT } from '#lib/config.js';
+	import { explorer } from '#lib/explorer.js';
+	import { aboutSheet, parseView, viewQuery } from '#lib/view.js';
 	import { link, date } from '#lib/format.js';
 
 	let { data } = $props();
@@ -53,44 +57,133 @@
 
 	const step = (/** @type {number} */ d) => (key = ORDER[(ORDER.indexOf(key) + d + ORDER.length) % ORDER.length]);
 
-	/** @typedef {'worked' | 'profile' | 'about' | 'limits'} Dialog */
-	let dialog = $state(/** @type {Dialog | null} */ (null));
-	// A dialog that closes because another has replaced it mustn't close its replacement.
-	const closed = (/** @type {Dialog} */ d) => { if (dialog === d) dialog = null; };
 	const INTRO_SEEN = 'wcs-explore-intro-seen';
+
+	// What's on show is also in the URL (see lib/view.js), so that it survives a reload, can be
+	// shared, and Back and Forward move through it. Opening a dialog adds a history entry; any
+	// other change rewrites the current one. `page.state.depth` is how many entries back the
+	// explorer without a dialog is.
+	let dialog = $state(/** @type {import('#lib/view.js').Dialog | null} */ (null));
+	/** Whether the open dialog is the intro shown by itself on a first visit, which isn't in the URL. */
+	let intro = $state(false);
+	/** Whether the URL names the scoresheet: once it's chosen, or a dialog about it is opened. */
+	let pinned = $state(false);
+	/** Whether the URL has yet to be shown in full, so that it mustn't be rewritten. */
+	let showing = $state(true);
+	/** Whether the dialog was closed, and the browser is on its way back to the entry without it. */
+	let closing = $state(false);
+	const home = $derived(link(fmt.path));
+	const viewUrl = () => home + viewQuery(
+		{ metric: key, filters, sheet: pinned ? sheet.id : null, dialog: intro ? null : dialog }, location.search);
+
+	/** @type {ReturnType<typeof setTimeout> | undefined} */
+	let timer;
+	let writes = Promise.resolve();
+	/** Write the view into the URL, in a new history entry if `push`. */
+	function write(push = false) {
+		clearTimeout(timer);
+		const url = viewUrl();
+		writes = writes.then(() => {
+			if (!push && url === location.pathname + location.search) return;
+			const state = { depth: (page.state.depth ?? 0) + (push ? 1 : 0) };
+			return goto(url, { shallow: true, replace: !push, state, persistState: true });
+		}).catch(() => { /* superseded by another navigation */ });
+	}
+	// Rewriting waits for a pause, because dragging the slider changes the filters faster than
+	// browsers allow.
+	$effect(() => {
+		if (showing || closing) return;
+		viewUrl();
+		timer = setTimeout(() => write(), 200);
+		return () => clearTimeout(timer);
+	});
+
+	/** Open a dialog, in place of any that's open, perhaps changing the metric too. */
+	function open(/** @type {import('#lib/view.js').Dialog} */ d, metric = key) {
+		if (d === dialog && metric === key) return;
+		shown++; // Stop showing whatever the URL asked for.
+		showing = false;
+		if (aboutSheet(d)) pinned = true;
+		write(); // Any change still to be written belongs to the entry being left.
+		intro = false;
+		key = metric;
+		dialog = d;
+		write(true);
+	}
+	/** Close the dialog, however many were opened to get to it. */
+	function close() {
+		if (!dialog) return;
+		const depth = intro ? 0 : (page.state.depth ?? 0);
+		dialog = null;
+		intro = false;
+		if (!depth) return;
+		// The entry gone back to then takes on what's on show now.
+		closing = true;
+		clearTimeout(timer);
+		history.go(-depth);
+	}
+	// A dialog that closes because another has replaced it mustn't close its replacement.
+	const closed = (/** @type {import('#lib/view.js').Dialog} */ d) => { if (dialog === d) close(); };
+
+	let shown = 0;
+	/** Show what the URL asks for. */
+	async function show(first = false) {
+		const mine = ++shown;
+		showing = true;
+		const view = parseView(location.search);
+		filters = view.filters;
+		if (view.metric) key = view.metric;
+		else if (first) key = PICKABLE[Math.floor(Math.random() * PICKABLE.length)];
+		let found = !!view.sheet && view.sheet === sheet.id;
+		if (view.sheet && !found) {
+			found = await loadSheet(view.sheet);
+			if (mine !== shown) return;
+			if (found) source = 'linked';
+		}
+		if (found || !view.sheet) pinned = found;
+		// Without a scoresheet (or with one that doesn't exist), a dialog about one has nothing to show.
+		const d = aboutSheet(view.dialog) && !found ? null : view.dialog;
+		if (first && !d) showIntro();
+		else { intro = false; dialog = d; }
+		showing = false;
+		if (first && !found) pickRandomSheet();
+	}
+	/** The intro opens by itself on a first visit only. */
+	function showIntro() {
+		try {
+			if (localStorage.getItem(INTRO_SEEN)) return;
+			localStorage.setItem(INTRO_SEEN, '1');
+			dialog = 'about';
+			intro = true;
+		} catch { /* storage blocked: skip the intro */ }
+	}
+
+	// Back and Forward. (SvelteKit's afterNavigate doesn't run for all of them.)
+	function onpopstate() {
+		if (location.pathname !== home) return; // to another page
+		clearTimeout(timer);
+		if (closing) closing = false;
+		else show();
+	}
+	// A link to this page, such as the title's.
+	afterNavigate((nav) => {
+		if (nav.type === 'link' && nav.from?.route.id === nav.to?.route.id) show();
+	});
 
 	let mounted = $state(false);
 	let app = $state(false);
 	onMount(() => {
-		const params = new URLSearchParams(location.search);
-		filters = filtersFromParams(params);
-		const k = params.get('metric');
-		if (k && k in METRICS) key = k;
-		else key = PICKABLE[Math.floor(Math.random() * PICKABLE.length)];
 		mounted = true;
-		pickRandomSheet();
-		// The intro opens by itself on a first visit only.
-		try {
-			if (!localStorage.getItem(INTRO_SEEN)) { dialog = 'about'; localStorage.setItem(INTRO_SEEN, '1'); }
-		} catch { /* storage blocked: skip the intro */ }
+		show(true);
+		explorer.open = open;
 		const mq = matchMedia(APP_QUERY);
 		const sync = () => (app = mq.matches);
 		sync();
 		mq.addEventListener('change', sync);
-		return () => mq.removeEventListener('change', sync);
-	});
-	// Keep the URL in step, so a reload or a shared link shows the same view. It waits for a
-	// pause, because dragging the slider changes the filters faster than browsers allow.
-	$effect(() => {
-		if (!mounted) return;
-		const view = { key, filters };
-		const timer = setTimeout(() => {
-			const p = new URLSearchParams(location.search);
-			p.set('metric', view.key);
-			setFilterParams(p, view.filters);
-			history.replaceState(history.state, '', `?${queryString(p)}`);
-		}, 200);
-		return () => clearTimeout(timer);
+		return () => {
+			explorer.open = null;
+			mq.removeEventListener('change', sync);
+		};
 	});
 
 	// ← and → step through the metrics, unless a dialog is open or the reader is typing.
@@ -104,9 +197,9 @@
 
 	// The scoresheet "How is this calculated?" works through, and whose profile can be opened: one chosen at random on load
 	// (the fallback until it arrives), the one picked in the "Highlighted scoresheet" box, or the
-	// one whose point was clicked in the box plot.
+	// one whose point was clicked in the box plot, or the one the URL names.
 	let sheet = $derived(/** @type {import('#lib/server/data.js').Profile} */ (data.fallback));
-	let source = $state(/** @type {'random' | 'picked' | 'clicked'} */ ('random'));
+	let source = $state(/** @type {'random' | 'picked' | 'clicked' | 'linked'} */ ('random'));
 	let loading = $state(false);
 	let request = 0;
 	// Whether it loaded, and no other was asked for meanwhile.
@@ -117,6 +210,12 @@
 			const res = await fetch(link(`/sheet/${id}/data.json`));
 			const loaded = res.ok ? await res.json() : undefined;
 			if (!loaded || mine !== request) return false;
+			if (loaded.format !== data.format) {
+				// Only a link can ask for one: take it to the page for that format, and leave this one be.
+				shown++;
+				goto(link(FORMATS[/** @type {'jnj'|'strictly'} */ (loaded.format)].path) + location.search, { replace: true });
+				return false;
+			}
 			sheet = loaded;
 			return true;
 		} finally {
@@ -129,26 +228,25 @@
 		if (ids.length && await loadSheet(ids[Math.floor(Math.random() * ids.length)])) source = 'random';
 	}
 	async function pickSheet(/** @type {string} */ id) {
-		if (await loadSheet(id)) source = 'picked';
+		if (!(await loadSheet(id))) return;
+		source = 'picked';
+		pinned = true;
 	}
 	// A click on a point in the box plot shows that scoresheet's calculation.
 	async function showSheet(/** @type {string} */ id) {
 		if (id !== sheet.id && !(await loadSheet(id))) return;
 		source = 'clicked';
-		dialog = 'worked';
+		open('working');
 	}
 	// A click on a metric in a scoresheet's profile shows its working.
-	function showMetric(/** @type {string} */ k) {
-		key = k;
-		dialog = 'worked';
-	}
+	const showMetric = (/** @type {string} */ k) => open('working', k);
 	/** Why a scoresheet isn't in the charts on show, or '' if it is. */
 	const uncharted = (/** @type {import('#lib/dimensions.js').Countable} */ r) =>
 		r.n < (meta.minN ?? 0) ? 'has too few finalists for this metric' : matches(r, filters) ? '' : 'is outside the filters';
 	const sheetCharted = $derived(!uncharted({ m: sheet.judges.length, n: sheet.competitors.length }));
 </script>
 
-<svelte:window onkeydown={onKey} />
+<svelte:window onkeydown={onKey} {onpopstate} />
 
 {#snippet metricOptions()}
 	{#each FAMILIES as f (f.id)}
@@ -169,10 +267,8 @@
 		</div>
 		<span class="count small muted">{anyFilters(filters) ? `${filtered.length} of ` : ''}{rows.length} finals, {date(data.info.first_event)} to {date(data.info.last_event)}</span>
 		<span class="spacer"></span>
-		<button type="button" class="warn" onclick={() => (dialog = 'limits')}>⚠ Exploratory: read the limitations</button>
-		<button type="button" class="link-btn" onclick={() => (dialog = 'about')}>About</button>
-		<a class="small" href={link(fmt.longPath)}>Long-form page</a>
-		<a class="small" href={link('/sheets/')}>All scoresheets</a>
+		<button type="button" class="warn" onclick={() => open('limitations')}>⚠ Exploratory: read the limitations</button>
+		<button type="button" class="link-btn" onclick={() => open('about')}>About</button>
 	</header>
 
 	<div class="body">
@@ -200,7 +296,7 @@
 				<div class="heading">
 					<div class="title">
 						<h1 class="metric">{meta.label}</h1>
-						<button type="button" class="btn primary" onclick={() => (dialog = 'worked')}>How is this calculated?</button>
+						<button type="button" class="btn primary" onclick={() => open('working')}>How is this calculated?</button>
 					</div>
 					<p class="direction small">
 						<span class="dot" class:ok={meta.higher} class:bad={!meta.higher}></span>
@@ -208,12 +304,12 @@
 					</p>
 					<div class="filters"><FilterBar bind:filters /></div>
 				</div>
-				<SheetPicker {rows} selected={mounted ? sheet.id : undefined} {uncharted} onpick={pickSheet} ondetails={() => (dialog = 'profile')} />
+				<SheetPicker {rows} selected={mounted ? sheet.id : undefined} {uncharted} onpick={pickSheet} ondetails={() => open('profile')} />
 			</div>
 
 			<div class="charts">
 				{#key key}
-					<MetricChart {rows} index={METRIC_KEYS.indexOf(key)} {meta} colour={fmt.colour} format={data.format} {filters} fill={app}
+					<MetricChart {rows} index={METRIC_KEYS.indexOf(key)} {meta} colour={fmt.colour} format={data.format} {filters} fill={app} listBars={false}
 						highlight={mounted && sheetCharted ? sheet.id : undefined} onpoint={showSheet} />
 				{/key}
 			</div>
@@ -224,7 +320,7 @@
 					<p>{about.what}</p>
 					<p>
 						{about.reading}
-						<button type="button" class="link-btn" onclick={() => (dialog = 'worked')}>Learn more</button>
+						<button type="button" class="link-btn" onclick={() => open('working')}>Learn more</button>
 					</p>
 				</div>
 				<div class="panel">
@@ -234,7 +330,7 @@
 					{/if}
 					<p class="small muted">
 						{about.caveats.length ? 'Also see the' : 'See the'}
-						<button type="button" class="link-btn" onclick={() => (dialog = 'limits')}>limitations</button>
+						<button type="button" class="link-btn" onclick={() => open('limitations')}>limitations</button>
 						that apply to every metric: panel and field sizes differ between levels, scoresheets aren’t
 						independent, and more.
 					</p>
@@ -248,14 +344,14 @@
 	<select class="pick-metric" aria-label="Metric" bind:value={key}>{@render metricOptions()}</select>
 {/snippet}
 
-<Modal bind:open={() => dialog === 'worked', () => closed('worked')} kicker="How is this calculated?" title={meta.label}
+<Modal bind:open={() => dialog === 'working', () => closed('working')} kicker="How is this calculated?" title={meta.label}
 	heading={metricHeading} view={key} wide>
 	<p class="sheet">
 		<strong>{sheet.name}</strong> ({date(sheet.date)}){#if mounted && sheetCharted}, ringed in the box plot{/if}
-		· <button type="button" class="link-btn" onclick={() => (dialog = 'profile')}>details</button>
+		· <button type="button" class="link-btn" onclick={() => open('profile')}>details</button>
 	</p>
 	<p class="sheet-links small">
-		{{ random: 'A scoresheet chosen at random.', picked: 'The scoresheet you chose.', clicked: 'The scoresheet you clicked.' }[source]}
+		{{ random: 'A scoresheet chosen at random.', picked: 'The scoresheet you chose.', clicked: 'The scoresheet you clicked.', linked: '' }[source]}
 		To see another, close this and choose an event or click a point in the box plot, or
 		<button type="button" class="link-btn" onclick={pickRandomSheet} disabled={loading}>{loading ? 'loading…' : 'pick one at random'}</button>.
 	</p>
@@ -276,7 +372,7 @@
 	<MetricsTable {sheet} percentiles={sheet.percentiles} current={key} onmetric={showMetric} />
 </Modal>
 
-<Modal bind:open={() => dialog === 'limits', () => closed('limits')} kicker="Before you read anything into this" title="Reasons these comparisons might mislead">
+<Modal bind:open={() => dialog === 'limitations', () => closed('limitations')} kicker="Before you read anything into this" title="Reasons these comparisons might mislead">
 	<Limitations info={data.info} bare />
 </Modal>
 
@@ -295,20 +391,20 @@
 		This uses twelve, in four families. Pick one on the left (or step through them with ← and →); the bar
 		chart shows its mean by level, and the box plot shows every final. Field and panel sizes differ between
 		levels, so you can narrow the charts to finals with similar numbers of finalists or judges; the vertical
-		axes stay put, so you can compare.
+		axes stay put, so you can compare. The address in your browser always links to what you’re looking at.
 	</p>
 	<p>
 		Every number can be checked. “How is this calculated?” recalculates the metric in your browser, step by
 		step, and checks the result against the analysis. Choose a scoresheet to highlight at the top right, to ring it
 		in the box plot and work through it; its “details” show the judges’ rankings, every metric and a link to
-		the published scoresheet. Or click a point in the box plot for its working, or a bar to list its finals.
+		the published scoresheet. Or click a point in the box plot for its working.
 	</p>
 	<p class="callout small">
 		<strong>This is exploratory.</strong> Panel and field sizes differ between levels, and most of these
-		metrics depend on them. <button type="button" class="link-btn" onclick={() => (dialog = 'limits')}>Read the limitations</button>
+		metrics depend on them. <button type="button" class="link-btn" onclick={() => open('limitations')}>Read the limitations</button>
 		before reading anything into a difference.
 	</p>
-	<p><button type="button" class="btn primary" onclick={() => (dialog = null)}>Start exploring</button></p>
+	<p><button type="button" class="btn primary" onclick={close}>Start exploring</button></p>
 </Modal>
 
 <style>
@@ -320,7 +416,6 @@
 		padding: 0.1em 0.4em; border-radius: 3px; background: #fab219; color: #1a1a19;
 	}
 	.spacer { flex: 1; }
-	.topbar a.small { color: var(--text-2); }
 	.formats { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 	.formats a { text-align: center; padding: 0.2em 0.8em; font-size: 0.86rem; text-decoration: none; color: var(--text-2); }
 	.formats a + a { border-left: 1px solid var(--border); }

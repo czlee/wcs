@@ -13,16 +13,17 @@
 	/** @typedef {{id: string, level: string, event: string, date: string, name: string, m: number, n: number, v: (number | null)[]}} Row */
 	/**
 	 * @type {{rows: Row[], index: number, meta: {label: string, higher: boolean, chance?: boolean}, colour: string,
-	 *   format: string, filters?: import('#lib/dimensions.js').Filters, highlight?: string, fill?: boolean, onpoint?: (id: string) => void}}
+	 *   format: string, filters?: import('#lib/dimensions.js').Filters, highlight?: string, fill?: boolean, listBars?: boolean, onpoint?: (id: string) => void}}
 	 */
 	// `filters` picks which scoresheets are drawn. The axes come from all of `rows`, so
 	// views with different filters can be compared by eye.
 	// `onpoint`, where given, is called with a point's scoresheet id when it's clicked;
 	// otherwise a click opens that scoresheet's page.
 	// `highlight`, a scoresheet id, rings that scoresheet's point (the explorer's highlighted scoresheet).
+	// With `listBars`, a bar links to the list of its scoresheets.
 	// With `fill`, the charts take the size of their container (which must have a height) and
 	// draw at true pixel size; otherwise they keep a fixed shape and scale with the width.
-	let { rows: allRows, index, meta, colour, format, filters = noFilters(), highlight, fill = false, onpoint } = $props();
+	let { rows: allRows, index, meta, colour, format, filters = noFilters(), highlight, fill = false, listBars = true, onpoint } = $props();
 	// Scoresheets with no value for this metric (a field below its minN) are left out.
 	const unfiltered = $derived(allRows.filter((r) => r.v[index] != null));
 	const rows = $derived(unfiltered.filter((r) => matches(r, filters)));
@@ -142,9 +143,9 @@
 				{#each byLevel as d (d.level.id)}
 					{@const bx = /** @type {number} */ (x(d.level.id))}
 					{#if d.ci.n}
-						<a href={sheetsHref(d.level.id)} aria-label="{d.level.label}: mean {fx(d.ci.mean)}, {d.ci.n} scoresheets. List them"
-							onmouseenter={(e) => show(e, [`${d.level.label}: mean ${minus(fx(d.ci.mean))}`, d.small ? smallNote : `interval ${minus(fx(d.ci.lo))} to ${minus(fx(d.ci.hi))}`, `${d.ci.n} scoresheets — click to list them`])}
-							onmouseleave={hide} onfocus={(e) => show(e, [`${d.level.label}: mean ${minus(fx(d.ci.mean))}`, `${d.ci.n} scoresheets`])} onblur={hide}>
+						{@const label = `${d.level.label}: mean ${minus(fx(d.ci.mean))}`}
+						{@const lines = [label, d.small ? smallNote : `interval ${minus(fx(d.ci.lo))} to ${minus(fx(d.ci.hi))}`, `${d.ci.n} scoresheets${listBars ? ' — click to list them' : ''}`]}
+						{#snippet marks()}
 							<rect class="hit" x={bx - 4} y={M.t} width={x.bandwidth() + 8} height={H - M.b - M.t} />
 							<path d={bar(bx, x.bandwidth(), barY(0), barY(d.ci.mean))} fill={d.colour} clip-path="url(#{gid}-bars)" />
 							{#if Number.isFinite(d.ci.lo)}
@@ -152,7 +153,13 @@
 								<line class="err" x1={bx + x.bandwidth() * 0.3} x2={bx + x.bandwidth() * 0.7} y1={barY(d.ci.lo)} y2={barY(d.ci.lo)} />
 								<line class="err" x1={bx + x.bandwidth() * 0.3} x2={bx + x.bandwidth() * 0.7} y1={barY(d.ci.hi)} y2={barY(d.ci.hi)} />
 							{/if}
-						</a>
+						{/snippet}
+						{#if listBars}
+							<a class="bar" href={sheetsHref(d.level.id)} aria-label="{label}, {d.ci.n} scoresheets. List them"
+								onmouseenter={(e) => show(e, lines)} onmouseleave={hide} onfocus={(e) => show(e, lines)} onblur={hide}>{@render marks()}</a>
+						{:else}
+							<g class="bar" role="presentation" onmouseenter={(e) => show(e, lines)} onmouseleave={hide}>{@render marks()}</g>
+						{/if}
 					{/if}
 					<text class="lvl" x={bx + x.bandwidth() / 2} y={H - M.b + 15} text-anchor="middle">{d.level.short}</text>
 					<text class="n" x={bx + x.bandwidth() / 2} y={H - M.b + 29} text-anchor="middle">n={d.ci.n}</text>
@@ -246,7 +253,7 @@
 	.lvl { font-size: 11.5px; fill: var(--text-2); }
 	.err { stroke: var(--text); stroke-width: 1.3; }
 	.hit { fill: transparent; }
-	a:hover path, a:focus path { opacity: 0.85; }
+	.bar:hover path, .bar:focus path { opacity: 0.85; }
 	.whisker { stroke: var(--text-3); stroke-width: 1; }
 	.median { stroke-width: 2.5; }
 	.pt { fill-opacity: 0.38; cursor: pointer; }
