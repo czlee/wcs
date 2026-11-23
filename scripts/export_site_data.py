@@ -46,7 +46,7 @@ LEVELS = {
 METRICS = [
     "kendall_w", "mean_pairwise_rho", "mean_pairwise_tau", "tau_distance", "footrule_mean",
     "overlap_at_3_cc", "jaccard_at_3_cc", "overlap_at_3", "jaccard_at_3",
-    "mean_abs_rank_dev_mean_norm", "mean_abs_rank_dev_median_norm", "sd_rank_norm",
+    "mean_abs_rank_dev_median_norm", "sd_rank_norm",
 ]
 
 

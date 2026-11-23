@@ -118,14 +118,12 @@ export function spread(/** @type {Matrix} */ R) {
 		const ranks = column(R, i);
 		const mu = mean(ranks);
 		const med = median(ranks);
-		const madMean = mean(ranks.map((r) => Math.abs(r - mu)));
 		const madMedian = mean(ranks.map((r) => Math.abs(r - med)));
 		const sd = Math.sqrt(mean(ranks.map((r) => (r - mu) ** 2)));
-		return { ranks, mean: mu, median: med, madMean, madMedian, sd };
+		return { ranks, mean: mu, median: med, madMedian, sd };
 	});
 	return {
 		perCompetitor,
-		madMean: mean(perCompetitor.map((c) => c.madMean)),
 		madMedian: mean(perCompetitor.map((c) => c.madMedian)),
 		sd: mean(perCompetitor.map((c) => c.sd))
 	};
@@ -133,7 +131,8 @@ export function spread(/** @type {Matrix} */ R) {
 
 /**
  * The scales the spread metrics are normalised by, as in `rank_dispersion` in compute_metrics.py. The
- * MADs use n/4, the average spread of a panel split between one order and its exact reverse.
+ * MADs use n/4, the average spread of a panel split between one order and its exact reverse (for
+ * even n; panels with odd n or odd m can't quite reach it).
  * The SD uses √((n² − 1)/12), an upper bound on the average SD (and the SD of one random judge's
  * ranks). First-pass corrections for field size, to be replaced by a rigorous one.
  */
@@ -154,7 +153,7 @@ export function pairwise(/** @type {Matrix} */ R) {
 	});
 }
 
-/** The site's twelve metrics (plus the raw spread columns they're scaled from), keyed as in data/metrics.csv. */
+/** The site's eleven metrics (plus the raw spread columns they're scaled from), keyed as in data/metrics.csv. */
 export function allMetrics(/** @type {Matrix} */ R) {
 	const { W } = kendallW(R);
 	const p = pairwise(R);
@@ -175,10 +174,8 @@ export function allMetrics(/** @type {Matrix} */ R) {
 		jaccard_at_3_cc: chanceCorrected(avg('jaccard3'), chance3.jaccard),
 		overlap_at_3: avg('overlap3'),
 		jaccard_at_3: avg('jaccard3'),
-		mean_abs_rank_dev_mean: s.madMean,
 		mean_abs_rank_dev_median: s.madMedian,
 		sd_rank: s.sd,
-		mean_abs_rank_dev_mean_norm: s.madMean / madScale(R[0].length),
 		mean_abs_rank_dev_median_norm: s.madMedian / madScale(R[0].length),
 		sd_rank_norm: s.sd / sdScale(R[0].length)
 	};

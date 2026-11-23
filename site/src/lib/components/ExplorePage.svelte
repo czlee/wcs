@@ -407,7 +407,7 @@
 	</p>
 	<p>
 		There are many ways to measure how far apart rankings are, and they don’t all answer the same question.
-		This uses twelve, in four families. Pick one on the left (or step through them with ← and →); the bar
+		This uses eleven, in four families. Pick one on the left (or step through them with ← and →); the bar
 		chart shows its mean by level, and the box plot shows every final. Field and panel sizes differ between
 		levels, so you can narrow the charts to finals with similar numbers of finalists or judges; the vertical
 		axes stay put, so you can compare. The address in your browser always links to what you’re looking at.

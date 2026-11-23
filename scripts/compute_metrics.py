@@ -70,7 +70,7 @@ METRIC_COLS = [
     "overlap_at_3_cc", "overlap_at_5_cc", "jaccard_at_3_cc", "jaccard_at_5_cc",
     # Rank dispersion
     "mean_abs_rank_dev_mean", "mean_abs_rank_dev_median", "sd_rank",
-    # Rank dispersion divided by n/4 (see rank_dispersion)
+    # Rank dispersion normalised (see rank_dispersion)
     "mean_abs_rank_dev_mean_norm", "mean_abs_rank_dev_median_norm", "sd_rank_norm",
 ]
 
@@ -199,10 +199,21 @@ def rank_dispersion(R: np.ndarray) -> dict[str, float]:
 
     * The two MADs are divided by n/4: half the panel ranking in order and half
       in exact reverse gives every competitor a spread of |n + 1 - 2i|/2, which
-      averages n/4 (even n; (n^2 - 1)/(4n) for odd n, slightly less for odd m).
-      This is a construction, not a proven maximum: it held in an exhaustive
-      search over small m, n and on the real data (max 0.98), and is proven for
-      m = 2 only. Whether it's a true bound for the MADs is open.
+      averages n/4 for even n (and (n^2 - 1)/(4n) for odd n). For the MAD about
+      the median, n/4 is a proven upper bound for every m: a competitor's total
+      absolute deviation is (sum of its top floor(m/2) ranks) - (sum of its
+      bottom floor(m/2)), so the total over competitors is a signed sum with k
+      plus and k minus signs, k <= nm/2, over a table holding each of 1..n
+      exactly m times; that is at most (top k) - (bottom k) of the table, which
+      is mn^2/4 for k = nm/2. It is attained for even n and even m (duplicate a
+      reversed pair) and is looser otherwise (the exact maximum is smaller for
+      odd n, and smaller still for odd m: 0.83-0.89 of n/4 at m = 3).
+      Deliberately NOT divided by the exact maximum B(m, n): that has a
+      parity zigzag in n and m that typical (chance-level) values don't share,
+      so it would put a size artefact into the middle of the data. n/4 is
+      smooth in n. The MAD about the *mean* (kept in metrics.csv, not on the
+      site) has no proof; it held in an exhaustive search over small m, n and
+      on real data (max 0.98).
     * The SD is divided by sqrt((n^2 - 1)/12), a proven upper bound: the mean
       within-competitor variance is (1 - W)(n^2 - 1)/12 <= (n^2 - 1)/12 and the
       mean of SDs is at most the root of the mean of variances (Jensen). It is

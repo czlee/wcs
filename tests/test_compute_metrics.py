@@ -48,14 +48,15 @@ def test_unanimous_panel_is_perfect_agreement():
 
 
 def test_split_panel_scales_mads_to_one():
-    # Half the panel in order, half reversed: every competitor's spread averages n/4
-    # (even n, m), so the n/4-scaled MAD columns are exactly 1. (Not proven to be the
-    # maximum beyond m = 2; see rank_dispersion.)
+    # Half the panel in order, half reversed: every competitor's spread averages
+    # n/4 for even n, so the normalised MAD columns are exactly 1 (n/4 is a proven upper
+    # bound for the median version; see rank_dispersion).
     for m, n in ((2, 6), (4, 8), (4, 10)):
+        mad_cols = ("mean_abs_rank_dev_mean", "mean_abs_rank_dev_median")
         fwd, rev = np.arange(1, n + 1), np.arange(n, 0, -1)
         R = np.array([fwd] * (m // 2) + [rev] * (m // 2))
         out = cm.compute_metrics(make_doc(R))
-        for col in ("mean_abs_rank_dev_mean", "mean_abs_rank_dev_median"):
+        for col in mad_cols:
             assert out[col + "_norm"] == pytest.approx(1.0)
 
 
@@ -70,7 +71,8 @@ def test_cyclic_latin_square_reaches_sd_bound():
 
 
 def test_norm_columns_never_exceed_one_exhaustively():
-    # The SD bound is proven (see rank_dispersion); the MAD bound is only checked here.
+    # The SD bound and the median-MAD bound are proven (see rank_dispersion); the
+    # mean-MAD bound is only checked here.
     import itertools
     for m, n in ((2, 5), (3, 4), (3, 5), (4, 4)):
         perms = [np.array(p) for p in itertools.permutations(range(1, n + 1))]

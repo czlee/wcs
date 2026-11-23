@@ -123,14 +123,28 @@ of these has multiple defensible forms and is deferred to Phase 4/5.
   proven upper bound (mean within-competitor variance = (1 − W)(n² − 1)/12 ≤
   (n² − 1)/12, then Jensen; attained by a cyclic Latin square, m = n). The two
   MADs divide by n/4, the average spread of a panel split between an order and
-  its reverse; that is exact for m = 2 and held in an exhaustive small-case
-  search and on real data (max 0.98), but **isn't proven to be a bound for
-  m > 2** (an open question, being thought about). It's a first pass.
+  its reverse (even n). *Considered and rejected (2026-11-24):* dividing by the
+  exact maximum B(m, n) instead ((n² − 1)/(4n) for odd n, even m; smaller for odd
+  m: 0.83–0.89 of n/4 at m = 3, 0.90–0.96 at m = 5). B has a parity zigzag in n
+  and m that chance-level values don't share (E/B zigzags where E/(n/4) is
+  smooth), so it would move a size artefact from the maximum into the middle of
+  the data, and the odd-n part alone fixes only the smaller half of it. The site shows only the median
+  version; the mean version was dropped from the site, 2026-11-24, as
+  near-redundant (Spearman 0.99 with the median version and the SD). Its
+  `_norm` column is also on plain n/4.
+  its reverse. For the median version this is a **proven upper bound for every
+  m** (2026-11-24): a competitor's total absolute deviation from the median is
+  (top ⌊m/2⌋ ranks) − (bottom ⌊m/2⌋), so the total is a signed sum with k
+  plus and k minus signs (k ≤ nm/2) over a table with each of 1..n exactly m
+  times, at most (top k) − (bottom k) of that table = mn²/4 (m(n² − 1)/4 for
+  odd n). Attained for every even m (duplicate a reversed pair); looser for odd
+  m. The mean version (kept in `metrics.csv`) has no such proof; it held
+  numerically (max 0.98 on real data). It's a first pass.
   **To revisit more rigorously:** (a) chance level isn't constant on these
   scales (≈ √(1 − 1/m) for the SD, and it depends on m), so correct against the
   expectation under random rankings for the given (m, n), e.g. a Monte Carlo or
   exact table, reported as `1 − x/E` like the `*_cc` columns; (b) the SD can't
-  reach 1 for small m (m = 2 tops out at n/4, i.e. 0.87), and population SD
+  reach 1 for small m (m = 2 tops out at about n/4, i.e. 0.87), and population SD
   (ddof = 0) is biased low for small panels by about √((m − 1)/m); (c) the mean
   within-competitor variance is exactly (1 − W)(n² − 1)/12, so a chance-corrected
   SD is close to a transform of W and may be redundant; (d) competitors near the

@@ -72,20 +72,13 @@ export const ABOUT = {
 	},
 	mean_abs_rank_dev_median_norm: {
 		what: 'For each competitor, the average distance (in places) between each judge’s rank and the median of the ranks they got. Averaged over competitors, then normalised: divided by n/4 (n is the number of competitors) so that finals of different sizes can be compared.',
-		reading: '0 means every judge gave every competitor the same rank, and about 1 means the panel was split as far as it can be (half ranking in order, half in exact reverse). Lower is more agreement. It’s never more than the [[mean_abs_rank_dev_mean_norm|mean absolute deviation from the mean]].',
+		reading: '0 means every judge gave every competitor the same rank, and 1 is the most it can be, reached when half the panel ranks in order and half in exact reverse (a little under 1 for an odd number of finalists or judges). Lower is more agreement.',
 		caveats: [
-			'Normalised for field size only roughly, by dividing by n/4 (the most the average can be). That removes the main effect of field size, but random rankings don’t land at the same value for every field and panel size, so some of it remains. A proper chance correction is planned.'
-		]
-	},
-	mean_abs_rank_dev_mean_norm: {
-		what: 'For each competitor, the average distance (in places) between each judge’s rank and the mean of the ranks they got. Averaged over competitors, then normalised: divided by n/4 (n is the number of competitors) so that finals of different sizes can be compared.',
-		reading: '0 means every judge gave every competitor the same rank, and about 1 means the panel was split as far as it can be (half ranking in order, half in exact reverse). Lower is more agreement.',
-		caveats: [
-			'Normalised for field size only roughly, by dividing by n/4 (the most the average can be). That removes the main effect of field size, but random rankings don’t land at the same value for every field and panel size, so some of it remains. A proper chance correction is planned.'
+			'Normalised for field size only roughly, by dividing by n/4, the most the average can be: it’s what the average is when half the panel ranks in order and half in exact reverse. Some panels (an odd number of finalists or of judges) can’t quite reach it, so a maximally split panel reads a little under 1 there. That removes the main effect of field size, but random rankings don’t land at the same value for every field and panel size, so some of it remains. A proper chance correction is planned.'
 		]
 	},
 	sd_rank_norm: {
-		what: 'For each competitor, the standard deviation of the ranks they got (dividing by the number of judges). Averaged over competitors, then normalised: divided by √((n² − 1)/12) (n is the number of competitors; it’s the most the average can be) so that finals of different sizes can be compared. It gives more weight than the [[mean_abs_rank_dev_mean_norm|mean absolute deviations]] do to one judge who is far from the rest.',
+		what: 'For each competitor, the standard deviation of the ranks they got (dividing by the number of judges). Averaged over competitors, then normalised: divided by √((n² − 1)/12) (n is the number of competitors; it’s the most the average can be) so that finals of different sizes can be compared. It gives more weight than the [[mean_abs_rank_dev_median_norm|mean absolute deviation]] does to one judge who is far from the rest.',
 		reading: '0 means every judge gave every competitor the same rank, and 1 is the most it can be (the spread of ranks a single judge’s ranking has). Lower is more agreement.',
 		caveats: [
 			'Normalised for field size only roughly. That removes the main effect of field size, but random rankings don’t land at the same value for every panel size (a bit under 1, and further under for small panels), and a panel of two judges can’t reach 1. A proper chance correction is planned.'
