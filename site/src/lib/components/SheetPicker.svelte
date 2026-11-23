@@ -63,11 +63,15 @@
 	/** @type {HTMLElement | undefined} */
 	let list = $state();
 
+	/** Nothing is listed until this many characters have been typed. */
+	const MIN_QUERY = 3;
+	const searching = (/** @type {string[][]} */ words) => words.reduce((n, w) => n + w.length, 0) >= MIN_QUERY;
+
 	/** @type {Result[]} */
 	const results = $derived.by(() => {
 		if (!open) return [];
 		const words = queryWords(query ?? '');
-		if (!words.length) return items.map((item) => ({ item, hits: [] }));
+		if (!searching(words)) return [];
 		return items
 			.flatMap((item) => {
 				const m = match(words, item.hay);
@@ -145,6 +149,7 @@
 		{#if open}
 			<!-- Pressing the mouse here mustn't take the focus, which would close the list. -->
 			<div class="drop" role="presentation" onmousedown={(e) => e.preventDefault()}>
+				{#if shown.length}
 				<ul id="{id}-list" role="listbox" aria-label="Scoresheets" bind:this={list}>
 					{#each shown as r, i (r.item.row.id)}
 						{@const why = uncharted(r.item.row)}
@@ -160,8 +165,10 @@
 						</li>
 					{/each}
 				</ul>
+				{/if}
 				<p class="foot" role="status">
-					{#if !results.length}No matching scoresheets
+					{#if !searching(queryWords(query ?? ''))}Type at least {MIN_QUERY} characters to find a scoresheet
+					{:else if !results.length}No matching scoresheets
 					{:else if results.length > MAX_SHOWN}{MAX_SHOWN} of {results.length} scoresheets: type to narrow the list
 					{:else}{results.length} scoresheet{results.length === 1 ? '' : 's'}{/if}
 				</p>
@@ -194,6 +201,7 @@
 		position: absolute; z-index: 30; right: 0; top: calc(100% + 3px); width: 36em; max-width: calc(100vw - 32px);
 		border: 1px solid var(--border); border-radius: 6px; background: var(--surface); box-shadow: 0 6px 20px rgb(0 0 0 / 0.25);
 	}
+	ul + .foot { border-top: 1px solid var(--border); }
 	ul { list-style: none; margin: 0; padding: 0.25em; max-height: min(26em, 55vh); overflow-y: auto; }
 	li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 1em; padding: 0.3em 0.55em; border-radius: 4px; cursor: pointer; line-height: 1.35; }
 	li + li { margin-top: 1px; }
@@ -205,7 +213,7 @@
 	.current .title::after { content: ' ✓'; color: var(--accent); }
 	.dim .title, .dim .level { color: var(--text-3); }
 	mark { color: inherit; background: var(--highlight-bg); border-radius: 2px; }
-	.foot { margin: 0; max-width: none; padding: 0.3em 0.8em; border-top: 1px solid var(--border); color: var(--text-3); font-size: 0.76rem; }
+	.foot { margin: 0; max-width: none; padding: 0.3em 0.8em; color: var(--text-3); font-size: 0.76rem; }
 	@media (max-width: 860px) {
 		.picker { width: 100%; }
 		.drop { left: 0; right: 0; width: auto; }
