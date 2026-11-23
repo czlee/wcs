@@ -148,12 +148,15 @@ LEVEL_CODES: dict[str, str] = {
 _FINALS_WORDS_RE = re.compile(r"\b(finals?|финал)\b", re.IGNORECASE)
 
 # Matches dance styles that are definitively not WCS — mirrors the constant in download.py.
-_NON_WCS_STYLES = r"salsa|bachata|zouk|lindy|hustle|country|silc|brazuka|ceroc|modern\s+jive|shag"
-NON_WCS_STYLE_RE = re.compile(rf"\b(?:{_NON_WCS_STYLES})", re.IGNORECASE)
+# Specific events excluded as nonstandard (user decisions, 2026-11-23): Tequila Blues Weekend
+# (blues/WCS mixes, side comps) and Volga Flow Festival (unidentified, not confirmed WCS).
+_NON_WCS_STYLES = r"salsa|bachata|zouk|lindy|hustle|country|silc|brazuka|ceroc|modern\s+jive|shag|tequila\s+blues|volga\s+flow"
+# "zouk" is also matched anywhere in a name (KemZouk, ZvukiZouka), not only at a word start.
+NON_WCS_STYLE_RE = re.compile(rf"\b(?:{_NON_WCS_STYLES})|zouk", re.IGNORECASE)
 # Division names only: also excludes Blues.  Not applied to event names, because some
 # WCS events have "Blues" in the name (e.g. danceconvention.net "Cash&Blues", a WCS
 # festival whose J&J divisions are WCS), so an event-level match would drop real WCS.
-NON_WCS_DIVISION_RE = re.compile(rf"\b(?:{_NON_WCS_STYLES}|blues\b)", re.IGNORECASE)
+NON_WCS_DIVISION_RE = re.compile(rf"\b(?:{_NON_WCS_STYLES}|blues\b)|zouk", re.IGNORECASE)
 # For raw-slug normalisation: shorten known format keywords even in fallback tokens.
 _STRICTLY_NORM_RE = re.compile(r"\bstrictly(?:\s+swing)?\b", re.IGNORECASE)
 

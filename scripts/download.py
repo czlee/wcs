@@ -44,12 +44,15 @@ ROUND_KEYWORDS = re.compile(
 # (when the event name contains the keyword) or individual divisions (when only a
 # division name does).  "country" catches Country Swing / Line Dance; "silc" catches
 # the Ceroc/Modern-Jive SILC Stars competition format.
-_NON_WCS_STYLES = r"salsa|bachata|zouk|lindy|hustle|country|silc|brazuka|ceroc|modern\s+jive|shag"
-NON_WCS_STYLE_RE = re.compile(rf"\b(?:{_NON_WCS_STYLES})", re.IGNORECASE)
+# Specific events excluded as nonstandard (user decisions, 2026-11-23): Tequila Blues Weekend
+# (blues/WCS mixes, side comps) and Volga Flow Festival (unidentified, not confirmed WCS).
+_NON_WCS_STYLES = r"salsa|bachata|zouk|lindy|hustle|country|silc|brazuka|ceroc|modern\s+jive|shag|tequila\s+blues|volga\s+flow"
+# "zouk" is also matched anywhere in a name (KemZouk, ZvukiZouka), not only at a word start.
+NON_WCS_STYLE_RE = re.compile(rf"\b(?:{_NON_WCS_STYLES})|zouk", re.IGNORECASE)
 # Division names only: also excludes Blues.  Not applied to event names, because some
 # WCS events have "Blues" in the name (e.g. danceconvention.net "Cash&Blues", a WCS
 # festival whose J&J divisions are WCS), so an event-level match would drop real WCS.
-NON_WCS_DIVISION_RE = re.compile(rf"\b(?:{_NON_WCS_STYLES}|blues\b)", re.IGNORECASE)
+NON_WCS_DIVISION_RE = re.compile(rf"\b(?:{_NON_WCS_STYLES}|blues\b)|zouk", re.IGNORECASE)
 
 
 @dataclass
@@ -605,9 +608,10 @@ def discover_danceconvention(
             # "final" (Latin) and "Финал" (Cyrillic) both signal a finals round.
             # NON_FINALS covers semi/prelim/quarter in Latin and Отбор (qualifier) in Cyrillic.
             # Полуфинал/Четвертьфинал contain финал as a substring so are listed explicitly.
-            FINALS_IN_NAME = re.compile(r"\bfinal|финал", re.IGNORECASE)
+            # (?<![^\W_]) = not preceded by a letter/digit, so "Novice_JJ_Finals" matches (\b would not).
+            FINALS_IN_NAME = re.compile(r"(?<![^\W_])final|финал", re.IGNORECASE)
             NON_FINALS = re.compile(
-                r"\b(?:semi|prelim|quarter|heat)\b|отбор|полуфинал|четвертьфинал", re.IGNORECASE
+                r"(?<![^\W_])(?:semi|prelim|quarter|heat)(?![^\W_])|отбор|полуфинал|четвертьфинал", re.IGNORECASE
             )
             count = 0
             for m in div_re.finditer(rblob):

@@ -1,5 +1,13 @@
 event_id,event_name,site,event_date,url,registry_candidate,country_iso2,us_state_iso,filled_by,notes
 _README,"Worklist for events whose region could not be resolved automatically. Fill country_iso2 (ISO 3166-1 alpha-2, e.g. US, HU, NZ) on each blank row; for US events also fill us_state_iso (ISO 3166-2, e.g. US-CA). Set filled_by to 'agent' or 'human' on every filled row (change 'agent' to 'human' once a person has checked it), and give the evidence in notes. Use event_name/url/registry_candidate for context. Re-run build_regions.py when done. Filled rows are authoritative and are never overwritten.",,,,,,,,
+dc-300907271,Cinema Swing Fest: Sherlock,danceconvention.net,2026-03-28,https://danceconvention.net/eventdirector/en/roundscores/301310725.pdf,,,,,
+dc-301368170,Go West Swingfest 2026,danceconvention.net,2026-10-10,https://danceconvention.net/eventdirector/en/roundscores/30236790.pdf,,,,,
+dc-301330270,Life Is Life 2026,danceconvention.net,2026-05-30,https://danceconvention.net/eventdirector/en/roundscores/301404646.pdf,,,,,
+dc-300240591,Spicy Spring Swing,danceconvention.net,2025-03-22,https://danceconvention.net/eventdirector/en/roundscores/300493233.pdf,,,,,
+dc-301115640,Spicy Spring Swing,danceconvention.net,2026-03-21,https://danceconvention.net/eventdirector/en/roundscores/301299390.pdf,,,,,
+dc-8260590,Spicy Spring Swing,danceconvention.net,2024-03-16,https://danceconvention.net/eventdirector/en/roundscores/8442501.pdf,,,,,
+dc-301179241,The NZ WCS Open 2026,danceconvention.net,2026-10-17,https://danceconvention.net/eventdirector/en/roundscores/30227650.pdf,,,,,
+dc-301544790,КЕШЬЮ СВИНГ,danceconvention.net,2026-10-03,https://danceconvention.net/eventdirector/en/roundscores/30229567.pdf,,,,,
 dc-8288180,Cash&Blues,danceconvention.net,2024-02-24,https://danceconvention.net/eventdirector/en/roundscores/8406101.pdf,,RU,,agent,
 dc-300240590,Cash&Swing 2025,danceconvention.net,2025-02-22,https://danceconvention.net/eventdirector/en/roundscores/300446913.pdf,,RU,,agent,
 dc-299999901,Cinema Swing Fest,danceconvention.net,2024-11-02,https://danceconvention.net/eventdirector/en/roundscores/300198248.pdf,,RU,,agent,

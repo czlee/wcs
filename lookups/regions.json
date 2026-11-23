@@ -8,6 +8,15 @@
     "matched_name": null,
     "wsdc_registered": false
   },
+  "dc-299961040": {
+    "event_name": "Spooky Westie Weekend 2024",
+    "site": "danceconvention.net",
+    "country": "SG",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Spooky Westie Weekend",
+    "wsdc_registered": true
+  },
   "dc-299999901": {
     "event_name": "Cinema Swing Fest",
     "site": "danceconvention.net",
@@ -260,6 +269,51 @@
     "matched_name": null,
     "wsdc_registered": false
   },
+  "dc-300760260": {
+    "event_name": "Swingsation 2026",
+    "site": "danceconvention.net",
+    "country": "AU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Swingsation",
+    "wsdc_registered": true
+  },
+  "dc-300766630": {
+    "event_name": "Southern Lights Swing",
+    "site": "danceconvention.net",
+    "country": "AU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Southern Lights Swing",
+    "wsdc_registered": true
+  },
+  "dc-300797311": {
+    "event_name": "Swingvasion IV (2026)",
+    "site": "danceconvention.net",
+    "country": "NZ",
+    "state": null,
+    "source": "wsdc-registry-fuzzy",
+    "matched_name": "Swingvasion",
+    "wsdc_registered": true
+  },
+  "dc-300804490": {
+    "event_name": "Swing & Snow 2026",
+    "site": "danceconvention.net",
+    "country": "RU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Swing & Snow",
+    "wsdc_registered": true
+  },
+  "dc-300818670": {
+    "event_name": "Revitalise WCS",
+    "site": "danceconvention.net",
+    "country": "AU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Revitalise WCS",
+    "wsdc_registered": true
+  },
   "dc-300821000": {
     "event_name": "The After Party - A West Coast Swing Experience 2025",
     "site": "danceconvention.net",
@@ -286,6 +340,96 @@
     "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false
+  },
+  "dc-301107621": {
+    "event_name": "HONEY FEST 2026",
+    "site": "danceconvention.net",
+    "country": "RU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "HONEY FEST",
+    "wsdc_registered": true
+  },
+  "dc-301107622": {
+    "event_name": "Shakedown Swing 2026",
+    "site": "danceconvention.net",
+    "country": "NZ",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Shakedown Swing",
+    "wsdc_registered": true
+  },
+  "dc-301108262": {
+    "event_name": "Americano Dance Camp",
+    "site": "danceconvention.net",
+    "country": "RU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Americano Dance Camp",
+    "wsdc_registered": true
+  },
+  "dc-301179240": {
+    "event_name": "Simply Adelaide West Coast Swing 2026",
+    "site": "danceconvention.net",
+    "country": "AU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Simply Adelaide West Coast Swing",
+    "wsdc_registered": true
+  },
+  "dc-301189300": {
+    "event_name": "Best Of The Best 2026",
+    "site": "danceconvention.net",
+    "country": "AU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Best of the Best WCS",
+    "wsdc_registered": true
+  },
+  "dc-301273270": {
+    "event_name": "KOREA WESTIVAL 2026_10th Anniversary",
+    "site": "danceconvention.net",
+    "country": "KR",
+    "state": null,
+    "source": "wsdc-registry-fuzzy",
+    "matched_name": "Korea Westival",
+    "wsdc_registered": true
+  },
+  "dc-301273271": {
+    "event_name": "St.Petersburg WCS Nights 2026",
+    "site": "danceconvention.net",
+    "country": "RU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "St. Petersburg WCS Nights",
+    "wsdc_registered": true
+  },
+  "dc-301367300": {
+    "event_name": "Austin Rocks | ATX ROX 2026 - West Coast Swing Magic",
+    "site": "danceconvention.net",
+    "country": "US",
+    "state": "US-TX",
+    "source": "wsdc-registry-fuzzy",
+    "matched_name": "Austin Rocks",
+    "wsdc_registered": true
+  },
+  "dc-301399041": {
+    "event_name": "Moscow Westie Fest: Gala Edition 2026",
+    "site": "danceconvention.net",
+    "country": "RU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Moscow Westie Fest Gala Edition",
+    "wsdc_registered": true
+  },
+  "dc-301439540": {
+    "event_name": "Sea Dance Fest 2026",
+    "site": "danceconvention.net",
+    "country": "RU",
+    "state": null,
+    "source": "wsdc-registry-exact",
+    "matched_name": "Sea Dance Fest",
+    "wsdc_registered": true
   },
   "dc-7764440": {
     "event_name": "Swingsation 2024",
