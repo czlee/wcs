@@ -3,6 +3,7 @@
 	import PairMatrix from './PairMatrix.svelte';
 	import Check from './Check.svelte';
 	import Term from './Term.svelte';
+	import MetricLink from './MetricLink.svelte';
 	import Tex from './Tex.svelte';
 	import { kendallW, spearman, judgePairs, spread } from '#lib/metrics.js';
 	import { fx, nice, signed, minus } from '#lib/format.js';
@@ -113,7 +114,7 @@
 	panels of different sizes are compared fairly in that respect.
 </p>
 <aside class="aside small">
-	<strong>A curiosity, and a cross-check:</strong> there’s a shortcut through Kendall’s <Tex tex="W" />, another
+	<strong>A curiosity, and a cross-check:</strong> there’s a shortcut through <MetricLink k="kendall_w">Kendall’s <Tex tex="W" /></MetricLink>, another
 	of the metrics on this site, which measures how much the whole panel agrees on one order. For
 	<Tex tex={`m = ${m}`} /> judges and rankings without ties, <Tex tex={String.raw`\bar\rho`} /> is exactly
 	<Tex tex={String.raw`\frac{mW - 1}{m - 1}`} />, so for any one scoresheet the two carry the same information.
@@ -150,7 +151,7 @@
 	sizes: being 2 places apart in a field of {n} means more than in a field of 20.
 </p>
 <aside class="aside small">
-	<strong>How this relates to Kendall’s W:</strong> Kendall’s <Tex tex="W" /> is another of the metrics on this
+	<strong>How this relates to Kendall’s W:</strong> <MetricLink k="kendall_w">Kendall’s <Tex tex="W" /></MetricLink> is another of the metrics on this
 	site, which measures how much the whole panel agrees on one order; here <Tex tex={`W = ${fx(w.W, 6)}`} />. The
 	squared standard deviations (the variances) carry the same information as <Tex tex="W" /> for a given field size. For rankings without ties, their average over competitors is exactly
 	<Tex tex={String.raw`\tfrac{n^2 - 1}{12}(1 - W)`} />:

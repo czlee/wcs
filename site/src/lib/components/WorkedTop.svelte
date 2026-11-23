@@ -1,6 +1,7 @@
 <script>
 	import PairMatrix from './PairMatrix.svelte';
 	import Check from './Check.svelte';
+	import MetricLink from './MetricLink.svelte';
 	import Tex from './Tex.svelte';
 	import { topN, topNChance, chanceCorrected, judgePairs } from '#lib/metrics.js';
 	import { METRICS } from '#lib/families.js';
@@ -45,7 +46,7 @@
 </p>
 <p class="small muted">
 	The metric you’re looking at is the {ov ? 'overlap' : 'Jaccard index'}{cc ? ', corrected for chance (the last step)' : ', without a correction for chance'}.
-	The {ov ? 'Jaccard index' : 'overlap'} {cc ? 'is' : 'and the chance correction are'} dimmed, for comparison.
+	The {#if ov}<MetricLink k={cc ? 'jaccard_at_3_cc' : 'jaccard_at_3'}>Jaccard index</MetricLink>{:else}<MetricLink k={cc ? 'overlap_at_3_cc' : 'overlap_at_3'}>overlap</MetricLink>{/if} {cc ? 'is' : 'and the chance correction are'} dimmed, for comparison.
 </p>
 {#snippet pair(/** @type {string} */ o, /** @type {string} */ j, inner = false)}
 	<div class="eqs">

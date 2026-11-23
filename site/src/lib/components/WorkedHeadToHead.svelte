@@ -2,6 +2,7 @@
 	import PairMatrix from './PairMatrix.svelte';
 	import Check from './Check.svelte';
 	import Term from './Term.svelte';
+	import MetricLink from './MetricLink.svelte';
 	import Tex from './Tex.svelte';
 	import { kendallTau, judgePairs } from '#lib/metrics.js';
 	import { fx, minus } from '#lib/format.js';
@@ -49,7 +50,7 @@
 </p>
 <p class="small muted">
 	The metric you’re looking at is the {isTau ? 'mean pairwise Kendall correlation' : 'mean pairwise normalised Kendall τ distance'}. The
-	{isTau ? 'mean pairwise normalised Kendall τ distance' : 'mean pairwise Kendall correlation'} is dimmed, for comparison.
+	{#if isTau}<MetricLink k="tau_distance">mean pairwise normalised Kendall τ distance</MetricLink>{:else}<MetricLink k="mean_pairwise_tau">mean pairwise Kendall correlation</MetricLink>{/if} is dimmed, for comparison.
 </p>
 <p class="small muted">
 	Since both metrics are based on Kendall’s <Tex tex={String.raw`\tau`} />, the notation can get confusing. We’ll use

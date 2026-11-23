@@ -2,6 +2,7 @@
 	import RankMatrix from './RankMatrix.svelte';
 	import PairMatrix from './PairMatrix.svelte';
 	import Check from './Check.svelte';
+	import MetricLink from './MetricLink.svelte';
 	import Tex from './Tex.svelte';
 	import { spread, footrule, judgePairs } from '#lib/metrics.js';
 	import { fx, nice } from '#lib/format.js';
@@ -84,7 +85,7 @@
 </p>
 <p class="small muted">
 	There are two versions: the mean absolute deviation (MAD) from the median, and from the mean. The one you’re
-	looking at is from the {focus === MED ? 'median' : 'mean'}; the other is dimmed, for comparison.
+	looking at is from the {focus === MED ? 'median' : 'mean'}; the <MetricLink k={focus === MED ? MEAN : MED}>other</MetricLink> is dimmed, for comparison.
 </p>
 <RankMatrix
 	{sheet}
@@ -99,8 +100,8 @@
 <div class:dim={dim(MED)}><Check label="Mean abs. rank deviation (median)" js={s.madMedian} py={sheet.py.mean_abs_rank_dev_median} /></div>
 <div class:dim={dim(MEAN)}><Check label="Mean abs. rank deviation (mean)" js={s.madMean} py={sheet.py.mean_abs_rank_dev_mean} /></div>
 <p>
-	The median is the natural centre for absolute distances: no other point gives a smaller total. So MAD (mean)
-	is never smaller than MAD (median), and it’s larger when one judge is far from the rest, because that judge
+	The median is the natural centre for absolute distances: no other point gives a smaller total. So {#if focus === MED}<MetricLink k={MEAN}>MAD (mean)</MetricLink>{:else}MAD (mean){/if}
+	is never smaller than {#if focus === MEAN}<MetricLink k={MED}>MAD (median)</MetricLink>{:else}MAD (median){/if}, and it’s larger when one judge is far from the rest, because that judge
 	pulls the mean (but not the median) towards them. Neither is scaled to the field size, so they aren’t
 	comparable across finals of different sizes: being 2 places apart in a field of {n} means more
 	than in a field of 20.

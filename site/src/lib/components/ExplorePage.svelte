@@ -6,9 +6,10 @@
 	// dialogs, which can lead to each other: one is open at a time. What's
 	// on show, dialogs included, is in the URL (see lib/view.js); without a metric there, a random
 	// one that isn't `hidden` is picked on load. Smaller screens get a plain scrolling page for now.
-	import { onMount } from 'svelte';
+	import { onMount, setContext } from 'svelte';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import Linked from './Linked.svelte';
 	import Limitations from './Limitations.svelte';
 	import FilterBar from './FilterBar.svelte';
 	import MetricChart from './MetricChart.svelte';
@@ -249,6 +250,16 @@
 	}
 	// A click on a metric in a scoresheet's profile shows its working.
 	const showMetric = (/** @type {string} */ k) => open('working', k);
+	// A metric named in prose: it becomes the current metric, wherever the reader is. In the working it's
+	// shown in place; from a profile, that leads to its working; elsewhere any dialog closes, to show the chart.
+	setContext('showMetric', (/** @type {string} */ k) => {
+		if (dialog === 'working') key = k;
+		else if (dialog === 'profile') open('working', k);
+		else {
+			close();
+			key = k;
+		}
+	});
 	/** Why a scoresheet isn't in the charts on show, or '' if it is. */
 	const uncharted = (/** @type {import('#lib/dimensions.js').Countable} */ r) =>
 		r.n < (meta.minN ?? 0) ? 'has too few finalists for this metric' : matches(r, filters) ? '' : 'is outside the filters';
@@ -326,16 +337,16 @@
 			<div class="panels">
 				<div class="panel">
 					<h2>What it measures</h2>
-					<p>{about.what}</p>
+					<p><Linked text={about.what} /></p>
 					<p>
-						{about.reading}
+						<Linked text={about.reading} />
 						<button type="button" class="link-btn" onclick={() => open('working')}>Learn more</button>
 					</p>
 				</div>
 				<div class="panel">
 					<h2>Caveats for this metric</h2>
 					{#if about.caveats.length}
-						<ul>{#each about.caveats as c, i (i)}<li>{c}</li>{/each}</ul>
+						<ul>{#each about.caveats as c, i (i)}<li><Linked text={c} /></li>{/each}</ul>
 					{/if}
 					<p class="small muted">
 						{about.caveats.length ? 'Also see the' : 'See the'}
