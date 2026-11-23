@@ -23,6 +23,22 @@ export const YEARS = [2024, 2025, 2026];
 /** @type {Dimension[]} */
 export const DIMENSIONS = [
 	{
+		id: 'judges', label: 'Judges', of: (r) => r.m,
+		bins: [
+			{ id: '5', label: '5', test: (v) => v === 5 },
+			{ id: '7', label: '7', test: (v) => v === 7 },
+			{ id: '9', label: '9', test: (v) => v === 9 }
+		]
+	},
+	{
+		id: 'year', label: 'Year', of: (r) => +r.date.slice(0, 4),
+		bins: YEARS.map((y) => ({ id: String(y), label: String(y), test: (v) => v === y }))
+	},
+	{
+		id: 'region', label: 'Region', of: (r) => regionOf(r.country),
+		bins: REGIONS.map(({ id, label }) => ({ id, label, test: (v) => v === id }))
+	},
+	{
 		id: 'finalists', label: 'Finalists', of: (r) => r.n,
 		tip: 'The number of couples in the final. Some metrics depend on field size, so narrowing this range can help take that variable out of the comparison.',
 		// Very few finals have more than 16.
@@ -34,22 +50,6 @@ export const DIMENSIONS = [
 			{ id: '11-13', label: '11–13', test: (v) => v >= 11 && v <= 13 },
 			{ id: '14-up', label: '14+', test: (v) => v >= 14 }
 		]
-	},
-	{
-		id: 'judges', label: 'Judges', of: (r) => r.m,
-		bins: [
-			{ id: '5', label: '5', test: (v) => v === 5 },
-			{ id: '7', label: '7', test: (v) => v === 7 },
-			{ id: '9', label: '9', test: (v) => v === 9 }
-		]
-	},
-	{
-		id: 'region', label: 'Region', of: (r) => regionOf(r.country),
-		bins: REGIONS.map(({ id, label }) => ({ id, label, test: (v) => v === id }))
-	},
-	{
-		id: 'year', label: 'Year', of: (r) => +r.date.slice(0, 4),
-		bins: YEARS.map((y) => ({ id: String(y), label: String(y), test: (v) => v === y }))
 	}
 ];
 

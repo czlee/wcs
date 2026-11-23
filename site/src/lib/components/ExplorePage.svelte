@@ -271,7 +271,7 @@
 {#snippet metricOptions()}
 	{#each FAMILIES as f (f.id)}
 		<optgroup label={f.title}>
-			{#each f.metrics as k (k)}<option value={k}>{METRICS[k].label}</option>{/each}
+			{#each f.metrics as k (k)}<option value={k}>{METRICS[k].menu ?? METRICS[k].label}</option>{/each}
 		</optgroup>
 	{/each}
 {/snippet}
@@ -303,7 +303,7 @@
 						<div class="fam-title">{f.title}</div>
 						{#each f.metrics as k (k)}
 							<button type="button" class:hidden-metric={METRICS[k].hidden} aria-pressed={k === key} onclick={() => (key = k)}>
-								{METRICS[k].label}
+								{METRICS[k].menu ?? METRICS[k].label}
 							</button>
 						{/each}
 					</div>
