@@ -10,6 +10,11 @@
 	);
 </script>
 
+<p class="alert" role="alert">
+	<strong>Wait! Before you read too much into this…</strong> These comparisons have limits that can change
+	what a difference between levels means.
+</p>
+
 <ul>
 	<li>
 		<strong>This is exploratory.</strong> It describes how much judges’ rankings differ, by level. It
@@ -31,9 +36,8 @@
 		come from either.
 	</li>
 	<li>
-		<strong>Scoresheets aren’t independent.</strong> The same judges sit on many panels, and several
-		divisions come from the same event. The error bars assume independence, so they’re probably too
-		narrow. The interval method itself (mean ± 1.96 standard errors) is provisional.
+		<strong>Scoresheets aren’t independent.</strong> The same judges sit on many panels. The error
+		bars assume independence, so they’re probably too narrow. The interval method itself (mean ± 1.96 standard errors) is provisional.
 	</li>
 	<li>
 		<strong>Levels are read from division names</strong> by keyword. Combined divisions (e.g. “All-Star/Champions”)
@@ -60,6 +64,10 @@
 </ul>
 
 <style>
+	.alert {
+		margin: 0.3em 0 0.8em; padding: 0.6em 0.8em; border-radius: 6px;
+		border: 1px solid var(--warn-border); background: var(--warn-bg); color: var(--warn-text);
+	}
 	ul { margin: 0.3em 0; padding-left: 1.2em; }
 	li + li { margin-top: 0.5em; }
 </style>

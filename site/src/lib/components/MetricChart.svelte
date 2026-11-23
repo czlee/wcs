@@ -48,7 +48,7 @@
 	});
 	const byLevel = $derived(cells(rows));
 	const byLevelAll = $derived(cells(unfiltered));
-	const smallNote = `Fewer than ${MIN_CELL} scoresheets, so shown in grey`;
+	const smallNote = `Fewer than ${MIN_CELL} scoresheets`;
 
 	const barY = $derived.by(() => {
 		// Fixed by the unfiltered bars, unless a filtered bar or interval needs more room. Grey
@@ -127,7 +127,7 @@
 <div class="chart" class:fill bind:this={wrap}>
 	<div class="panels">
 		<figure>
-			<figcaption>{CI_LABEL} (<Term tip="Scoresheets aren’t independent: the same judges sit on many panels, and several divisions come from the same event. The error bars assume independence, so they’re probably too narrow.">provisional</Term>), by level</figcaption>
+			<figcaption>{CI_LABEL} (<Term tip="Scoresheets aren’t independent: the same judges sit on many panels. The error bars are the 95% confidence interval assuming independence, so they’re probably too narrow.">provisional</Term>), by level</figcaption>
 			<div class="plot" bind:clientWidth={mw} bind:clientHeight={mh}>
 			<svg viewBox="0 0 {W} {H}" role="img" aria-label="{meta.label} ({meta.higher ? 'higher' : 'lower'} means more agreement): mean by level">
 				<defs><clipPath id="{gid}-bars"><rect x={M.l} y={M.t} width={W - M.l - M.r} height={H - M.b - M.t} /></clipPath></defs>

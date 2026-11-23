@@ -171,9 +171,18 @@
 	});
 
 	let mounted = $state(false);
+	const LIMITS_ACKED = 'wcs-explore-limitations-acknowledged';
+	/** Whether the reader has acknowledged the limitations, which they must do once before closing them. */
+	let acked = $state(false);
+	function acknowledge() {
+		acked = true;
+		try { localStorage.setItem(LIMITS_ACKED, '1'); } catch { /* storage blocked: asked again next visit */ }
+		close();
+	}
 	let app = $state(false);
 	onMount(() => {
 		mounted = true;
+		try { acked = !!localStorage.getItem(LIMITS_ACKED); } catch { /* ask */ }
 		show(true);
 		explorer.open = open;
 		const mq = matchMedia(APP_QUERY);
@@ -330,9 +339,7 @@
 					{/if}
 					<p class="small muted">
 						{about.caveats.length ? 'Also see the' : 'See the'}
-						<button type="button" class="link-btn" onclick={() => open('limitations')}>limitations</button>
-						that apply to every metric: panel and field sizes differ between levels, scoresheets aren’t
-						independent, and more.
+						<button type="button" class="link-btn" onclick={() => open('limitations')}>limitations</button>.
 					</p>
 				</div>
 			</div>
@@ -372,11 +379,12 @@
 	<MetricsTable {sheet} percentiles={sheet.percentiles} current={key} onmetric={showMetric} />
 </Modal>
 
-<Modal bind:open={() => dialog === 'limitations', () => closed('limitations')} kicker="Before you read anything into this" title="Reasons these comparisons might mislead">
+<Modal bind:open={() => dialog === 'limitations', () => closed('limitations')} locked={!acked} kicker="Before you read anything into this" title="Reasons these comparisons might mislead">
 	<Limitations info={data.info} />
+	<p class="ack"><button type="button" class="btn danger" onclick={acknowledge}>I understand and promise to take care with interpreting this</button></p>
 </Modal>
 
-<Modal bind:open={() => dialog === 'about', () => closed('about')} kicker="About" title="How much do WCS judges disagree?">
+<Modal bind:open={() => dialog === 'about', (v) => { if (!v && dialog === 'about') open('limitations'); }} kicker="About" title="How much do WCS judges disagree?">
 	<p class="byline">By Chuan-Zheng Lee<span class="credit">, with implementation by Claude</span></p>
 	<p>
 		In a West Coast Swing final, every judge ranks every competitor, and relative placement combines those
@@ -399,12 +407,23 @@
 		in the box plot and work through it; its “details” show the judges’ rankings, every metric and a link to
 		the published scoresheet. Or click a point in the box plot for its working.
 	</p>
+	<p>
+		The method and design decisions are mine; the code, including the data processing and this website,
+		was largely written by <a href="https://claude.ai/">Claude</a>, under my direction.
+	</p>
+	<p>
+		Data: published finals scoresheets from <a href="https://scoring.dance/">scoring.dance</a>,
+		<a href="https://eepro.com/">eepro.com</a> and <a href="https://danceconvention.net/">danceconvention.net</a>,
+		events {date(data.info.first_event)} to {date(data.info.last_event)}; {data.info.sheets} scoresheets,
+		exported {date(data.info.exported)} from commit <code>{data.info.commit}</code>. Code:
+		<a href="https://github.com/czlee/wcs">czlee/wcs</a>.
+	</p>
 	<p class="callout small">
 		<strong>This is exploratory.</strong> Panel and field sizes differ between levels, and most of these
 		metrics depend on them. <button type="button" class="link-btn" onclick={() => open('limitations')}>Read the limitations</button>
 		before reading anything into a difference.
 	</p>
-	<p><button type="button" class="btn primary" onclick={close}>Start exploring</button></p>
+	<p><button type="button" class="btn primary" onclick={() => open('limitations')}>Continue</button></p>
 </Modal>
 
 <style>
@@ -424,6 +443,12 @@
 		font: inherit; font-size: 0.82rem; cursor: pointer; padding: 0.2em 0.7em; border-radius: 4px;
 		border: 1px solid var(--warn-border); background: var(--warn-bg); color: var(--warn-text);
 	}
+	.ack { margin: 1.2em 0 0; text-align: center; }
+	.btn.danger {
+		font: inherit; font-weight: 600; cursor: pointer; padding: 0.55em 1.1em; border-radius: 6px;
+		border: 1px solid #8f1d12; background: #c0392b; color: #fff;
+	}
+	.btn.danger:hover { background: #a93226; }
 	.link-btn { font: inherit; padding: 0; border: 0; background: none; color: var(--accent); text-decoration: underline; cursor: pointer; }
 	.topbar .link-btn { font-size: 0.85rem; color: var(--text-2); }
 

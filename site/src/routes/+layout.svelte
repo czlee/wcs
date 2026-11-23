@@ -8,7 +8,7 @@
 	import favicon from '#lib/assets/favicon.svg';
 	import { DRAFT } from '#lib/config.js';
 	import { explorer } from '#lib/explorer.js';
-	import { link, date } from '#lib/format.js';
+	import { link } from '#lib/format.js';
 	import { FORMATS } from '#lib/levels.js';
 	import { page } from '$app/state';
 
@@ -44,19 +44,8 @@
 
 <footer>
 	<p>
-		Analysis by Chuan-Zheng Lee. Exploratory, not adjusted for panel or field size; see the
+		Built by Chuan-Zheng Lee using Claude Code. Exploratory, not adjusted for panel or field size; see the
 		<a href={limitationsHref} onclick={openLimitations}>limitations</a>. This site doesn’t rate individual judges.
-	</p>
-	<p>
-		The method and design decisions are mine; the code, including the data processing and this
-		website, was largely written by <a href="https://claude.ai/">Claude</a>, under my direction.
-	</p>
-	<p>
-		Data: published finals scoresheets from <a href="https://scoring.dance/">scoring.dance</a>,
-		<a href="https://eepro.com/">eepro.com</a> and <a href="https://danceconvention.net/">danceconvention.net</a>,
-		events {date(data.info.first_event)} to {date(data.info.last_event)}; {data.info.sheets} scoresheets,
-		exported {date(data.info.exported)} from commit <code>{data.info.commit}</code>. Code:
-		<a href="https://github.com/czlee/wcs">czlee/wcs</a>.
 	</p>
 </footer>
 </div>

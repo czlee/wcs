@@ -11,9 +11,10 @@ export function sd(/** @type {number[]} */ xs) {
 }
 
 /**
- * The interval drawn on the bar charts. Provisional: a normal-approximation 95%
- * confidence interval for the mean, mean ± 1.96·sd/√n. Kept in one place so the
- * method can be swapped (e.g. for a t-interval or bootstrap).
+ * The interval drawn on the bar charts. Provisional: the mean ± 1.96·sd/√n. That's a 95%
+ * interval only under a normal approximation with independent scoresheets and a known
+ * standard error; with small groups and shared judges it covers less, so the site
+ * calls it the 95% CI only with that caveat (see the tooltip in MetricChart). Kept in one place so the method can be swapped (e.g. for a t-interval or bootstrap).
  */
 export const CI_LABEL = 'Mean ± 1.96 × standard error';
 export function meanCI(/** @type {number[]} */ xs) {

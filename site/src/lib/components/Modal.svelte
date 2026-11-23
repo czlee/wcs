@@ -1,10 +1,11 @@
 <script>
 	// A modal dialog (native <dialog>): Esc, the close button or a click on the
 	// backdrop closes it. Its body renders only while it's open. `open` is bindable.
+	// A `locked` dialog has no × and ignores Esc and the backdrop: the page must close it.
 	// `heading`, where given, is drawn in place of the title (which still names the dialog).
 	// When `view` changes, the dialog scrolls back to the top.
-	/** @type {{open?: boolean, kicker?: string, title: string, wide?: boolean, view?: string, heading?: import('svelte').Snippet, children: import('svelte').Snippet}} */
-	let { open = $bindable(false), kicker = '', title, wide = false, view, heading, children } = $props();
+	/** @type {{open?: boolean, locked?: boolean, kicker?: string, title: string, wide?: boolean, view?: string, heading?: import('svelte').Snippet, children: import('svelte').Snippet}} */
+	let { open = $bindable(false), locked = false, kicker = '', title, wide = false, view, heading, children } = $props();
 	/** @type {HTMLDialogElement | undefined} */
 	let dialog = $state();
 	/** @type {HTMLElement | undefined} */
@@ -24,26 +25,26 @@
 	const onclick = (/** @type {MouseEvent} */ e) => {
 		if (!dialog || e.target !== dialog) return;
 		const b = dialog.getBoundingClientRect();
-		if (e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) open = false;
+		if ((e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) && !locked) open = false;
 	};
 	// `closedby` leaves Esc to this, so that Android's Back goes back through the dialogs (the
 	// explorer gives each a history entry) instead of closing this one outright.
 	const onkeydown = (/** @type {KeyboardEvent} */ e) => {
 		if (!open || e.key !== 'Escape' || e.defaultPrevented) return;
 		e.preventDefault();
-		open = false;
+		if (!locked) open = false;
 	};
 </script>
 
 <svelte:window {onkeydown} />
 
-<dialog closedby="none" class:wide bind:this={dialog} onclose={() => (open = false)} {onclick} aria-label={title}>
+<dialog closedby="none" class:wide bind:this={dialog} oncancel={(e) => e.preventDefault()} onclose={() => (open = false)} {onclick} aria-label={title}>
 	<header>
 		<div class="titles">
 			{#if kicker}<p class="kicker">{kicker}</p>{/if}
 			<h2>{#if heading}{@render heading()}{:else}{title}{/if}</h2>
 		</div>
-		<button type="button" class="close" onclick={() => (open = false)} aria-label="Close">×</button>
+		{#if !locked}<button type="button" class="close" onclick={() => (open = false)} aria-label="Close">×</button>{/if}
 	</header>
 	<div class="body" tabindex="-1" bind:this={body}>
 		{#if open}{@render children()}{/if}
