@@ -9,7 +9,7 @@
 	import { fx, minus, date } from '#lib/format.js';
 	import Term from './Term.svelte';
 
-	/** @typedef {{id: string, level: string, event: string, date: string, name: string, m: number, n: number, v: (number | null)[]}} Row */
+	/** @typedef {{id: string, level: string, event: string, date: string, name: string, m: number, n: number, country: string | null, v: (number | null)[]}} Row */
 	/**
 	 * @type {{rows: Row[], index: number, meta: {label: string, higher: boolean, chance?: boolean}, colour: string,
 	 *   filters?: import('#lib/dimensions.js').Filters, highlight?: string, fill?: boolean, onpoint: (id: string) => void}}

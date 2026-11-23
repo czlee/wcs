@@ -58,11 +58,11 @@
 </div>
 
 <style>
-	.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em 1.2em; font-size: 0.82rem; }
+	.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em 0.9em; font-size: 0.82rem; }
 	.dimension { display: flex; align-items: center; gap: 0.5em; }
 	.label { color: var(--text-3); }
 	.bins { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
-	.bins button { font: inherit; padding: 0.15em 0.65em; border: 0; background: transparent; color: var(--text-2); cursor: pointer; }
+	.bins button { font: inherit; padding: 0.15em 0.5em; border: 0; background: transparent; color: var(--text-2); cursor: pointer; }
 	.bins button + button { border-left: 1px solid var(--border); }
 	.bins button:hover { background: var(--surface-2); }
 	.bins button[aria-pressed='true'] { background: var(--text); color: var(--surface); }

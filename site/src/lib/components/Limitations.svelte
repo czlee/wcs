@@ -26,6 +26,11 @@
 		between levels could come from this.
 	</li>
 	<li>
+		<strong>Regions differ in more than geography.</strong> Panel and field sizes vary between regions, and
+		so does the site that most of a region’s scoresheets come from, so a difference between regions might
+		come from either.
+	</li>
+	<li>
 		<strong>Scoresheets aren’t independent.</strong> The same judges sit on many panels, and several
 		divisions come from the same event. The error bars assume independence, so they’re probably too
 		narrow. The interval method itself (mean ± 1.96 standard errors) is provisional.
