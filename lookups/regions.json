@@ -134,6 +134,15 @@
     "matched_name": null,
     "wsdc_registered": false
   },
+  "dc-300240591": {
+    "event_name": "Spicy Spring Swing",
+    "site": "danceconvention.net",
+    "country": "RU",
+    "state": null,
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
   "dc-300278470": {
     "event_name": "Cinema Swing Fest: Wonderland",
     "site": "danceconvention.net",
@@ -323,6 +332,15 @@
     "matched_name": null,
     "wsdc_registered": false
   },
+  "dc-300907271": {
+    "event_name": "Cinema Swing Fest: Sherlock",
+    "site": "danceconvention.net",
+    "country": "RU",
+    "state": null,
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
   "dc-300926550": {
     "event_name": "Shooba Dooba Swing",
     "site": "danceconvention.net",
@@ -368,6 +386,15 @@
     "matched_name": "Americano Dance Camp",
     "wsdc_registered": true
   },
+  "dc-301115640": {
+    "event_name": "Spicy Spring Swing",
+    "site": "danceconvention.net",
+    "country": "RU",
+    "state": null,
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
   "dc-301179240": {
     "event_name": "Simply Adelaide West Coast Swing 2026",
     "site": "danceconvention.net",
@@ -376,6 +403,15 @@
     "source": "wsdc-registry-exact",
     "matched_name": "Simply Adelaide West Coast Swing",
     "wsdc_registered": true
+  },
+  "dc-301179241": {
+    "event_name": "The NZ WCS Open 2026",
+    "site": "danceconvention.net",
+    "country": "NZ",
+    "state": null,
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
   },
   "dc-301189300": {
     "event_name": "Best Of The Best 2026",
@@ -404,6 +440,15 @@
     "matched_name": "St. Petersburg WCS Nights",
     "wsdc_registered": true
   },
+  "dc-301330270": {
+    "event_name": "Life Is Life 2026",
+    "site": "danceconvention.net",
+    "country": "RU",
+    "state": null,
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
   "dc-301367300": {
     "event_name": "Austin Rocks | ATX ROX 2026 - West Coast Swing Magic",
     "site": "danceconvention.net",
@@ -412,6 +457,15 @@
     "source": "wsdc-registry-fuzzy",
     "matched_name": "Austin Rocks",
     "wsdc_registered": true
+  },
+  "dc-301368170": {
+    "event_name": "Go West Swingfest 2026",
+    "site": "danceconvention.net",
+    "country": "AU",
+    "state": null,
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
   },
   "dc-301399041": {
     "event_name": "Moscow Westie Fest: Gala Edition 2026",
@@ -430,6 +484,15 @@
     "source": "wsdc-registry-exact",
     "matched_name": "Sea Dance Fest",
     "wsdc_registered": true
+  },
+  "dc-301544790": {
+    "event_name": "КЕШЬЮ СВИНГ",
+    "site": "danceconvention.net",
+    "country": "RU",
+    "state": null,
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
   },
   "dc-7764440": {
     "event_name": "Swingsation 2024",
@@ -508,6 +571,15 @@
     "site": "danceconvention.net",
     "country": "US",
     "state": "US-TX",
+    "source": "manual-agent",
+    "matched_name": null,
+    "wsdc_registered": false
+  },
+  "dc-8260590": {
+    "event_name": "Spicy Spring Swing",
+    "site": "danceconvention.net",
+    "country": "RU",
+    "state": null,
     "source": "manual-agent",
     "matched_name": null,
     "wsdc_registered": false

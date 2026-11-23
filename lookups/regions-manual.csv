@@ -1,22 +1,17 @@
 event_id,event_name,site,event_date,url,registry_candidate,country_iso2,us_state_iso,filled_by,notes
 _README,"Worklist for events whose region could not be resolved automatically. Fill country_iso2 (ISO 3166-1 alpha-2, e.g. US, HU, NZ) on each blank row; for US events also fill us_state_iso (ISO 3166-2, e.g. US-CA). Set filled_by to 'agent' or 'human' on every filled row (change 'agent' to 'human' once a person has checked it), and give the evidence in notes. Use event_name/url/registry_candidate for context. Re-run build_regions.py when done. Filled rows are authoritative and are never overwritten.",,,,,,,,
-dc-300907271,Cinema Swing Fest: Sherlock,danceconvention.net,2026-03-28,https://danceconvention.net/eventdirector/en/roundscores/301310725.pdf,,,,,
-dc-301368170,Go West Swingfest 2026,danceconvention.net,2026-10-10,https://danceconvention.net/eventdirector/en/roundscores/30236790.pdf,,,,,
-dc-301330270,Life Is Life 2026,danceconvention.net,2026-05-30,https://danceconvention.net/eventdirector/en/roundscores/301404646.pdf,,,,,
-dc-300240591,Spicy Spring Swing,danceconvention.net,2025-03-22,https://danceconvention.net/eventdirector/en/roundscores/300493233.pdf,,,,,
-dc-301115640,Spicy Spring Swing,danceconvention.net,2026-03-21,https://danceconvention.net/eventdirector/en/roundscores/301299390.pdf,,,,,
-dc-8260590,Spicy Spring Swing,danceconvention.net,2024-03-16,https://danceconvention.net/eventdirector/en/roundscores/8442501.pdf,,,,,
-dc-301179241,The NZ WCS Open 2026,danceconvention.net,2026-10-17,https://danceconvention.net/eventdirector/en/roundscores/30227650.pdf,,,,,
-dc-301544790,КЕШЬЮ СВИНГ,danceconvention.net,2026-10-03,https://danceconvention.net/eventdirector/en/roundscores/30229567.pdf,,,,,
 dc-8288180,Cash&Blues,danceconvention.net,2024-02-24,https://danceconvention.net/eventdirector/en/roundscores/8406101.pdf,,RU,,agent,
 dc-300240590,Cash&Swing 2025,danceconvention.net,2025-02-22,https://danceconvention.net/eventdirector/en/roundscores/300446913.pdf,,RU,,agent,
 dc-299999901,Cinema Swing Fest,danceconvention.net,2024-11-02,https://danceconvention.net/eventdirector/en/roundscores/300198248.pdf,,RU,,agent,
+dc-300907271,Cinema Swing Fest: Sherlock,danceconvention.net,2026-03-28,https://danceconvention.net/eventdirector/en/roundscores/301310725.pdf,,RU,,agent,"Moscow, Russia: danceconvention.net 2026 archive location ""Россия, Москва, Лисоборье""."
 dc-300278470,Cinema Swing Fest: Wonderland,danceconvention.net,2025-04-05,https://danceconvention.net/eventdirector/en/roundscores/300521650.pdf,,RU,,agent,
 dc-8391900,Go West Swingfest 2024,danceconvention.net,2024-10-12,https://danceconvention.net/eventdirector/en/roundscores/300146702.pdf,,AU,,agent,
 dc-300146691,Go West Swingfest 2025,danceconvention.net,2025-10-11,https://danceconvention.net/eventdirector/en/roundscores/301010142.pdf,,AU,,agent,
+dc-301368170,Go West Swingfest 2026,danceconvention.net,2026-10-10,https://danceconvention.net/eventdirector/en/roundscores/30236790.pdf,,AU,,agent,"Subiaco WA, Australia: danceconvention.net 2026 archive location ""Subiaco, Western Australia""."
 dc-8086042,Korean Open WCS Championships 2024,danceconvention.net,2024-04-13,https://danceconvention.net/eventdirector/en/roundscores/8526348.pdf,,KR,,agent,
 dc-300096840,Korean Open WCS Championships 2025,danceconvention.net,2025-04-12,https://danceconvention.net/eventdirector/en/roundscores/300546240.pdf,,KR,,agent,
 dc-300568811,Life Is Life,danceconvention.net,2025-05-31,https://danceconvention.net/eventdirector/en/roundscores/300670151.pdf,,RU,,agent,
+dc-301330270,Life Is Life 2026,danceconvention.net,2026-05-30,https://danceconvention.net/eventdirector/en/roundscores/301404646.pdf,,RU,,agent,"Moscow, Russia: danceconvention.net 2026 archive location ""Moscow, Russia""."
 dc-8526400,Life is Life 2024,danceconvention.net,2024-06-01,https://danceconvention.net/eventdirector/en/roundscores/8648311.pdf,,RU,,agent,
 dc-300486940,March Madness JNJ,danceconvention.net,2025-03-22,https://danceconvention.net/eventdirector/en/roundscores/300487010.pdf,,MY,,agent,
 dc-8391971,NEVA SWING JAM 2024,danceconvention.net,2024-09-28,https://danceconvention.net/eventdirector/en/roundscores/300087351.pdf,,RU,,agent,
@@ -25,6 +20,9 @@ dc-8048580,Odyssey West Coast Swing 2024,danceconvention.net,2024-07-13,https://
 dc-8340691,Riga Summer Swing 2024,danceconvention.net,2024-07-27,https://danceconvention.net/eventdirector/en/roundscores/299952743.pdf,,LV,,agent,
 dc-300093870,Shooba Dooba Swing,danceconvention.net,2024-12-07,https://danceconvention.net/eventdirector/en/roundscores/300276246.pdf,,RU,,agent,
 dc-300926550,Shooba Dooba Swing,danceconvention.net,2025-12-06,https://danceconvention.net/eventdirector/en/roundscores/301126705.pdf,,RU,,agent,
+dc-300240591,Spicy Spring Swing,danceconvention.net,2025-03-22,https://danceconvention.net/eventdirector/en/roundscores/300493233.pdf,,RU,,agent,"St Petersburg, Russia: danceconvention.net 2025 archive location ""Saint-Petersburg, Russia""."
+dc-301115640,Spicy Spring Swing,danceconvention.net,2026-03-21,https://danceconvention.net/eventdirector/en/roundscores/301299390.pdf,,RU,,agent,"St Petersburg, Russia: danceconvention.net 2026 archive location ""Saint-Petersburg, Russia""."
+dc-8260590,Spicy Spring Swing,danceconvention.net,2024-03-16,https://danceconvention.net/eventdirector/en/roundscores/8442501.pdf,,RU,,agent,"St Petersburg, Russia: danceconvention.net 2024 archive location ""Saint-Peterburg, Russia""."
 dc-300647280,Swing Dance Mania,danceconvention.net,2025-08-23,https://danceconvention.net/eventdirector/en/roundscores/300732281.pdf,,US,US-OH,agent,
 dc-299934330,The After Party - A West Coast Swing Experience '24,danceconvention.net,2024-12-07,https://danceconvention.net/eventdirector/en/roundscores/300285953.pdf,,US,US-CA,agent,
 dc-300821000,The After Party - A West Coast Swing Experience 2025,danceconvention.net,2025-12-06,https://danceconvention.net/eventdirector/en/roundscores/301146763.pdf,,US,US-CA,agent,
@@ -32,12 +30,14 @@ dc-299999902,The Australian Classic WCS Dance Championships,danceconvention.net,
 dc-8086041,The Australian Classic WCS Dance Championships,danceconvention.net,2024-01-20,https://danceconvention.net/eventdirector/en/roundscores/8349798.pdf,,AU,,agent,
 dc-8357940,The NZ WCS Open 2024,danceconvention.net,2024-11-09,https://danceconvention.net/eventdirector/en/roundscores/300227140.pdf,,NZ,,agent,
 dc-300426000,The NZ WCS Open 2025,danceconvention.net,2025-10-18,https://danceconvention.net/eventdirector/en/roundscores/300977137.pdf,,NZ,,agent,
+dc-301179241,The NZ WCS Open 2026,danceconvention.net,2026-10-17,https://danceconvention.net/eventdirector/en/roundscores/30227650.pdf,,NZ,,agent,"Auckland, New Zealand: danceconvention.net 2026 archive location ""Auckland, NZ""."
 dc-300146690,WCS Malaysia Fun JNJ,danceconvention.net,2024-10-19,https://danceconvention.net/eventdirector/en/roundscores/300146700.pdf,,MY,,agent,
 dc-301000841,WCS Утренник 2025,danceconvention.net,2025-11-29,https://danceconvention.net/eventdirector/en/roundscores/301126717.pdf,,RU,,agent,
 dc-300721130,Waffle Fest,danceconvention.net,2025-10-04,https://danceconvention.net/eventdirector/en/roundscores/301010140.pdf,,RU,,agent,
 dc-8637240,WesterOz Swing,danceconvention.net,2025-02-08,https://danceconvention.net/eventdirector/en/roundscores/300416383.pdf,,AU,,agent,
 dc-8421431,Westie Remix HD,danceconvention.net,2024-05-11,https://danceconvention.net/eventdirector/en/roundscores/8614545.pdf,,US,US-TX,agent,
 dc-8676530,Зукоморье 2024,danceconvention.net,2024-08-24,https://danceconvention.net/eventdirector/en/roundscores/299991161.pdf,,RU,,agent,
+dc-301544790,КЕШЬЮ СВИНГ,danceconvention.net,2026-10-03,https://danceconvention.net/eventdirector/en/roundscores/30229567.pdf,,RU,,agent,"Samara, Russia: danceconvention.net 2026 archive location ""Самара, Россия""."
 ee-adc2024,Arizona Dance Classic,eepro.com,2024-08-03,https://eepro.com/results/adc2024/jjfinals.html,,US,US-AZ,agent,
 ee-adc2025,Arizona Dance Classic,eepro.com,2025-08-02,https://eepro.com/results/adc2025/jjfinals.html,,US,US-AZ,agent,
 ee-bigapple2024,Big Apple CDF,eepro.com,2024-07-13,https://eepro.com/results/bigapple2024/jjfinals.html,,US,US-NJ,agent,
