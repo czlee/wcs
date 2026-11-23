@@ -17,9 +17,10 @@
 	/**
 	 * `uncharted` says why a scoresheet isn't in the charts on show (a phrase that follows
 	 * "this scoresheet"), or '' if it is.
-	 * @type {{rows: Row[], selected?: string, uncharted: (r: Row) => string, onpick: (id: string) => void, ondetails: () => void}}
+	 * With `compact`, it's just the box, styled as a heading, for use as a dialog's title: no label, details or link.
+	 * @type {{rows: Row[], selected?: string, uncharted: (r: Row) => string, onpick: (id: string) => void, ondetails?: () => void, compact?: boolean}}
 	 */
-	let { rows, selected, uncharted, onpick, ondetails } = $props();
+	let { rows, selected, uncharted, onpick, ondetails, compact = false } = $props();
 	const MAX_SHOWN = 50;
 	const id = $props.id();
 
@@ -131,15 +132,15 @@
 
 {#snippet marked(/** @type {string} */ text, /** @type {Set<number> | undefined} */ hits)}{#each runs(text, hits) as r, i (i)}{#if r.hit}<mark>{r.text}</mark>{:else}{r.text}{/if}{/each}{/snippet}
 
-<div class="picker">
-	<label for="{id}-input">
+<div class="picker" class:compact>
+	{#if !compact}<label for="{id}-input">
 		<svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.2" /></svg>
 		Highlighted scoresheet
-	</label>
+	</label>{/if}
 	<div class="box">
 		<input bind:this={input} id="{id}-input" type="text" role="combobox" autocomplete="off" spellcheck="false"
 			placeholder="Choose an event…" aria-autocomplete="list" aria-expanded={open} aria-controls="{id}-list"
-			aria-activedescendant={open && shown[active] ? `${id}-${active}` : undefined} aria-describedby="{id}-details"
+			aria-activedescendant={open && shown[active] ? `${id}-${active}` : undefined} aria-label={compact ? 'Scoresheet' : undefined} aria-describedby={compact ? undefined : `${id}-details`}
 			value={query ?? label} {oninput} {onkeydown} onblur={close}
 			onfocus={(e) => { show(); e.currentTarget.select(); }}
 			onclick={(e) => { show(); if (query === null) e.currentTarget.select(); }} />
@@ -172,6 +173,7 @@
 			</div>
 		{/if}
 	</div>
+	{#if !compact}
 	<p class="details" id="{id}-details">
 		{#if current}
 			{@const why = uncharted(current.row)}
@@ -179,6 +181,7 @@
 		{:else}&nbsp;{/if}
 	</p>
 	<p class="more"><button type="button" class="open" disabled={!current} onclick={ondetails}>details and all metrics for this scoresheet</button></p>
+	{/if}
 </div>
 
 <style>
@@ -211,6 +214,11 @@
 	.dim .title, .dim .level { color: var(--text-3); }
 	mark { color: inherit; background: var(--highlight-bg); border-radius: 2px; }
 	.foot { margin: 0; max-width: none; padding: 0.3em 0.8em; color: var(--text-3); font-size: 0.76rem; }
+	.compact { width: 100%; font-size: inherit; }
+	.compact .box { margin: 0; }
+	.compact input { font-size: 1.2rem; font-weight: 700; padding: 0.05em 0.3em; margin-left: -0.3em; width: calc(100% + 0.3em); background: transparent; border-color: transparent; cursor: text; }
+	.compact input:hover, .compact input:focus { background: var(--surface-2); border-color: var(--border); }
+	.compact .drop { left: 0; right: auto; font-size: 0.82rem; }
 	@media (max-width: 860px) {
 		.picker { width: 100%; }
 		.drop { left: 0; right: 0; width: auto; }

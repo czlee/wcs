@@ -378,7 +378,11 @@
 	{#key `${sheet.id}/${key}`}<Worked {sheet} focus={key} />{/key}
 </Modal>
 
-<Modal bind:open={() => dialog === 'profile', () => closed('profile')} kicker="Scoresheet profile" title={sheet.name} wide>
+{#snippet profileHeading()}
+	<SheetPicker compact {rows} selected={mounted ? sheet.id : undefined} {uncharted} onpick={pickSheet} />
+{/snippet}
+
+<Modal bind:open={() => dialog === 'profile', () => closed('profile')} kicker="Scoresheet profile" title={sheet.name} heading={profileHeading} wide>
 	<SheetMeta {sheet} />
 	<RankMatrix {sheet} caption="Each judge’s ranks (1 = first), competitors in the order on the scoresheet" />
 	<h3>Every metric for this scoresheet</h3>
