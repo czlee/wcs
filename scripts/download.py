@@ -464,18 +464,117 @@ def discover_eepro(
 # (Adapted from who-woulda-wonscripts/check_new_scoresheets.py)
 # ---------------------------------------------------------------------------
 
+# "final" (Latin) and "Финал" (Cyrillic) both signal a finals round.
+# NON_FINALS covers semi/prelim/quarter in Latin and Отбор (qualifier) in Cyrillic.
+# Полуфинал/Четвертьфинал contain финал as a substring so are listed explicitly.
+# (?<![^\W_]) = "not preceded by a letter/digit", so "Novice_JJ_Finals" matches (\b would
+# not: an underscore is a word character).
+FINALS_IN_NAME = re.compile(r"(?<![^\W_])final|финал", re.IGNORECASE)
+NON_FINALS = re.compile(
+    r"(?<![^\W_])(?:semi|prelim|quarter|heat)(?![^\W_])|отбор|полуфинал|четвертьфинал",
+    re.IGNORECASE,
+)
+
+
+def is_finals_round(round_name: str) -> bool:
+    return bool(FINALS_IN_NAME.search(round_name)) and not NON_FINALS.search(round_name)
+
+
+_NUXT_VALUE = r'(?:"((?:[^"\\]|\\.)*)"|(\d+)|([a-zA-Z_$][a-zA-Z0-9_$]*))'
+
+
+def parse_archive_events(
+    raw_html: str, label: str = ""
+) -> dict[str, tuple[str, str, date, date]]:
+    """Parse a danceconvention.net events-archive page into {event_id: (name, slug, start, end)}.
+
+    Nuxt serialises the page as an IIFE and hoists repeated values into parameters, so
+    ANY field of an event may be a quoted literal, a bare number or a variable
+    reference: `eventId:300721130,name:"Waffle Fest",...` and `eventId:aA,name:aB,...`
+    both occur, even on the same page. (Older code resolved variables for the dates
+    only, silently dropping most events; 2026's page has no literal entries at all.)
+    """
+    # Build variable map to resolve IIFE parameter references (e.g. startDate:C → "6/21/25")
+    nuxt_start = raw_html.find("window.__NUXT__=(function(")
+    var_map = _nuxt_var_map(raw_html[nuxt_start:]) if nuxt_start != -1 else {}
+    if not var_map:
+        logging.warning("danceconvention.net: could not build Nuxt variable map; fields may be missing")
+
+    blob = _decode_nuxt(raw_html)
+
+    def field(ctx: str, key: str) -> str | None:
+        """Value of `key:<literal|number|variable>` in ctx, or None if absent/unresolved."""
+        m = re.search(rf"\b{key}:" + _NUXT_VALUE, ctx)
+        if not m:
+            return None
+        literal, number, var = m.groups()
+        if literal is not None:
+            return literal
+        if number is not None:
+            return number
+        return var_map.get(var)
+
+    def clean_name(name: str) -> str:
+        # Names are HTML-escaped, sometimes twice (&amp;#39;).
+        for _ in range(2):
+            name = html.unescape(name)
+        return name
+
+    events: dict[str, tuple[str, str, date, date]] = {}
+    entries = 0
+
+    for em in re.finditer(r"\beventId:", blob):
+        entries += 1
+        # Fields follow within a few hundred chars (before the long banner URLs, in
+        # literal form), so slice to the end of this entry's object.
+        end = blob.find("},{eventId:", em.end())
+        ctx = blob[em.start(): (end if end != -1 else em.start() + 1500)]
+
+        event_id = field(ctx, "eventId")
+        event_name = field(ctx, "name")
+        if not event_id or not event_id.isdigit() or event_name is None:
+            continue
+        event_name = clean_name(event_name)
+        if event_id in events:
+            continue
+
+        s_start, s_end = field(ctx, "startDate"), field(ctx, "endDate")
+        ev_start = _parse_mdy(s_start) if s_start else None
+        ev_end = _parse_mdy(s_end) if s_end else None
+        if ev_end is None:
+            ev_end = ev_start
+
+        if ev_start is None:
+            logging.warning(
+                f"danceconvention.net: could not parse date for event {event_id} "
+                f"({event_name!r}), skipping"
+            )
+            continue
+
+        page = field(ctx, "eventPage")
+        page_m = re.search(rf"/eventdirector/en/eventpage/{event_id}-([^\"/]+)$", page or "")
+        if not page_m:
+            continue
+        slug = page_m.group(1)
+
+        events[event_id] = (event_name, slug, ev_start, ev_end)
+
+    if entries and not events:
+        logging.warning(
+            f"danceconvention.net: archive {label}: {entries} event entries but none could "
+            f"be parsed — the page format has probably changed"
+        )
+    elif not entries:
+        logging.warning(f"danceconvention.net: archive {label}: no event entries found")
+
+    return events
+
+
 def discover_danceconvention(
     client: RateLimitedClient, w_start: date, w_end: date
 ) -> list[DiscoveredFinal]:
     finals = []
 
-    # Nuxt serialises the archive page as an IIFE and hoists repeated values into
-    # parameters, so ANY field of an event may be a quoted literal, a bare number or a
-    # variable reference: `eventId:300721130,name:"Waffle Fest",...` and
-    # `eventId:aA,name:aB,...` both occur, even on the same page. (Older code resolved
-    # variables for the dates only, silently dropping most events; 2026's page has no
-    # literal entries at all.)
-    _value = r'(?:"((?:[^"\\]|\\.)*)"|(\d+)|([a-zA-Z_$][a-zA-Z0-9_$]*))'
     seen_event_ids: set[str] = set()  # archive pages overlap (e.g. 2025 lists 2026 events)
 
     for year in range(w_start.year, w_end.year + 1):
@@ -488,80 +587,7 @@ def discover_danceconvention(
             logging.warning(f"danceconvention.net: failed to fetch archive {year}: {e}")
             continue
 
-        raw_html = resp.text
-
-        # Build variable map to resolve IIFE parameter references (e.g. startDate:C → "6/21/25")
-        nuxt_start = raw_html.find("window.__NUXT__=(function(")
-        var_map = _nuxt_var_map(raw_html[nuxt_start:]) if nuxt_start != -1 else {}
-        if not var_map:
-            logging.warning("danceconvention.net: could not build Nuxt variable map; fields may be missing")
-
-        blob = _decode_nuxt(raw_html)
-
-        def field(ctx: str, key: str) -> str | None:
-            """Value of `key:<literal|number|variable>` in ctx, or None if absent/unresolved."""
-            m = re.search(rf"\b{key}:" + _value, ctx)
-            if not m:
-                return None
-            literal, number, var = m.groups()
-            if literal is not None:
-                return literal
-            if number is not None:
-                return number
-            return var_map.get(var)
-
-        def clean_name(name: str) -> str:
-            # Names are HTML-escaped, sometimes twice (&amp;#39;).
-            for _ in range(2):
-                name = html.unescape(name)
-            return name
-
-        events: dict[str, tuple[str, str, date, date]] = {}
-        entries = 0
-
-        for em in re.finditer(r"\beventId:", blob):
-            entries += 1
-            # Fields follow within a few hundred chars (before the long banner URLs, in
-            # literal form), so slice to the end of this entry's object.
-            end = blob.find("},{eventId:", em.end())
-            ctx = blob[em.start(): (end if end != -1 else em.start() + 1500)]
-
-            event_id = field(ctx, "eventId")
-            event_name = field(ctx, "name")
-            if not event_id or not event_id.isdigit() or event_name is None:
-                continue
-            event_name = clean_name(event_name)
-            if event_id in events:
-                continue
-
-            s_start, s_end = field(ctx, "startDate"), field(ctx, "endDate")
-            ev_start = _parse_mdy(s_start) if s_start else None
-            ev_end = _parse_mdy(s_end) if s_end else None
-            if ev_end is None:
-                ev_end = ev_start
-
-            if ev_start is None:
-                logging.warning(
-                    f"danceconvention.net: could not parse date for event {event_id} "
-                    f"({event_name!r}), skipping"
-                )
-                continue
-
-            page = field(ctx, "eventPage")
-            page_m = re.search(rf"/eventdirector/en/eventpage/{event_id}-([^\"/]+)$", page or "")
-            if not page_m:
-                continue
-            slug = page_m.group(1)
-
-            events[event_id] = (event_name, slug, ev_start, ev_end)
-
-        if entries and not events:
-            logging.warning(
-                f"danceconvention.net: archive {year}: {entries} event entries but none could "
-                f"be parsed — the page format has probably changed"
-            )
-        elif not entries:
-            logging.warning(f"danceconvention.net: archive {year}: no event entries found")
+        events = parse_archive_events(resp.text, label=str(year))
 
         qualifying = [
             (eid, name, slug, es, ee)
@@ -605,14 +631,6 @@ def discover_danceconvention(
             div_re = re.compile(
                 r'\d+,"([^"]+)",(?:"([^"]+)",)?(\d+),(?:"([^"]+)",)?"/eventdirector/en/roundscores/\d+\.pdf"'
             )
-            # "final" (Latin) and "Финал" (Cyrillic) both signal a finals round.
-            # NON_FINALS covers semi/prelim/quarter in Latin and Отбор (qualifier) in Cyrillic.
-            # Полуфинал/Четвертьфинал contain финал as a substring so are listed explicitly.
-            # (?<![^\W_]) = not preceded by a letter/digit, so "Novice_JJ_Finals" matches (\b would not).
-            FINALS_IN_NAME = re.compile(r"(?<![^\W_])final|финал", re.IGNORECASE)
-            NON_FINALS = re.compile(
-                r"(?<![^\W_])(?:semi|prelim|quarter|heat)(?![^\W_])|отбор|полуфинал|четвертьфинал", re.IGNORECASE
-            )
             count = 0
             for m in div_re.finditer(rblob):
                 division_name, pre_field, pdf_id, round_name = (
@@ -623,7 +641,7 @@ def discover_danceconvention(
                     continue
                 if round_name is not None:
                     # Format B / D+B: filter by round name
-                    if not FINALS_IN_NAME.search(round_name) or NON_FINALS.search(round_name):
+                    if not is_finals_round(round_name):
                         continue
                 else:
                     # Format A / D: skip entries where the "division name" is actually a round keyword
