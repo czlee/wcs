@@ -132,13 +132,10 @@
 {#snippet marked(/** @type {string} */ text, /** @type {Set<number> | undefined} */ hits)}{#each runs(text, hits) as r, i (i)}{#if r.hit}<mark>{r.text}</mark>{:else}{r.text}{/if}{/each}{/snippet}
 
 <div class="picker">
-	<div class="top">
-		<label for="{id}-input">
-			<svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.2" /></svg>
-			Highlighted scoresheet
-		</label>
-		<button type="button" class="open" disabled={!current} onclick={ondetails}>details</button>
-	</div>
+	<label for="{id}-input">
+		<svg width="13" height="13" viewBox="0 0 13 13" aria-hidden="true"><circle cx="6.5" cy="6.5" r="5.2" /></svg>
+		Highlighted scoresheet
+	</label>
 	<div class="box">
 		<input bind:this={input} id="{id}-input" type="text" role="combobox" autocomplete="off" spellcheck="false"
 			placeholder="Choose an event…" aria-autocomplete="list" aria-expanded={open} aria-controls="{id}-list"
@@ -181,14 +178,13 @@
 			{#if why}<span class="why"><Term tip="No point in the box plot is ringed, because this scoresheet {why}.">Not in the current view</Term></span>{' · '}{/if}{current.details} · {size(current.row)}
 		{:else}&nbsp;{/if}
 	</p>
+	<p class="more"><button type="button" class="open" disabled={!current} onclick={ondetails}>details and all metrics for this scoresheet</button></p>
 </div>
 
 <style>
 	.picker { width: 25em; max-width: 100%; font-size: 0.82rem; }
 	.box { position: relative; margin: 0.2em 0; }
-	.top { display: flex; align-items: baseline; gap: 0.7em; }
 	.open { font: inherit; padding: 0; border: 0; background: none; color: var(--accent); text-decoration: underline; cursor: pointer; }
-	/* The text, not the ring, sets the label's baseline, which "details" lines up with. */
 	label { display: flex; align-items: baseline; gap: 0.4em; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); }
 	label svg { align-self: center; fill: none; stroke: var(--text); stroke-width: 1.8; }
 	input {
@@ -196,6 +192,7 @@
 		text-overflow: ellipsis; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px;
 	}
 	.details { margin: 0; max-width: none; color: var(--text-2); font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+	.more { margin: 0.1em 0 0; }
 	.why { color: var(--warn-text); }
 	.drop {
 		position: absolute; z-index: 30; right: 0; top: calc(100% + 3px); width: 36em; max-width: calc(100vw - 32px);

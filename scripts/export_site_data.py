@@ -27,6 +27,7 @@ from pathlib import Path
 import pandas as pd
 
 from compute_metrics import build_matrix
+from parsers.eepro import EeproParser
 
 PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -48,6 +49,20 @@ METRICS = [
     "overlap_at_3_cc", "jaccard_at_3_cc", "overlap_at_3", "jaccard_at_3",
     "mean_abs_rank_dev_median_norm", "sd_rank_norm",
 ]
+
+
+def eepro_division(doc: dict) -> str:
+    """The division's name on its eepro page, which whowouldawon.dance takes as ``division``.
+
+    The parsed ``competition_name`` is "{page event name} - {division}" and the event name
+    may itself contain " - ", so find the page's division name that it ends with.
+    """
+    content = (DATA_DIR / "raw" / doc["raw_file"]).read_bytes()
+    names = EeproParser().get_division_names(content)
+    hits = [n for n in names if doc["competition_name"].endswith(" - " + n)]
+    if not hits:
+        raise SystemExit(f"{doc['id']}: no eepro division matches {doc['competition_name']!r}")
+    return max(hits, key=len)  # the longest, in case one name is a suffix of another
 
 
 def git_commit() -> str:
@@ -83,6 +98,7 @@ def main() -> None:
             "state": region.get("state"),      # ISO 3166-2, US only, e.g. "US-CA"
             "site": row.site,
             "url": row.url,
+            "division": eepro_division(doc) if row.site == "eepro.com" else None,  # for the whowouldawon link
             "judges": doc["judges"],
             "competitors": doc["competitors"],
             "R": R.tolist(),

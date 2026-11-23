@@ -9,7 +9,7 @@ import { YEARS } from '#lib/dimensions.js';
 
 /**
  * @typedef {{id: string, format: string, level: string, event: string, date: string, name: string,
- *   country: string | null, state: string | null, site: string, url: string, judges: string[], competitors: string[], R: number[][],
+ *   country: string | null, state: string | null, site: string, url: string, division: string | null, judges: string[], competitors: string[], R: number[][],
  *   py: Record<string, number>}} Sheet
  * @typedef {Sheet & {percentiles: Record<string, import('#lib/percentiles.js').Percentile>}} Profile
  */

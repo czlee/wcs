@@ -21,7 +21,7 @@
 	<div class="fig">
 		<span class="label">Percentile</span>
 		{#if p}
-			<strong>{rank(p)} <PercentileTrack pct={p.pct} /></strong>
+			<strong>{rank(p)} <span class="track"><PercentileTrack pct={p.pct} /></span></strong>
 			<span class="note">{explain(metric, p, group)}</span>
 		{:else}
 			<strong>–</strong>
@@ -38,5 +38,6 @@
 	.fig { display: flex; flex-direction: column; }
 	.label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); }
 	strong { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+	.track { margin-left: 0.3em; } /* the track's mark overhangs its left end at 0 */
 	.note { font-size: 0.82rem; color: var(--text-2); }
 </style>

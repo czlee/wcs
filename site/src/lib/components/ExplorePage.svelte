@@ -365,13 +365,14 @@
 <Modal bind:open={() => dialog === 'working', () => closed('working')} kicker="How is this calculated?" title={meta.label}
 	heading={metricHeading} view={key} wide>
 	<p class="sheet">
-		<strong>{sheet.name}</strong> ({date(sheet.date)}){#if mounted && sheetCharted}, ringed in the box plot{/if}
-		· <button type="button" class="link-btn" onclick={() => open('profile')}>details</button>
+		<strong>{sheet.name}</strong> ({date(sheet.date)})
 	</p>
 	<p class="sheet-links small">
 		{{ random: 'A scoresheet chosen at random.', picked: 'The scoresheet you chose.', clicked: 'The scoresheet you clicked.', linked: '' }[source]}
 		To see another, close this and choose an event or click a point in the box plot, or
 		<button type="button" class="link-btn" onclick={pickRandomSheet} disabled={loading}>{loading ? 'loading…' : 'pick one at random'}</button>.
+		You can also <!-- An anchor, not a button, so that this long link can wrap across lines. -->
+		<a href="#profile" class="link-btn" onclick={(e) => { e.preventDefault(); open('profile'); }}>see details and other metrics for this scoresheet</a>.
 	</p>
 	<Standing {sheet} metric={key} />
 	{#key `${sheet.id}/${key}`}<Worked {sheet} focus={key} />{/key}
