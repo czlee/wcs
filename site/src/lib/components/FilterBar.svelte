@@ -8,10 +8,14 @@
 	/** @type {{filters: import('#lib/dimensions.js').Filters}} */
 	let { filters = $bindable() } = $props();
 
-	const toggle = (/** @type {import('#lib/dimensions.js').Dimension} */ d, /** @type {string} */ id) => {
+	// A plain click chooses just that bin (or clears the dimension, if it's the only one on);
+	// Ctrl, Shift or Cmd adds it to or removes it from what's chosen.
+	const toggle = (/** @type {import('#lib/dimensions.js').Dimension} */ d, /** @type {string} */ id, /** @type {MouseEvent} */ e) => {
 		const on = filters[d.id];
+		const multi = e.ctrlKey || e.shiftKey || e.metaKey;
 		// Kept in bin order, so the URL doesn't depend on the order of clicks.
-		const next = on.includes(id) ? on.filter((b) => b !== id) : d.bins.map((b) => b.id).filter((b) => b === id || on.includes(b));
+		const next = !multi ? (on.length === 1 && on[0] === id ? [] : [id])
+			: on.includes(id) ? on.filter((b) => b !== id) : d.bins.map((b) => b.id).filter((b) => b === id || on.includes(b));
 		filters = { ...filters, [d.id]: next };
 	};
 
@@ -46,13 +50,17 @@
 			{:else}
 				<div class="bins" role="group" aria-label={d.label}>
 					{#each d.bins as b (b.id)}
-						<button type="button" aria-pressed={filters[d.id].includes(b.id)} onclick={() => toggle(d, b.id)}>{b.label}</button>
+						<button type="button" aria-pressed={filters[d.id].includes(b.id)} onclick={(e) => toggle(d, b.id, e)}
+							title={filters[d.id].length ? 'Ctrl-click or Shift-click to add or remove from the choice' : 'Ctrl-click or Shift-click to choose several'}>{b.label}</button>
 					{/each}
 				</div>
 			{/if}
 		</div>
 	{/each}
 	{#if anyFilters(filters)}
+		{#if DIMENSIONS.some((d) => !d.range && filters[d.id].length)}
+			<span class="hint">Ctrl/Shift-click to choose several</span>
+		{/if}
 		<button type="button" class="clear" onclick={() => (filters = noFilters())}>Clear filters</button>
 	{/if}
 </div>
@@ -97,5 +105,6 @@
 	.slider input:focus-visible::-moz-range-thumb { outline: 2px solid var(--text); }
 	/* Fixed width, so the controls beside it don't shift as it changes. */
 	output { min-width: 3.4em; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+	.hint { color: var(--text-3); font-size: 0.9em; }
 	.clear { font: inherit; padding: 0; border: 0; background: none; color: var(--accent); text-decoration: underline; cursor: pointer; }
 </style>
