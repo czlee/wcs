@@ -7,13 +7,13 @@
 	import { fx, minus } from '#lib/format.js';
 	import { agreeBg } from './agree.js';
 
-	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus?: string}} */
+	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus: string}} */
 	let { sheet, focus } = $props();
-	// With `focus` (a metric key), the working for the other metrics is still shown alongside
+	// Alongside the working of `focus` (a metric key), the other metrics' is still shown
 	// (overlap and Jaccard explain each other), but dimmed, and a note says which is which.
-	const ov = $derived(!focus || focus.startsWith('overlap'));
-	const jc = $derived(!focus || focus.startsWith('jaccard'));
-	const cc = $derived(!focus || focus.endsWith('_cc'));
+	const ov = $derived(focus.startsWith('overlap'));
+	const jc = $derived(focus.startsWith('jaccard'));
+	const cc = $derived(focus.endsWith('_cc'));
 	// Inside the chance-correction section, which is dimmed as a whole when it isn't in focus,
 	// only dim the other metric when the section itself is in focus (so nothing is dimmed twice).
 	const dimO = $derived(!ov && cc), dimJ = $derived(!jc && cc);
@@ -38,17 +38,15 @@
 </script>
 
 <p>
-	{focus ? 'This metric ignores' : 'These ignore'} the order within the top {N} places and {focus ? 'asks' : 'ask'} only
+	This metric ignores the order within the top {N} places and asks only
 	<em>who</em> made them. For a pair of judges, take the sets <Tex tex="A" /> and <Tex tex="B" /> of competitors each
 	ranked 1st to {N}rd, and count how many are in both. There are two ways to turn that into a score: the overlap
 	divides it by {N}, and the Jaccard index divides it by how many are in either set.
 </p>
-{#if focus}
-	<p class="small muted">
-		The metric you’re looking at is the {ov ? 'overlap' : 'Jaccard index'}{cc ? ', corrected for chance (the last step)' : ', without a correction for chance'}.
-		The {ov ? 'Jaccard index' : 'overlap'} {cc ? 'is' : 'and the chance correction are'} dimmed, for comparison.
-	</p>
-{/if}
+<p class="small muted">
+	The metric you’re looking at is the {ov ? 'overlap' : 'Jaccard index'}{cc ? ', corrected for chance (the last step)' : ', without a correction for chance'}.
+	The {ov ? 'Jaccard index' : 'overlap'} {cc ? 'is' : 'and the chance correction are'} dimmed, for comparison.
+</p>
 {#snippet pair(/** @type {string} */ o, /** @type {string} */ j, inner = false)}
 	<div class="eqs">
 		<div class:dim={inner ? dimO : !ov}><Tex display tex={o} /></div>
@@ -115,9 +113,8 @@
 	<p class="callout small">
 		With only {n} competitors, any two top-{N} sets must share at least
 		<Tex tex={String.raw`2 \times ${N} - ${n} = ${2 * N - n}`} />
-		{2 * N - n === 1 ? 'competitor' : 'competitors'}, so {focus ? 'this metric' : 'these metrics'} can’t reach
-		{focus ? 'its' : 'their'} full range. Finals of fewer than {minN} are left out of the charts for
-		{focus ? 'this metric' : 'these metrics'}.
+		{2 * N - n === 1 ? 'competitor' : 'competitors'}, so this metric can’t reach its
+		full range. Finals of fewer than {minN} are left out of the charts for this metric.
 	</p>
 {/if}
 

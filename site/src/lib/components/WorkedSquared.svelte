@@ -9,11 +9,9 @@
 	import { tn } from '#lib/tex.js';
 	import { agreeBg } from './agree.js';
 
-	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus?: string}} */
+	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus: string}} */
 	let { sheet, focus } = $props();
-	// With `focus` (a metric key), only that metric's working is shown, and it must make sense on
-	// its own; without it, the whole family's.
-	const on = (/** @type {string[]} */ ...ks) => !focus || ks.includes(focus);
+	// Only the working of `focus` (a metric key) is shown, and it must make sense on its own.
 	const w = $derived(kendallW(sheet.R));
 	const m = $derived(w.m), n = $derived(w.n);
 	const rhoBar = $derived((m * w.W - 1) / (m - 1));
@@ -33,11 +31,11 @@
 </script>
 
 <p class="lede small">
-	{focus ? 'This metric is' : 'All three metrics here are'} built from <strong>squared</strong> rank gaps, so one
+	This metric is built from <strong>squared</strong> rank gaps, so one
 	big disagreement counts for more than several small ones adding up to the same number of places.
 </p>
 
-{#if on('kendall_w')}
+{#if focus === 'kendall_w'}
 <h4>Kendall’s W, step by step</h4>
 <p>
 	This final has <Tex tex={`m = ${m}`} /> judges and <Tex tex={`n = ${n}`} /> competitors. Add up the ranks each
@@ -70,7 +68,7 @@
 </p>
 {/if}
 
-{#if on('mean_pairwise_rho')}
+{#if focus === 'mean_pairwise_rho'}
 <h4>Mean pairwise Spearman ρ</h4>
 <p>
 	<Term tip="Spearman’s rank correlation: 1 if two rankings are identical, −1 if one is the reverse of the other, about 0 if unrelated.">Spearman’s <Tex tex={String.raw`\rho`} /></Term>
@@ -125,7 +123,7 @@
 </aside>
 {/if}
 
-{#if on('sd_rank')}
+{#if focus === 'sd_rank'}
 <h4>Standard deviation of ranks</h4>
 <p>
 	This looks at each competitor in turn: how far apart are the {m} ranks they got? For a competitor with

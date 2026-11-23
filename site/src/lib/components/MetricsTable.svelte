@@ -10,10 +10,9 @@
 	import { fx, minus } from '#lib/format.js';
 
 	/**
-	 * `onmetric`, where given, is called with a metric's key when its name is clicked; otherwise
-	 * the name links to its family's section of the page. `current` is the metric to pick out.
+	 * `onmetric` is called with a metric's key when its name is clicked. `current` is the metric to pick out.
 	 * @type {{sheet: import('#lib/server/data.js').Sheet, percentiles: Record<string, import('#lib/percentiles.js').Percentile>,
-	 *   current?: string, onmetric?: (key: string) => void}}
+	 *   current: string, onmetric: (key: string) => void}}
 	 */
 	let { sheet, percentiles, current, onmetric } = $props();
 	const group = $derived(FORMATS[/** @type {'jnj'|'strictly'} */ (sheet.format)].label);
@@ -29,8 +28,7 @@
 					{@const p = percentiles[k]}
 					<tr class:current={k === current}>
 						<td>
-							{#if onmetric}<button type="button" class="name" onclick={() => onmetric(k)}>{METRICS[k].label}</button>
-							{:else}<a href="#{f.id}">{METRICS[k].label}</a>{/if}
+							<button type="button" class="name" onclick={() => onmetric(k)}>{METRICS[k].label}</button>
 						</td>
 						<td class="muted small">{METRICS[k].higher ? 'higher' : 'lower'} = more agreement</td>
 						<td class="num">{minus(fx(js[k], 6))}</td>

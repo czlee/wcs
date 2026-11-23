@@ -7,7 +7,7 @@
 	import { tp } from '#lib/tex.js';
 	import { agreeBg } from './agree.js';
 
-	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus?: string}} */
+	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus: string}} */
 	let { sheet, focus } = $props();
 	// τ distance is worked out from τ̄, so its working includes τ̄'s. With `focus` on τ̄, the τ distance
 	// part is dimmed.

@@ -7,13 +7,11 @@
 	import { fx, nice } from '#lib/format.js';
 	import { disagreeBg } from './agree.js';
 
-	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus?: string}} */
+	/** @type {{sheet: import('#lib/server/data.js').Sheet, focus: string}} */
 	let { sheet, focus } = $props();
-	// With `focus` (a metric key), only that metric's working is shown, except that the two MADs
-	// go together: whichever isn't in focus is shown dimmed, and a note says what it is. Without
-	// it, the whole family's.
-	const on = (/** @type {string[]} */ ...ks) => !focus || ks.includes(focus);
-	const dim = (/** @type {string} */ k) => !!focus && focus !== k;
+	// Only the working of `focus` (a metric key) is shown, except that the two MADs go together:
+	// the other one is dimmed, and a note says what it is.
+	const dim = (/** @type {string} */ k) => focus !== k;
 	const m = $derived(sheet.judges.length), n = $derived(sheet.competitors.length);
 	const pairs = $derived(judgePairs(m));
 	const fr = (/** @type {number} */ a, /** @type {number} */ b) => footrule(sheet.R[a], sheet.R[b]).value;
@@ -28,11 +26,11 @@
 </script>
 
 <p class="lede small">
-	{focus ? 'This metric counts' : 'All three metrics here count'} rank gaps in plain places, so a gap of 4 places
+	This metric counts rank gaps in plain places, so a gap of 4 places
 	counts the same as four gaps of 1 place.
 </p>
 
-{#if on('footrule_mean')}
+{#if focus === 'footrule_mean'}
 <h4>Spearman’s footrule</h4>
 <p>
 	The footrule adds up how many places apart two judges put each competitor, and divides by the largest
@@ -69,10 +67,10 @@
 <Check label="Mean footrule" js={frBar} py={sheet.py.footrule_mean} />
 {/if}
 
-{#if on(MED, MEAN)}
+{#if focus === MED || focus === MEAN}
 <h4>Mean absolute deviation of each competitor’s ranks</h4>
 <p>
-	{focus ? 'This looks' : 'These look'} at each competitor in turn: how far apart are the {m} ranks they got? For a competitor with
+	This looks at each competitor in turn: how far apart are the {m} ranks they got? For a competitor with
 	ranks <Tex tex={String.raw`r_1, \dots, r_m`} />, median <Tex tex={String.raw`\tilde r`} /> and mean
 	<Tex tex={String.raw`\bar r`} />, take the average distance from the centre:
 </p>
@@ -81,15 +79,13 @@
 	<div class:dim={dim(MEAN)}><Tex display tex={String.raw`\text{MAD (mean)} = \frac{1}{m}\sum_{j=1}^{m} |r_j - \bar r|`} /></div>
 </div>
 <p>
-	{focus ? 'The metric' : 'Each metric'} is then the average over the {n} competitors. It’s in places, so lower means
+	The metric is then the average over the {n} competitors. It’s in places, so lower means
 	more agreement.
 </p>
-{#if focus}
-	<p class="small muted">
-		There are two versions: the mean absolute deviation (MAD) from the median, and from the mean. The one you’re
-		looking at is from the {focus === MED ? 'median' : 'mean'}; the other is dimmed, for comparison.
-	</p>
-{/if}
+<p class="small muted">
+	There are two versions: the mean absolute deviation (MAD) from the median, and from the mean. The one you’re
+	looking at is from the {focus === MED ? 'median' : 'mean'}; the other is dimmed, for comparison.
+</p>
 <RankMatrix
 	{sheet}
 	extras={[

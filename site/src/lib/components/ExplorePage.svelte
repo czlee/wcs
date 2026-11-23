@@ -207,7 +207,7 @@
 		const mine = ++request;
 		loading = true;
 		try {
-			const res = await fetch(link(`/sheet/${id}/data.json`));
+			const res = await fetch(link(`/data/${id}.json`));
 			const loaded = res.ok ? await res.json() : undefined;
 			if (!loaded || mine !== request) return false;
 			if (loaded.format !== data.format) {
@@ -309,7 +309,7 @@
 
 			<div class="charts">
 				{#key key}
-					<MetricChart {rows} index={METRIC_KEYS.indexOf(key)} {meta} colour={fmt.colour} format={data.format} {filters} fill={app} listBars={false}
+					<MetricChart {rows} index={METRIC_KEYS.indexOf(key)} {meta} colour={fmt.colour} {filters} fill={app}
 						highlight={mounted && sheetCharted ? sheet.id : undefined} onpoint={showSheet} />
 				{/key}
 			</div>
@@ -373,7 +373,7 @@
 </Modal>
 
 <Modal bind:open={() => dialog === 'limitations', () => closed('limitations')} kicker="Before you read anything into this" title="Reasons these comparisons might mislead">
-	<Limitations info={data.info} bare />
+	<Limitations info={data.info} />
 </Modal>
 
 <Modal bind:open={() => dialog === 'about', () => closed('about')} kicker="About" title="How much do WCS judges disagree?">
