@@ -8,14 +8,17 @@
  *
  * `id` is also the dimension's URL parameter, and a bin's `id` its value there, so both
  * must stay stable and avoid commas and plus signs. `of` takes a chart row or list entry
- * (anything with `m` judges, `n` competitors and a `country`). Bins are exclusive, but needn't cover every
+ * (anything with `m` judges, `n` competitors, a `country` and a `date`). Bins are exclusive, but needn't cover every
  * value: a scoresheet in no bin shows only while that dimension has no filter.
- * @typedef {{m: number, n: number, country: string | null}} Countable
+ * @typedef {{m: number, n: number, country: string | null, date: string}} Countable
  * @typedef {{id: string, label: string, test: (v: any) => boolean}} Bin
  * @typedef {{id: string, label: string, tip?: string, of: (r: Countable) => any, bins: Bin[],
  *   range?: {min: number, max: number}}} Dimension
  */
 import { REGIONS, regionOf } from './regions.js';
+
+/** The years with data. A new year needs adding here (server/data.js checks). */
+export const YEARS = [2024, 2025, 2026];
 
 /** @type {Dimension[]} */
 export const DIMENSIONS = [
@@ -43,6 +46,10 @@ export const DIMENSIONS = [
 	{
 		id: 'region', label: 'Region', of: (r) => regionOf(r.country),
 		bins: REGIONS.map(({ id, label }) => ({ id, label, test: (v) => v === id }))
+	},
+	{
+		id: 'year', label: 'Year', of: (r) => +r.date.slice(0, 4),
+		bins: YEARS.map((y) => ({ id: String(y), label: String(y), test: (v) => v === y }))
 	}
 ];
 

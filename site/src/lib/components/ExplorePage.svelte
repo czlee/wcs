@@ -252,7 +252,7 @@
 	/** Why a scoresheet isn't in the charts on show, or '' if it is. */
 	const uncharted = (/** @type {import('#lib/dimensions.js').Countable} */ r) =>
 		r.n < (meta.minN ?? 0) ? 'has too few finalists for this metric' : matches(r, filters) ? '' : 'is outside the filters';
-	const sheetCharted = $derived(!uncharted({ m: sheet.judges.length, n: sheet.competitors.length, country: sheet.country }));
+	const sheetCharted = $derived(!uncharted({ m: sheet.judges.length, n: sheet.competitors.length, country: sheet.country, date: sheet.date }));
 </script>
 
 <svelte:window onkeydown={onKey} {onpopstate} />

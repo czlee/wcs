@@ -5,6 +5,7 @@ import sheetsJson from '#lib/data/sheets.json';
 import exportInfo from '#lib/data/export.json';
 import { METRICS, METRIC_KEYS } from '#lib/families.js';
 import { regionOf } from '#lib/regions.js';
+import { YEARS } from '#lib/dimensions.js';
 
 /**
  * @typedef {{id: string, format: string, level: string, event: string, date: string, name: string,
@@ -21,6 +22,9 @@ const byId = new Map(sheets.map((s) => [s.id, s]));
 // A country in no region would silently drop out of every view with a region filter.
 const unplaced = new Set(sheets.filter((s) => !regionOf(s.country)).map((s) => s.country ?? `none (${s.event})`));
 if (unplaced.size) throw new Error(`Countries in no region (lib/regions.js): ${[...unplaced].join(', ')}`);
+
+const unyeared = new Set(sheets.map((s) => +s.date.slice(0, 4)).filter((y) => !YEARS.includes(y)));
+if (unyeared.size) throw new Error(`Years missing from YEARS (lib/dimensions.js): ${[...unyeared].join(', ')}`);
 
 /** One scoresheet, in full. */
 export const sheet = (/** @type {string} */ id) => byId.get(id);
