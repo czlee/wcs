@@ -466,8 +466,14 @@ def discover_danceconvention(
 ) -> list[DiscoveredFinal]:
     finals = []
 
-    # Regex pieces for fields that may be a quoted literal or a variable reference
-    _date_or_var = r'(?:"([^"]+)"|([a-zA-Z_$][a-zA-Z0-9_$]*))'
+    # Nuxt serialises the archive page as an IIFE and hoists repeated values into
+    # parameters, so ANY field of an event may be a quoted literal, a bare number or a
+    # variable reference: `eventId:300721130,name:"Waffle Fest",...` and
+    # `eventId:aA,name:aB,...` both occur, even on the same page. (Older code resolved
+    # variables for the dates only, silently dropping most events; 2026's page has no
+    # literal entries at all.)
+    _value = r'(?:"((?:[^"\\]|\\.)*)"|(\d+)|([a-zA-Z_$][a-zA-Z0-9_$]*))'
+    seen_event_ids: set[str] = set()  # archive pages overlap (e.g. 2025 lists 2026 events)
 
     for year in range(w_start.year, w_end.year + 1):
         archive_url = f"https://danceconvention.net/eventdirector/en/eventsarchive/{year}"
@@ -485,38 +491,49 @@ def discover_danceconvention(
         nuxt_start = raw_html.find("window.__NUXT__=(function(")
         var_map = _nuxt_var_map(raw_html[nuxt_start:]) if nuxt_start != -1 else {}
         if not var_map:
-            logging.warning("danceconvention.net: could not build Nuxt variable map; dates may be missing")
+            logging.warning("danceconvention.net: could not build Nuxt variable map; fields may be missing")
 
         blob = _decode_nuxt(raw_html)
 
-        def resolve_date_field(m: re.Match) -> str | None:
-            """Return the string value of a date field match (literal or variable)."""
-            literal, var = m.group(1), m.group(2)
-            if literal:
+        def field(ctx: str, key: str) -> str | None:
+            """Value of `key:<literal|number|variable>` in ctx, or None if absent/unresolved."""
+            m = re.search(rf"\b{key}:" + _value, ctx)
+            if not m:
+                return None
+            literal, number, var = m.groups()
+            if literal is not None:
                 return literal
+            if number is not None:
+                return number
             return var_map.get(var)
 
-        events: dict[str, tuple[str, str, date, date]] = {}
-        event_name_re = re.compile(r'eventId:(\d+),name:"([^"]*)"')
+        def clean_name(name: str) -> str:
+            # Names are HTML-escaped, sometimes twice (&amp;#39;).
+            for _ in range(2):
+                name = html.unescape(name)
+            return name
 
-        for em in event_name_re.finditer(blob):
-            event_id, event_name = em.group(1), html.unescape(em.group(2))
+        events: dict[str, tuple[str, str, date, date]] = {}
+        entries = 0
+
+        for em in re.finditer(r"\beventId:", blob):
+            entries += 1
+            # Fields follow within a few hundred chars (before the long banner URLs, in
+            # literal form), so slice to the end of this entry's object.
+            end = blob.find("},{eventId:", em.end())
+            ctx = blob[em.start(): (end if end != -1 else em.start() + 1500)]
+
+            event_id = field(ctx, "eventId")
+            event_name = field(ctx, "name")
+            if not event_id or not event_id.isdigit() or event_name is None:
+                continue
+            event_name = clean_name(event_name)
             if event_id in events:
                 continue
 
-            # Look forward ~600 chars for startDate, endDate, eventPage
-            ctx = blob[em.start(): em.start() + 600]
-
-            start_m = re.search(r"startDate:" + _date_or_var, ctx)
-            end_m = re.search(r"endDate:" + _date_or_var, ctx)
-
-            ev_start = ev_end = None
-            if start_m:
-                s = resolve_date_field(start_m)
-                ev_start = _parse_mdy(s) if s else None
-            if end_m:
-                s = resolve_date_field(end_m)
-                ev_end = _parse_mdy(s) if s else None
+            s_start, s_end = field(ctx, "startDate"), field(ctx, "endDate")
+            ev_start = _parse_mdy(s_start) if s_start else None
+            ev_end = _parse_mdy(s_end) if s_end else None
             if ev_end is None:
                 ev_end = ev_start
 
@@ -527,20 +544,28 @@ def discover_danceconvention(
                 )
                 continue
 
-            page_m = re.search(
-                rf'eventPage:"/eventdirector/en/eventpage/{event_id}-([^"]+)"', ctx
-            )
+            page = field(ctx, "eventPage")
+            page_m = re.search(rf"/eventdirector/en/eventpage/{event_id}-([^\"/]+)$", page or "")
             if not page_m:
                 continue
             slug = page_m.group(1)
 
             events[event_id] = (event_name, slug, ev_start, ev_end)
 
+        if entries and not events:
+            logging.warning(
+                f"danceconvention.net: archive {year}: {entries} event entries but none could "
+                f"be parsed — the page format has probably changed"
+            )
+        elif not entries:
+            logging.warning(f"danceconvention.net: archive {year}: no event entries found")
+
         qualifying = [
             (eid, name, slug, es, ee)
             for eid, (name, slug, es, ee) in events.items()
-            if _overlaps(es, ee, w_start, w_end)
+            if _overlaps(es, ee, w_start, w_end) and eid not in seen_event_ids
         ]
+        seen_event_ids.update(eid for eid, *_ in qualifying)
         logging.info(
             f"danceconvention.net: found {len(events)} events, {len(qualifying)} in window"
         )
