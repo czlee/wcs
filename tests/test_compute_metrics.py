@@ -44,6 +44,42 @@ def test_unanimous_panel_is_perfect_agreement():
         assert out[col] == pytest.approx(1.0)
     for col in ("mean_abs_rank_dev_mean", "mean_abs_rank_dev_median", "sd_rank"):
         assert out[col] == pytest.approx(0.0)
+        assert out[col + "_norm"] == pytest.approx(0.0)
+
+
+def test_split_panel_scales_mads_to_one():
+    # Half the panel in order, half reversed: every competitor's spread averages n/4
+    # (even n, m), so the n/4-scaled MAD columns are exactly 1. (Not proven to be the
+    # maximum beyond m = 2; see rank_dispersion.)
+    for m, n in ((2, 6), (4, 8), (4, 10)):
+        fwd, rev = np.arange(1, n + 1), np.arange(n, 0, -1)
+        R = np.array([fwd] * (m // 2) + [rev] * (m // 2))
+        out = cm.compute_metrics(make_doc(R))
+        for col in ("mean_abs_rank_dev_mean", "mean_abs_rank_dev_median"):
+            assert out[col + "_norm"] == pytest.approx(1.0)
+
+
+def test_cyclic_latin_square_reaches_sd_bound():
+    # m = n judges, judge j gives competitor i rank (i + j) mod n + 1: every competitor gets
+    # every rank once, W = 0, and the SD is exactly sqrt((n^2 - 1)/12) for all of them.
+    for n in (4, 7, 10):
+        R = np.array([[(i + j) % n + 1 for i in range(n)] for j in range(n)])
+        out = cm.compute_metrics(make_doc(R))
+        assert out["kendall_w"] == pytest.approx(0.0)
+        assert out["sd_rank_norm"] == pytest.approx(1.0)
+
+
+def test_norm_columns_never_exceed_one_exhaustively():
+    # The SD bound is proven (see rank_dispersion); the MAD bound is only checked here.
+    import itertools
+    for m, n in ((2, 5), (3, 4), (3, 5), (4, 4)):
+        perms = [np.array(p) for p in itertools.permutations(range(1, n + 1))]
+        worst = {}
+        for combo in itertools.combinations_with_replacement(range(len(perms)), m):
+            out = cm.rank_dispersion(np.array([perms[i] for i in combo]))
+            for col in ("mean_abs_rank_dev_mean_norm", "mean_abs_rank_dev_median_norm", "sd_rank_norm"):
+                worst[col] = max(worst.get(col, 0), out[col])
+        assert all(v <= 1 + 1e-12 for v in worst.values()), (m, n, worst)
 
 
 def test_two_judges_fully_reversed():

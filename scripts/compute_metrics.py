@@ -70,6 +70,8 @@ METRIC_COLS = [
     "overlap_at_3_cc", "overlap_at_5_cc", "jaccard_at_3_cc", "jaccard_at_5_cc",
     # Rank dispersion
     "mean_abs_rank_dev_mean", "mean_abs_rank_dev_median", "sd_rank",
+    # Rank dispersion divided by n/4 (see rank_dispersion)
+    "mean_abs_rank_dev_mean_norm", "mean_abs_rank_dev_median_norm", "sd_rank_norm",
 ]
 
 
@@ -192,15 +194,40 @@ def chance_corrected(x: float, e: float) -> float:
 def rank_dispersion(R: np.ndarray) -> dict[str, float]:
     """Per-competitor spread of the m ranks it received, averaged over competitors.
 
-    Three raw (unnormalised) reductions of the same per-competitor spread; the
-    size-dependent normalisation is deferred to Phase 4/5.
+    Three reductions of the same per-competitor spread, each raw (in places) and
+    normalised (`*_norm`) so that finals of different sizes are roughly comparable:
+
+    * The two MADs are divided by n/4: half the panel ranking in order and half
+      in exact reverse gives every competitor a spread of |n + 1 - 2i|/2, which
+      averages n/4 (even n; (n^2 - 1)/(4n) for odd n, slightly less for odd m).
+      This is a construction, not a proven maximum: it held in an exhaustive
+      search over small m, n and on the real data (max 0.98), and is proven for
+      m = 2 only. Whether it's a true bound for the MADs is open.
+    * The SD is divided by sqrt((n^2 - 1)/12), a proven upper bound: the mean
+      within-competitor variance is (1 - W)(n^2 - 1)/12 <= (n^2 - 1)/12 and the
+      mean of SDs is at most the root of the mean of variances (Jensen). It is
+      attained (m = n judges in a cyclic Latin square, W = 0), but not for every
+      panel size (for m = 2 the maximum is n/4). It's also the SD of ranks for
+      one random judge, so ~1 is "as spread as a panel can be without agreeing".
+
+    These are first-pass normalisations. They remove the main dependence on n, but not
+    on m, and chance-level disagreement sits below 1 (about sqrt(1 - 1/m) for the
+    SD). A rigorous correction (e.g. against the expectation under random
+    rankings for the given m and n) is deferred; see plan.md.
     """
+    n = R.shape[1]
     col_mean = R.mean(axis=0)
     col_median = np.median(R, axis=0)
+    mad_mean = float(np.abs(R - col_mean).mean(axis=0).mean())
+    mad_median = float(np.abs(R - col_median).mean(axis=0).mean())
+    sd = float(R.std(axis=0, ddof=0).mean())
     return {
-        "mean_abs_rank_dev_mean": float(np.abs(R - col_mean).mean(axis=0).mean()),
-        "mean_abs_rank_dev_median": float(np.abs(R - col_median).mean(axis=0).mean()),
-        "sd_rank": float(R.std(axis=0, ddof=0).mean()),
+        "mean_abs_rank_dev_mean": mad_mean,
+        "mean_abs_rank_dev_median": mad_median,
+        "sd_rank": sd,
+        "mean_abs_rank_dev_mean_norm": mad_mean / (n / 4.0),
+        "mean_abs_rank_dev_median_norm": mad_median / (n / 4.0),
+        "sd_rank_norm": sd / float(np.sqrt((n * n - 1) / 12.0)),
     }
 
 

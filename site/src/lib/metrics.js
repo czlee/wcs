@@ -131,6 +131,15 @@ export function spread(/** @type {Matrix} */ R) {
 	};
 }
 
+/**
+ * The scales the spread metrics are normalised by, as in `rank_dispersion` in compute_metrics.py. The
+ * MADs use n/4, the average spread of a panel split between one order and its exact reverse.
+ * The SD uses √((n² − 1)/12), an upper bound on the average SD (and the SD of one random judge's
+ * ranks). First-pass corrections for field size, to be replaced by a rigorous one.
+ */
+export const madScale = (/** @type {number} */ n) => n / 4;
+export const sdScale = (/** @type {number} */ n) => Math.sqrt((n * n - 1) / 12);
+
 /** Every judge pair's τ, ρ, footrule and top-3 overlap and Jaccard. */
 export function pairwise(/** @type {Matrix} */ R) {
 	return judgePairs(R.length).map(([a, b]) => {
@@ -145,7 +154,7 @@ export function pairwise(/** @type {Matrix} */ R) {
 	});
 }
 
-/** The site's twelve metrics, keyed as in data/metrics.csv. */
+/** The site's twelve metrics (plus the raw spread columns they're scaled from), keyed as in data/metrics.csv. */
 export function allMetrics(/** @type {Matrix} */ R) {
 	const { W } = kendallW(R);
 	const p = pairwise(R);
@@ -168,7 +177,10 @@ export function allMetrics(/** @type {Matrix} */ R) {
 		jaccard_at_3: avg('jaccard3'),
 		mean_abs_rank_dev_mean: s.madMean,
 		mean_abs_rank_dev_median: s.madMedian,
-		sd_rank: s.sd
+		sd_rank: s.sd,
+		mean_abs_rank_dev_mean_norm: s.madMean / madScale(R[0].length),
+		mean_abs_rank_dev_median_norm: s.madMedian / madScale(R[0].length),
+		sd_rank_norm: s.sd / sdScale(R[0].length)
 	};
 }
 

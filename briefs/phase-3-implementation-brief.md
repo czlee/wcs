@@ -117,6 +117,24 @@ of these has multiple defensible forms and is deferred to Phase 4/5.
   columns (uniform-random top-N sets, without replacement; see `topn_chance` in
   `compute_metrics.py`) so the results site can show it. It's a first pass; the
   simulated null and stratifying by n remain open.
+- **Size correction of the rank-spread metrics** (`sd_rank`, `mean_abs_rank_dev_*`):
+  *Update (2026-11-23):* the `*_norm` columns put these on a rough 0–1 scale
+  (0 = unanimous, not flipped). `sd_rank_norm` divides by √((n² − 1)/12), a
+  proven upper bound (mean within-competitor variance = (1 − W)(n² − 1)/12 ≤
+  (n² − 1)/12, then Jensen; attained by a cyclic Latin square, m = n). The two
+  MADs divide by n/4, the average spread of a panel split between an order and
+  its reverse; that is exact for m = 2 and held in an exhaustive small-case
+  search and on real data (max 0.98), but **isn't proven to be a bound for
+  m > 2** (an open question, being thought about). It's a first pass.
+  **To revisit more rigorously:** (a) chance level isn't constant on these
+  scales (≈ √(1 − 1/m) for the SD, and it depends on m), so correct against the
+  expectation under random rankings for the given (m, n), e.g. a Monte Carlo or
+  exact table, reported as `1 − x/E` like the `*_cc` columns; (b) the SD can't
+  reach 1 for small m (m = 2 tops out at n/4, i.e. 0.87), and population SD
+  (ddof = 0) is biased low for small panels by about √((m − 1)/m); (c) the mean
+  within-competitor variance is exactly (1 − W)(n² − 1)/12, so a chance-corrected
+  SD is close to a transform of W and may be redundant; (d) competitors near the
+  top and bottom have bounded spread, which a percentile-rank version would handle.
 - **Comparison against a simulated null** (e.g. expressing an observed value as a
   percentile of random panels of the same m, n): depends on a null model.
 - **Inclusion filtering** (e.g. ≥5 judges, ≥6 competitors): a threshold, and a

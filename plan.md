@@ -92,7 +92,7 @@ originally evaluated:
 - Mean absolute rank deviation across judges
 
 That investigation is complete; see the brief above for the final metric set and the
-rationale for storing raw values with size-correction deferred to Phases 4/5.
+rationale for storing raw values with size-correction deferred to Phases 4/5. Open for Phase 4/5: a rigorous field-size and panel-size correction for the rank-spread metrics (the site currently divides the SD by √((n²−1)/12) and the MADs by n/4 as a first pass; the brief lists what to revisit), alongside the top-N chance correction.
 
 ---
 

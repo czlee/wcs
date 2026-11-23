@@ -5,7 +5,7 @@
 	import Term from './Term.svelte';
 	import MetricLink from './MetricLink.svelte';
 	import Tex from './Tex.svelte';
-	import { kendallW, spearman, judgePairs, spread } from '#lib/metrics.js';
+	import { kendallW, spearman, judgePairs, spread, sdScale } from '#lib/metrics.js';
 	import { fx, nice, signed, minus } from '#lib/format.js';
 	import { tn } from '#lib/tex.js';
 	import { agreeBg } from './agree.js';
@@ -26,6 +26,7 @@
 	const sp = $derived(spearman(sheet.R[selected[0]], sheet.R[selected[1]]));
 	const s = $derived(spread(sheet.R));
 	const f3 = (/** @type {number} */ v) => nice(v, 3);
+	const scale = $derived(sdScale(n));
 	// Mean over competitors of the variance of their ranks, and what W says it must be.
 	const meanVar = $derived(s.perCompetitor.reduce((t, c) => t + c.sd ** 2, 0) / n);
 	const varFromW = $derived(((n * n - 1) / 12) * (1 - w.W));
@@ -124,7 +125,7 @@
 </aside>
 {/if}
 
-{#if focus === 'sd_rank'}
+{#if focus === 'sd_rank_norm'}
 <h4>Standard deviation of ranks</h4>
 <p>
 	This looks at each competitor in turn: how far apart are the {m} ranks they got? For a competitor with
@@ -133,9 +134,8 @@
 </p>
 <Tex display tex={String.raw`\text{standard deviation} = \sqrt{\frac{1}{m}\sum_{j=1}^{m} (r_j - \bar r)^2}`} />
 <p>
-	(dividing by <Tex tex="m" />, not <Tex tex="m - 1" />). The metric is the average over the
-	<Tex tex={`n = ${n}`} /> competitors.
-	It’s in places, so lower means more agreement.
+	(dividing by <Tex tex="m" />, not <Tex tex="m - 1" />). The metric starts from the average over the
+	<Tex tex={`n = ${n}`} /> competitors. That’s in places, so lower means more agreement.
 </p>
 <RankMatrix
 	{sheet}
@@ -144,11 +144,19 @@
 		{ label: 'Standard deviation', title: 'Population standard deviation (÷ m)', values: s.perCompetitor.map((c) => f3(c.sd)), foot: f3(s.sd), strong: true }
 	]}
 />
-<p class="small muted">The bottom row of the last column is its average over competitors.</p>
-<Check label="Standard deviation of ranks" js={s.sd} py={sheet.py.sd_rank} />
+<p class="small muted">The bottom row of the last column is its average over competitors, in places.</p>
 <p>
-	Because it’s in places and isn’t scaled to the field size, it isn’t comparable across finals of different
-	sizes: being 2 places apart in a field of {n} means more than in a field of 20.
+	<strong>Normalising.</strong> Because the average is in places, it can’t be compared across finals of different sizes. So the
+	metric normalises it, dividing by <Tex tex={String.raw`\sqrt{(n^2-1)/12}`} />, the largest the average can be. That is also
+	the standard deviation of the ranks a single judge would give a random competitor, so 1 means the judges disagreed as much as
+	judges can without agreeing at all, and 0 means every judge agreed on every competitor.
+</p>
+<Tex display tex={String.raw`\frac{${f3(s.sd)}}{\sqrt{(n^2-1)/12}} = \frac{${f3(s.sd)}}{\sqrt{(${n}^2-1)/12}} = \frac{${f3(s.sd)}}{${nice(scale, 3)}} = ${fx(s.sd / scale)}`} />
+<Check label="Standard deviation of ranks, normalised" js={s.sd / scale} py={sheet.py.sd_rank_norm} />
+<p class="small muted">
+	This is a first pass. It removes the main effect of field size, but not all of it: random rankings don’t land at the
+	same value for every panel size (a bit under 1, and further under for small panels), and a panel of two judges can’t
+	reach 1. A chance-based correction is planned.
 </p>
 <aside class="aside small">
 	<strong>How this relates to Kendall’s W:</strong> <MetricLink k="kendall_w">Kendall’s <Tex tex="W" /></MetricLink> is another of the metrics on this

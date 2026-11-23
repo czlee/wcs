@@ -70,25 +70,25 @@ export const ABOUT = {
 			'Only finals of 6 or more are charted: in a final of 5, any two top 3s must share someone.'
 		]
 	},
-	mean_abs_rank_dev_median: {
-		what: 'For each competitor, the average distance (in places) between each judge’s rank and the median of the ranks they got. Averaged over competitors.',
-		reading: '0 means every judge gave every competitor the same rank. In places, so lower is more agreement. It’s never more than the [[mean_abs_rank_dev_mean|mean absolute deviation from the mean]].',
+	mean_abs_rank_dev_median_norm: {
+		what: 'For each competitor, the average distance (in places) between each judge’s rank and the median of the ranks they got. Averaged over competitors, then normalised: divided by n/4 (n is the number of competitors) so that finals of different sizes can be compared.',
+		reading: '0 means every judge gave every competitor the same rank, and about 1 means the panel was split as far as it can be (half ranking in order, half in exact reverse). Lower is more agreement. It’s never more than the [[mean_abs_rank_dev_mean_norm|mean absolute deviation from the mean]].',
 		caveats: [
-			'In places and not scaled to the field size: 2 places apart means more in a final of 8 than in a final of 20, and bigger finals spread further by chance. Field sizes differ between levels.'
+			'Normalised for field size only roughly, by dividing by n/4 (the most the average can be). That removes the main effect of field size, but random rankings don’t land at the same value for every field and panel size, so some of it remains. A proper chance correction is planned.'
 		]
 	},
-	mean_abs_rank_dev_mean: {
-		what: 'For each competitor, the average distance (in places) between each judge’s rank and the mean of the ranks they got. Averaged over competitors.',
-		reading: '0 means every judge gave every competitor the same rank. In places, so lower is more agreement.',
+	mean_abs_rank_dev_mean_norm: {
+		what: 'For each competitor, the average distance (in places) between each judge’s rank and the mean of the ranks they got. Averaged over competitors, then normalised: divided by n/4 (n is the number of competitors) so that finals of different sizes can be compared.',
+		reading: '0 means every judge gave every competitor the same rank, and about 1 means the panel was split as far as it can be (half ranking in order, half in exact reverse). Lower is more agreement.',
 		caveats: [
-			'In places and not scaled to the field size: 2 places apart means more in a final of 8 than in a final of 20, and bigger finals spread further by chance. Field sizes differ between levels.'
+			'Normalised for field size only roughly, by dividing by n/4 (the most the average can be). That removes the main effect of field size, but random rankings don’t land at the same value for every field and panel size, so some of it remains. A proper chance correction is planned.'
 		]
 	},
-	sd_rank: {
-		what: 'For each competitor, the standard deviation of the ranks they got (dividing by the number of judges). Averaged over competitors. It gives more weight than the [[mean_abs_rank_dev_mean|mean absolute deviations]] do to one judge who is far from the rest.',
-		reading: '0 means every judge gave every competitor the same rank. In places, so lower is more agreement.',
+	sd_rank_norm: {
+		what: 'For each competitor, the standard deviation of the ranks they got (dividing by the number of judges). Averaged over competitors, then normalised: divided by √((n² − 1)/12) (n is the number of competitors; it’s the most the average can be) so that finals of different sizes can be compared. It gives more weight than the [[mean_abs_rank_dev_mean_norm|mean absolute deviations]] do to one judge who is far from the rest.',
+		reading: '0 means every judge gave every competitor the same rank, and 1 is the most it can be (the spread of ranks a single judge’s ranking has). Lower is more agreement.',
 		caveats: [
-			'In places and not scaled to the field size: 2 places apart means more in a final of 8 than in a final of 20, and bigger finals spread further by chance. Field sizes differ between levels.'
+			'Normalised for field size only roughly. That removes the main effect of field size, but random rankings don’t land at the same value for every panel size (a bit under 1, and further under for small panels), and a panel of two judges can’t reach 1. A proper chance correction is planned.'
 		]
 	}
 };

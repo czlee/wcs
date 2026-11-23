@@ -19,9 +19,9 @@ export const METRICS = {
 	jaccard_at_3_cc: { key: 'jaccard_at_3_cc', label: 'Mean Jaccard @ 3, chance-corrected', short: 'Jaccard@3 (corrected)', higher: true, minN: 6, chance: true },
 	overlap_at_3: { key: 'overlap_at_3', label: 'Mean overlap @ 3', short: 'overlap@3', higher: true, minN: 6, hidden: true },
 	jaccard_at_3: { key: 'jaccard_at_3', label: 'Mean Jaccard @ 3', short: 'Jaccard@3', higher: true, minN: 6, hidden: true },
-	mean_abs_rank_dev_mean: { key: 'mean_abs_rank_dev_mean', label: 'Mean abs. rank deviation from the mean', short: 'MAD (mean)', higher: false },
-	mean_abs_rank_dev_median: { key: 'mean_abs_rank_dev_median', label: 'Mean abs. rank deviation from the median', short: 'MAD (median)', higher: false },
-	sd_rank: { key: 'sd_rank', label: 'Standard deviation of ranks', short: 'standard deviation', higher: false }
+	mean_abs_rank_dev_mean_norm: { key: 'mean_abs_rank_dev_mean_norm', label: 'Mean abs. rank deviation from the mean', short: 'MAD (mean)', higher: false },
+	mean_abs_rank_dev_median_norm: { key: 'mean_abs_rank_dev_median_norm', label: 'Mean abs. rank deviation from the median', short: 'MAD (median)', higher: false },
+	sd_rank_norm: { key: 'sd_rank_norm', label: 'Standard deviation of ranks', short: 'standard deviation', higher: false }
 };
 
 /**
@@ -30,8 +30,8 @@ export const METRICS = {
  * @type {{id: string, title: string, metrics: string[]}[]}
  */
 export const FAMILIES = [
-	{ id: 'l2', title: 'Rank gaps squared (ℓ₂)', metrics: ['kendall_w', 'mean_pairwise_rho', 'sd_rank'] },
-	{ id: 'l1', title: 'Rank gaps (ℓ₁)', metrics: ['footrule_mean', 'mean_abs_rank_dev_median', 'mean_abs_rank_dev_mean'] },
+	{ id: 'l2', title: 'Rank gaps squared (ℓ₂)', metrics: ['kendall_w', 'mean_pairwise_rho', 'sd_rank_norm'] },
+	{ id: 'l1', title: 'Rank gaps (ℓ₁)', metrics: ['footrule_mean', 'mean_abs_rank_dev_median_norm', 'mean_abs_rank_dev_mean_norm'] },
 	{ id: 'head-to-head', title: 'Head-to-head order', metrics: ['tau_distance', 'mean_pairwise_tau'] },
 	{ id: 'top', title: 'Top-N agreement', metrics: ['overlap_at_3_cc', 'jaccard_at_3_cc', 'overlap_at_3', 'jaccard_at_3'] }
 ];

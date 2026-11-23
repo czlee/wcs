@@ -4,7 +4,7 @@
 	import Check from './Check.svelte';
 	import MetricLink from './MetricLink.svelte';
 	import Tex from './Tex.svelte';
-	import { spread, footrule, judgePairs } from '#lib/metrics.js';
+	import { spread, madScale, footrule, judgePairs } from '#lib/metrics.js';
 	import { fx, nice } from '#lib/format.js';
 	import { disagreeBg } from './agree.js';
 
@@ -23,7 +23,8 @@
 	const ft = $derived(footrule(sheet.R[selFr[0]], sheet.R[selFr[1]]));
 	const s = $derived(spread(sheet.R));
 	const f3 = (/** @type {number} */ v) => nice(v, 3);
-	const MED = 'mean_abs_rank_dev_median', MEAN = 'mean_abs_rank_dev_mean';
+	const scale = $derived(madScale(n));
+	const MED = 'mean_abs_rank_dev_median_norm', MEAN = 'mean_abs_rank_dev_mean_norm';
 </script>
 
 <p class="lede small">
@@ -80,8 +81,7 @@
 	<div class:dim={dim(MEAN)}><Tex display tex={String.raw`\text{MAD (mean)} = \frac{1}{m}\sum_{j=1}^{m} |r_j - \bar r|`} /></div>
 </div>
 <p>
-	The metric is then the average over the {n} competitors. It’s in places, so lower means
-	more agreement.
+	The metric starts from the average over the {n} competitors. That’s in places, so lower means more agreement.
 </p>
 <p class="small muted">
 	There are two versions: the mean absolute deviation (MAD) from the median, and from the mean. The one you’re
@@ -96,15 +96,25 @@
 		{ label: 'MAD (mean)', title: 'Mean absolute deviation from the mean', values: s.perCompetitor.map((c) => f3(c.madMean)), foot: f3(s.madMean), strong: true, dim: dim(MEAN) }
 	]}
 />
-<p class="small muted">The bottom row of each MAD column is its average over competitors.</p>
-<div class:dim={dim(MED)}><Check label="Mean abs. rank deviation (median)" js={s.madMedian} py={sheet.py.mean_abs_rank_dev_median} /></div>
-<div class:dim={dim(MEAN)}><Check label="Mean abs. rank deviation (mean)" js={s.madMean} py={sheet.py.mean_abs_rank_dev_mean} /></div>
+<p class="small muted">The bottom row of each MAD column is its average over competitors, in places.</p>
+<p>
+	<strong>Normalising.</strong> Because the average is in places, it can’t be compared across finals of different sizes. So the
+	metric normalises it, dividing by <Tex tex={String.raw`n/4`} />, which is what the average would be if half the
+	panel ranked in order and half in exact reverse. Then 0 means every judge agreed on every competitor, and
+	about 1 means the panel was split as far as it could be.
+</p>
+<div class:dim={dim(MED)}><Tex display tex={String.raw`\text{MAD (median)} = \frac{${f3(s.madMedian)}}{n/4} = \frac{${f3(s.madMedian)}}{${nice(scale, 3)}} = ${fx(s.madMedian / scale)}`} /></div>
+<div class:dim={dim(MEAN)}><Tex display tex={String.raw`\text{MAD (mean)} = \frac{${f3(s.madMean)}}{n/4} = \frac{${f3(s.madMean)}}{${nice(scale, 3)}} = ${fx(s.madMean / scale)}`} /></div>
+<div class:dim={dim(MED)}><Check label="Mean abs. rank deviation (median), normalised" js={s.madMedian / scale} py={sheet.py.mean_abs_rank_dev_median_norm} /></div>
+<div class:dim={dim(MEAN)}><Check label="Mean abs. rank deviation (mean), normalised" js={s.madMean / scale} py={sheet.py.mean_abs_rank_dev_mean_norm} /></div>
 <p>
 	The median is the natural centre for absolute distances: no other point gives a smaller total. So {#if focus === MED}<MetricLink k={MEAN}>MAD (mean)</MetricLink>{:else}MAD (mean){/if}
 	is never smaller than {#if focus === MEAN}<MetricLink k={MED}>MAD (median)</MetricLink>{:else}MAD (median){/if}, and it’s larger when one judge is far from the rest, because that judge
-	pulls the mean (but not the median) towards them. Neither is scaled to the field size, so they aren’t
-	comparable across finals of different sizes: being 2 places apart in a field of {n} means more
-	than in a field of 20.
+	pulls the mean (but not the median) towards them.
+</p>
+<p class="small muted">
+	Normalising by <Tex tex={String.raw`n/4`} /> is a first pass. It removes the main effect of field size, but not all of it:
+	random rankings don’t land at the same value for every field and panel size, so a chance-based correction is planned.
 </p>
 {/if}
 

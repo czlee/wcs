@@ -42,11 +42,11 @@ LEVELS = {
 # The metrics shown on the site. This started as the notebook's METRICS list; the site
 # has since dropped the top-5 metrics (degenerate in finals of 5, which are common at
 # the upper levels) and added the naively chance-corrected top-3 metrics, which the
-# notebook doesn't show.
+# notebook doesn't show. The three rank-spread metrics are the scaled `_norm` versions (see rank_dispersion).
 METRICS = [
     "kendall_w", "mean_pairwise_rho", "mean_pairwise_tau", "tau_distance", "footrule_mean",
     "overlap_at_3_cc", "jaccard_at_3_cc", "overlap_at_3", "jaccard_at_3",
-    "mean_abs_rank_dev_mean", "mean_abs_rank_dev_median", "sd_rank",
+    "mean_abs_rank_dev_mean_norm", "mean_abs_rank_dev_median_norm", "sd_rank_norm",
 ]
 
 
