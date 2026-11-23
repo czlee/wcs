@@ -162,8 +162,4 @@
 
 <style>
 	.lede { color: var(--text-2); }
-	.aside {
-		border-left: 3px solid var(--border); background: var(--surface-2); color: var(--text-2);
-		padding: 0.5em 0.9em; margin: 0.8em 0; max-width: 72ch;
-	}
 </style>

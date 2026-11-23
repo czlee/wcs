@@ -1,13 +1,15 @@
 <script>
 	// A judge × judge matrix of one pairwise value. Hovering, focusing or tapping a
-	// cell selects that pair, and `detail` renders its working beside the matrix.
+	// cell selects that pair, and `detail` renders its working beside the matrix. A working with
+	// hover content of its own (tooltips) sets `select="click"`, so the pointer can cross the matrix
+	// to the working without changing the pair on the way.
 	// Modelled on the Schulze tables at whowouldawon.dance.
 	/**
 	 * @type {{judges: string[], value: (a: number, b: number) => number, fmt: (v: number) => string,
 	 *   colour?: (v: number) => string, selected: [number, number],
-	 *   detail: import('svelte').Snippet<[number, number]>, label: string}}
+	 *   detail: import('svelte').Snippet<[number, number]>, label: string, select?: 'hover' | 'click'}}
 	 */
-	let { judges, value, fmt, colour = () => 'transparent', selected = $bindable(), detail, label } = $props();
+	let { judges, value, fmt, colour = () => 'transparent', selected = $bindable(), detail, label, select = 'hover' } = $props();
 	const pick = (/** @type {number} */ a, /** @type {number} */ b) => {
 		if (a !== b) selected = a < b ? [a, b] : [b, a];
 	};
@@ -35,7 +37,7 @@
 								{@const v = value(a, b)}
 								<td class="num cell" class:sel={isSel(a, b)} style:--bg={colour(v)}>
 									<button type="button" aria-pressed={isSel(a, b)} aria-label="J{a + 1} and J{b + 1}: {fmt(v)}"
-										onmouseenter={() => pick(a, b)} onfocus={() => pick(a, b)} onclick={() => pick(a, b)}>{fmt(v)}</button>
+										onmouseenter={() => select === 'hover' && pick(a, b)} onfocus={() => pick(a, b)} onclick={() => pick(a, b)}>{fmt(v)}</button>
 								</td>
 							{/if}
 						{/each}
@@ -43,7 +45,7 @@
 				{/each}
 			</tbody>
 		</table>
-		<p class="small muted hint">Hover over or tap a cell to see that pair’s working.</p>
+		<p class="small muted hint">{select === 'click' ? 'Click' : 'Hover over'} or tap a cell to see that pair’s working.</p>
 	</div>
 	<div class="detail" aria-live="polite">
 		{@render detail(selected[0], selected[1])}

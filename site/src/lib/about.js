@@ -19,18 +19,18 @@ export const ABOUT = {
 			'For any one scoresheet it carries the same information as Kendall’s W (with m judges, ρ̄ = (mW − 1)/(m − 1)), rescaled so that chance is 0 for every panel size.'
 		]
 	},
-	mean_pairwise_tau: {
-		what: 'For two judges, Kendall’s τ takes every pair of competitors and asks whether both judges put the same one ahead. It’s (agreeing pairs − disagreeing pairs) ÷ all pairs, averaged over every pair of judges.',
-		reading: '1 means identical rankings, −1 means one is the reverse of the other, and random judging averages 0. Higher is more agreement.',
-		caveats: [
-			'Random judging averages 0 for any field size, but in a smaller final the value varies more from one final to the next, by chance alone.'
-		]
-	},
 	tau_distance: {
-		what: 'The share of head-to-heads (pairs of competitors) that two judges put in opposite orders, averaged over every pair of judges. It’s (1 − τ̄)/2: the same information as the mean pairwise Kendall τ, on a scale that’s easier to read.',
+		what: 'The mean pairwise normalised Kendall τ distance. For two judges, the Kendall τ distance counts the head-to-heads (pairs of competitors) that they put in opposite orders; here it’s normalised to a share of all pairs. It’s averaged over every pair of judges.',
 		reading: '0 means identical rankings, 1 means one is the reverse of the other, and random judging averages 0.5. Lower is more agreement.',
 		caveats: [
 			'Random judging averages 0.5 for any field size, but in a smaller final the value varies more from one final to the next, by chance alone.'
+		]
+	},
+	mean_pairwise_tau: {
+		what: 'The mean pairwise Kendall rank correlation coefficient. It counts the same pairs of competitors as the normalised Kendall τ distance, but scores them as (agreeing pairs − disagreeing pairs) ÷ all pairs, which runs from −1 to 1, and averages that over every pair of judges.',
+		reading: '1 means identical rankings, −1 means one is the reverse of the other, and random judging averages 0. Higher is more agreement.',
+		caveats: [
+			'Random judging averages 0 for any field size, but in a smaller final the value varies more from one final to the next, by chance alone.'
 		]
 	},
 	footrule_mean: {

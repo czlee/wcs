@@ -21,6 +21,9 @@
 	/* Format colours (validated against both surfaces with the dataviz palette checker). */
 	--jnj: #3f5bd9;
 	--strictly: #8a3fb8;
+	/* The two judges of a pair, where one view needs them told apart (blue and orange, colour-blind safe). */
+	--judge-a: var(--accent);
+	--judge-b: #d9730d;
 	--font: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 	--mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 }
@@ -47,6 +50,7 @@
 		--disagree-bg: #4a2420;
 		--jnj: #6f86f0;
 		--strictly: #b67ee8;
+	--judge-b: #f0883e;
 	}
 }
 :root[data-theme='dark'] {
@@ -71,6 +75,7 @@
 	--disagree-bg: #4a2420;
 	--jnj: #6f86f0;
 	--strictly: #b67ee8;
+	--judge-b: #f0883e;
 }
 
 * { box-sizing: border-box; }
@@ -122,3 +127,9 @@ svg text { fill: var(--text-2); font-family: var(--font); font-variant-numeric: 
 .dim { opacity: 0.4; }
 /* Display formulas side by side (each its own .tex-display, so each can be dimmed). */
 .eqs { display: flex; flex-wrap: wrap; column-gap: 2em; align-items: baseline; }
+
+/* A side note in a worked example: a curiosity or a link to another metric. */
+.aside {
+	border-left: 3px solid var(--border); background: var(--surface-2); color: var(--text-2);
+	padding: 0.5em 0.9em; margin: 0.8em 0; max-width: 72ch;
+}

@@ -11,8 +11,8 @@
 export const METRICS = {
 	kendall_w: { key: 'kendall_w', label: "Kendall's W", short: 'W', higher: true },
 	mean_pairwise_rho: { key: 'mean_pairwise_rho', label: 'Mean pairwise Spearman ρ', short: 'ρ̄', higher: true },
-	mean_pairwise_tau: { key: 'mean_pairwise_tau', label: 'Mean pairwise Kendall τ', short: 'τ̄', higher: true },
-	tau_distance: { key: 'tau_distance', label: 'Kendall τ distance', short: 'τ distance', higher: false },
+	tau_distance: { key: 'tau_distance', label: 'Mean pairwise Kendall τ distance', short: 'τ distance', higher: false },
+	mean_pairwise_tau: { key: 'mean_pairwise_tau', label: 'Mean pairwise Kendall correlation', short: 'τ̄', higher: true },
 	footrule_mean: { key: 'footrule_mean', label: 'Mean Spearman footrule', short: 'footrule', higher: false },
 	// Top 3 needs n ≥ 6 (= 2 × 3): in a final of 5, any two top-3 sets must share a competitor.
 	overlap_at_3_cc: { key: 'overlap_at_3_cc', label: 'Mean overlap @ 3, chance-corrected', short: 'overlap@3 (corrected)', higher: true, minN: 6, chance: true },
@@ -32,7 +32,7 @@ export const METRICS = {
 export const FAMILIES = [
 	{ id: 'l2', title: 'Rank gaps squared (ℓ₂)', metrics: ['kendall_w', 'mean_pairwise_rho', 'sd_rank'] },
 	{ id: 'l1', title: 'Rank gaps (ℓ₁)', metrics: ['footrule_mean', 'mean_abs_rank_dev_median', 'mean_abs_rank_dev_mean'] },
-	{ id: 'head-to-head', title: 'Head-to-head order', metrics: ['mean_pairwise_tau', 'tau_distance'] },
+	{ id: 'head-to-head', title: 'Head-to-head order', metrics: ['tau_distance', 'mean_pairwise_tau'] },
 	{ id: 'top', title: 'Top-N agreement', metrics: ['overlap_at_3_cc', 'jaccard_at_3_cc', 'overlap_at_3', 'jaccard_at_3'] }
 ];
 
