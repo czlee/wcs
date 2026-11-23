@@ -1,6 +1,6 @@
 # Builds the results site (site/) and deploys it to GitHub Pages. The user
 # site's custom domain (czlee.nz) covers this repo's project page, so with the
-# repo named "wcs" this serves https://czlee.nz/wcs/judge-divergence/.
+# repo named "wcs" this serves https://czlee.nz/wcs/judge-agreement/.
 #
 # The site's data (site/src/lib/data/) is committed, written by
 # scripts/export_site_data.py: CI doesn't rerun the Python pipeline, whose
@@ -40,11 +40,11 @@ jobs:
       - run: npm run build
         working-directory: site
         env:
-          BASE_PATH: /wcs/judge-divergence
+          BASE_PATH: /wcs/judge-agreement
       - name: Assemble Pages tree
         run: |
           mkdir -p _site
-          cp -r site/build _site/judge-divergence
+          cp -r site/build _site/judge-agreement
           cp site/static-root/index.html _site/index.html
       - uses: actions/upload-pages-artifact@v3
         with:

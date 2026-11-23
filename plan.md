@@ -1,6 +1,6 @@
-# WCS Judge Divergence Study — Project Plan
+# WCS Judge Agreement Study — Project Plan
 
-**Goal:** Quantify how much judges on the same panel disagree in WCS competition finals, and find what predicts higher or lower divergence (division level, panel size, field size, etc.).
+**Goal:** Quantify how much judges on the same panel disagree in WCS competition finals, and find what predicts more or less agreement (division level, panel size, field size, etc.).
 
 > This plan is a rough guide. Agents implementing individual phases should use their judgement and diverge from it where appropriate.
 
@@ -77,7 +77,7 @@ This stage acts as the single interface between raw data and all downstream work
 
 ---
 
-## Phase 3: Divergence Metrics
+## Phase 3: Agreement Metrics
 
 **Status:** ⬜ Not started.
 
@@ -110,15 +110,15 @@ Build `lookups/regions.json` — a manual mapping from event name to geographic 
 
 ### Task 4B: Competition format (stretch)
 
-Whether the final was **spotlights**, **cluster spotlights**, or **all-skates** would be highly valuable for explaining divergence differences. However, this information is not on any of the source sites and would require manual research or crowdsourcing per event. Treat as a stretch covariate — valuable if filled in, but not blocking analysis.
+Whether the final was **spotlights**, **cluster spotlights**, or **all-skates** would be highly valuable for explaining differences in agreement. However, this information is not on any of the source sites and would require manual research or crowdsourcing per event. Treat as a stretch covariate — valuable if filled in, but not blocking analysis.
 
 If pursued: build `lookups/formats.json` with the same join key as regions.
 
 ### Possible interaction effects to explore
-- Does divergence scale with division level? (Hypothesis: higher levels may have more consensus because judges agree on quality, or alternatively more divergence because top-level differences are subtle)
-- Does panel size (5 vs 7 vs 9) affect divergence? (Larger panels may or may not have more variance)
-- Does field size matter? (Closer fields may produce more divergence)
-- Does competition format (spotlights vs. all-skates) affect divergence?
+- Does disagreement scale with division level? (Hypothesis: higher levels may have more consensus because judges agree on quality, or alternatively more disagreement because top-level differences are subtle)
+- Does panel size (5 vs 7 vs 9) affect disagreement? (Larger panels may or may not have more variance)
+- Does field size matter? (Closer fields may produce more disagreement)
+- Does competition format (spotlights vs. all-skates) affect disagreement?
 
 ---
 
@@ -130,11 +130,11 @@ If pursued: build `lookups/formats.json` with the same join key as regions.
 
 Primary mode is visual: if a pattern isn't obvious on a plot, it isn't interesting. Statistical tests can be used to confirm what's already visible, not to go fishing.
 
-1. **Descriptive stats:** Distribution of divergence metric(s) across the full dataset
+1. **Descriptive stats:** Distribution of agreement metric(s) across the full dataset
 2. **Visualization:**
    - Box plots / violin plots by division level
-   - Scatter plot of divergence vs. field size
-   - Scatter plot of divergence vs. panel size
+   - Scatter plot of disagreement vs. field size
+   - Scatter plot of disagreement vs. panel size
    - Any other obvious cuts (year, site, competition tier)
 3. **Confirmation:** For patterns that look visually clear, a simple statistical test (e.g. Kruskal-Wallis or Spearman correlation) to check it isn't noise
 
@@ -161,7 +161,7 @@ Field size changes the metrics directly (a ranking of 5 has far less room to dis
 ## Project File Structure
 
 ```
-wcs-judge-divergence/
+wcs-judge-agreement/
   plan.md                       # this file
   data/
     raw/                        # Phase 1: cached raw scoresheet files (named by URL hash or slug)
@@ -174,7 +174,7 @@ wcs-judge-divergence/
   scripts/
     download.py                 # Phase 1: discover and download scoresheets
     extract.py                  # Phase 2: parse raw files, validate, normalise covariates
-    compute_metrics.py          # Phase 3: compute divergence metrics → data/metrics.csv
+    compute_metrics.py          # Phase 3: compute agreement metrics → data/metrics.csv
     analyze.ipynb               # Phase 5: exploratory analysis and visualisations
   lookups/
     regions.json                # manual mapping: event name → geographic region

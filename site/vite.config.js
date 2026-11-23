@@ -2,9 +2,9 @@ import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
-// Served from https://czlee.nz/wcs/judge-divergence/ (GitHub Pages for czlee/wcs,
-// with the build copied into a judge-divergence/ folder).
-const base = process.env.BASE_PATH ?? '/wcs/judge-divergence';
+// Served from https://czlee.nz/wcs/judge-agreement/ (GitHub Pages for czlee/wcs,
+// with the build copied into a judge-agreement/ folder).
+const base = process.env.BASE_PATH ?? '/wcs/judge-agreement';
 
 export default defineConfig({
 	plugins: [

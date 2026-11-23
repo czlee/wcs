@@ -4,7 +4,7 @@ A scratchpad for ideas that aren't planned yet. Once an idea is committed to, it
 
 ## Explorer (`site/`, `ExplorePage.svelte`)
 
-For now the y-axis is always a divergence metric. These ideas are about how the x-axis is grouped and which scoresheets get included.
+For now the y-axis is always an agreement metric. These ideas are about how the x-axis is grouped and which scoresheets get included.
 
 ### Filters
 
@@ -23,7 +23,7 @@ Field size and panel size are done: see "Results site: filters" in `plan.md`. St
 
 ### Colouring points by a dimension
 
-- Colour the points (or boxes) by a second dimension, e.g. field-size bin, panel size, year or region. This is the Tableau/Hex-style "colour" shelf. It would let us see within-level structure without filtering anything away, e.g. whether the high-divergence sheets in a level are mostly the small fields.
+- Colour the points (or boxes) by a second dimension, e.g. field-size bin, panel size, year or region. This is the Tableau/Hex-style "colour" shelf. It would let us see within-level structure without filtering anything away, e.g. whether the low-agreement sheets in a level are mostly the small fields.
 - It should use the same dimension list as filters and the x-axis, so one definition of each dimension (label, accessor, bins) serves all three roles: filter, group-by and colour-by.
 - Needs a categorical palette that stays legible in both themes, and a legend that shows n per colour.
 

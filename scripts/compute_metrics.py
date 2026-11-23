@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Phase 3: Compute inter-judge divergence metrics from parsed scoresheets.
+"""Phase 3: Compute inter-judge agreement metrics from parsed scoresheets.
 
 Reads every data/parsed/{id}.json (Phase 2 output), computes a panel of rank-based
-divergence metrics from each scoresheet's judge x competitor rank matrix, and writes
+agreement metrics from each scoresheet's judge x competitor rank matrix, and writes
 one row per scoresheet to data/metrics.csv.
 
 Governing principle (see briefs/phase-3-implementation-brief.md): store RAW metric

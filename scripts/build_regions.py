@@ -45,7 +45,7 @@ REGIONS_PATH = LOOKUPS_DIR / "regions.json"
 MANUAL_PATH = LOOKUPS_DIR / "regions-manual.csv"
 
 REGISTRY_URL = "https://worldsdc.com/events/"
-USER_AGENT = "Mozilla/5.0 (wcs-judge-divergence research)"
+USER_AGENT = "Mozilla/5.0 (wcs-judge-agreement research)"
 
 MANUAL_FIELDS = [
     "event_id", "event_name", "site", "event_date", "url",

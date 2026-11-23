@@ -1,4 +1,4 @@
-"""Unit tests for the Phase 3 divergence metrics.
+"""Unit tests for the Phase 3 agreement metrics.
 
 These functions are the load-bearing core of the study, so they are pinned against
 closed-form answers on tiny matrices (unanimous, fully reversed), an internal

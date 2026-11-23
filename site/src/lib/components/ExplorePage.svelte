@@ -258,7 +258,7 @@
 
 <div class="explorer" class:app>
 	<header class="topbar">
-		<a class="brand" href={link('/')}>WCS judge divergence{#if DRAFT}<span class="draft-tag">DRAFT</span>{/if}</a>
+		<a class="brand" href={link('/')}>WCS judge agreement{#if DRAFT}<span class="draft-tag">DRAFT</span>{/if}</a>
 		<div class="formats" role="group" aria-label="Dance format">
 			{#each Object.values(FORMATS) as f (f.id)}
 				<a href="{link(f.path)}?{query}" aria-current={f.id === data.format ? 'page' : undefined}
