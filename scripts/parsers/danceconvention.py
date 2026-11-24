@@ -332,7 +332,7 @@ class DanceConventionParser(ScoresheetParser):
         """Extract judge initials -> full name mapping from text.
 
         Looks for lines like "AG Alexis Garrish" or "КП Павел Катунин":
-        2-4 uppercase initials followed by at least two alphabetic name words.
+        2-4 initials followed by at least two name words (see below for what counts).
         Uses Unicode-aware checks so this works for any script.
         """
         judge_key = {}
@@ -344,10 +344,12 @@ class DanceConventionParser(ScoresheetParser):
             initials = words[0]
             if not self._is_judge_initials(initials):
                 continue
-            # All remaining words should be alphabetic (any script), which
-            # excludes lines with numbers or punctuation.
+            # Each remaining word must contain a letter and no digits. That excludes
+            # table rows and headings (which have numbers or bare symbols) but allows
+            # punctuation in names: "Coxall-Jones", "D'oliveira", 'Raine "rake" Salo',
+            # and pod labels like "Singapore/Malaysia Pod".
             name_parts = words[1:]
-            if all(w.isalpha() for w in name_parts):
+            if all(any(c.isalpha() for c in w) and not any(c.isdigit() for c in w) for w in name_parts):
                 judge_key[initials] = " ".join(name_parts)
 
         return judge_key
