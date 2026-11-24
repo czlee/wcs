@@ -68,6 +68,15 @@
 	here <Tex tex={String.raw`\tfrac{1}{${m}} = ${fx(1 / m, 3)}`} />. So a bigger panel gets a lower
 	<Tex tex="W" /> from chance alone, and <Tex tex="W" /> isn’t directly comparable across panel sizes.
 </p>
+<aside class="aside small">
+	<strong>How this relates to Spearman’s ρ:</strong> the <MetricLink k="mean_pairwise_rho">mean pairwise Spearman <Tex tex={String.raw`\rho`} /></MetricLink>,
+	<Tex tex={String.raw`\bar\rho`} />, is another of the metrics on this site, which averages the agreement between each pair of judges. For rankings without
+	ties the two are exactly related: <Tex tex={String.raw`\bar\rho = \frac{mW - 1}{m - 1}`} />,
+	so for any one scoresheet they carry the same information. Here <Tex tex={`W = ${fx(w.W, 6)}`} />, giving
+	<Tex display tex={String.raw`\bar\rho = \frac{mW - 1}{m - 1} = \frac{${m} \times ${fx(w.W, 6)} - 1}{${m} - 1} = ${fx(rhoBar)}`} />
+	The difference is the scale: <Tex tex={String.raw`\bar\rho`} /> is 0 for random judging whatever the
+	panel size, whereas <Tex tex="W" /> is <Tex tex={String.raw`\tfrac{1}{m}`} />, which is why <Tex tex={String.raw`\bar\rho`} /> is the one to compare across panel sizes.
+</aside>
 {/if}
 
 {#if focus === 'mean_pairwise_rho'}
@@ -115,13 +124,13 @@
 	panels of different sizes are compared fairly in that respect.
 </p>
 <aside class="aside small">
-	<strong>A curiosity, and a cross-check:</strong> there’s a shortcut through <MetricLink k="kendall_w">Kendall’s <Tex tex="W" /></MetricLink>, another
+	<strong>How this relates to Kendall’s W:</strong> <MetricLink k="kendall_w">Kendall’s <Tex tex="W" /></MetricLink> is another
 	of the metrics on this site, which measures how much the whole panel agrees on one order. For
-	<Tex tex={`m = ${m}`} /> judges and rankings without ties, <Tex tex={String.raw`\bar\rho`} /> is exactly
-	<Tex tex={String.raw`\frac{mW - 1}{m - 1}`} />, so for any one scoresheet the two carry the same information.
-	Here <Tex tex={`W = ${fx(w.W, 6)}`} />, and the code behind the charts uses the shortcut:
+	<Tex tex={`m = ${m}`} /> judges and rankings without ties, the two are exactly related: <Tex tex={String.raw`\bar\rho = \frac{mW - 1}{m - 1}`} />, so for any one scoresheet they carry the same information.
+	Here <Tex tex={`W = ${fx(w.W, 6)}`} />, giving
 	<Tex display tex={String.raw`\frac{mW - 1}{m - 1} = \frac{${m} \times ${fx(w.W, 6)} - 1}{${m} - 1} = ${fx(rhoBar)}`} />
-	the same as the mean above.
+	the same as the mean above. The difference is the scale: a random panel averages <Tex tex={String.raw`\bar\rho = 0`} /> whatever its
+	size, but <Tex tex="W" /> averages <Tex tex={String.raw`\tfrac{1}{m}`} />.
 </aside>
 {/if}
 

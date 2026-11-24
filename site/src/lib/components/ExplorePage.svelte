@@ -268,10 +268,10 @@
 
 <svelte:window onkeydown={onKey} {onpopstate} />
 
-{#snippet metricOptions()}
+{#snippet metricOptions(full = false)}
 	{#each FAMILIES as f (f.id)}
 		<optgroup label={f.title}>
-			{#each f.metrics as k (k)}<option value={k}>{METRICS[k].menu ?? METRICS[k].label}</option>{/each}
+			{#each f.metrics as k (k)}<option value={k}>{full ? METRICS[k].label : (METRICS[k].menu ?? METRICS[k].label)}</option>{/each}
 		</optgroup>
 	{/each}
 {/snippet}
@@ -298,6 +298,7 @@
 				<select bind:value={key}>{@render metricOptions()}</select>
 			</label>
 			<div class="list">
+				<h2 class="rail-title">Metrics</h2>
 				{#each FAMILIES as f (f.id)}
 					<div class="fam">
 						<div class="fam-title">{f.title}</div>
@@ -359,7 +360,7 @@
 </div>
 
 {#snippet metricHeading()}
-	<select class="pick-metric" aria-label="Metric" bind:value={key}>{@render metricOptions()}</select>
+	<select class="pick-metric" aria-label="Metric" bind:value={key}>{@render metricOptions(true)}</select>
 {/snippet}
 
 <Modal bind:open={() => dialog === 'working', () => closed('working')} kicker="How is this calculated?" title={meta.label}
@@ -472,6 +473,7 @@
 	.select { display: none; }
 	.select select { font: inherit; width: 100%; padding: 0.3em; margin-top: 0.2em; }
 	.list { display: flex; flex-direction: column; gap: 0.7em; }
+	.rail-title { font-size: 1rem; margin: 0 0 -0.3em; }
 	.fam-title { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); margin-bottom: 0.15em; }
 	.list button {
 		display: block; width: 100%; text-align: left; font: inherit; font-size: 0.82rem; line-height: 1.3;

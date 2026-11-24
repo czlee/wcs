@@ -10,17 +10,17 @@
  */
 export const METRICS = {
 	kendall_w: { key: 'kendall_w', label: "Kendall's W", short: 'W', higher: true },
-	mean_pairwise_rho: { key: 'mean_pairwise_rho', label: 'Mean pairwise Spearman ρ', menu: 'Mean Spearman ρ', short: 'ρ̄', higher: true },
-	tau_distance: { key: 'tau_distance', label: 'Mean pairwise normalised Kendall τ distance', menu: 'Mean Kendall τ distance', short: 'τ distance', higher: false },
-	mean_pairwise_tau: { key: 'mean_pairwise_tau', label: 'Mean pairwise Kendall rank correlation coefficient', menu: 'Mean Kendall correlation', short: 'τ̄', higher: true },
-	footrule_mean: { key: 'footrule_mean', label: 'Mean Spearman footrule', short: 'footrule', higher: false },
+	mean_pairwise_rho: { key: 'mean_pairwise_rho', label: 'Mean pairwise Spearman ρ', menu: 'Spearman ρ', short: 'ρ̄', higher: true },
+	tau_distance: { key: 'tau_distance', label: 'Mean pairwise normalised Kendall τ distance', menu: 'Kendall τ distance', short: 'τ distance', higher: false },
+	mean_pairwise_tau: { key: 'mean_pairwise_tau', label: 'Mean pairwise Kendall rank correlation coefficient', menu: 'Kendall correlation', short: 'τ̄', higher: true },
+	footrule_mean: { key: 'footrule_mean', label: 'Mean Spearman footrule', menu: 'Spearman footrule', short: 'footrule', higher: false },
 	// Top 3 needs n ≥ 6 (= 2 × 3): in a final of 5, any two top-3 sets must share a competitor.
-	overlap_at_3_cc: { key: 'overlap_at_3_cc', label: 'Mean overlap @ 3, chance-corrected', menu: 'Mean overlap @ 3 (cc)', short: 'overlap@3 (corrected)', higher: true, minN: 6, chance: true },
-	jaccard_at_3_cc: { key: 'jaccard_at_3_cc', label: 'Mean Jaccard @ 3, chance-corrected', menu: 'Mean Jaccard @ 3 (cc)', short: 'Jaccard@3 (corrected)', higher: true, minN: 6, chance: true },
-	overlap_at_3: { key: 'overlap_at_3', label: 'Mean overlap @ 3', short: 'overlap@3', higher: true, minN: 6, hidden: true },
-	jaccard_at_3: { key: 'jaccard_at_3', label: 'Mean Jaccard @ 3', short: 'Jaccard@3', higher: true, minN: 6, hidden: true },
-	mean_abs_rank_dev_median_norm: { key: 'mean_abs_rank_dev_median_norm', label: 'Mean absolute deviation from the median', menu: 'Mean absolute deviation', short: 'mean abs. deviation', higher: false },
-	sd_rank_norm: { key: 'sd_rank_norm', label: 'Standard deviation of ranks', menu: 'Standard deviation', short: 'standard deviation', higher: false }
+	overlap_at_3_cc: { key: 'overlap_at_3_cc', label: 'Mean overlap @ 3, chance-corrected', menu: 'Overlap @ 3 (cc)', short: 'overlap@3 (corrected)', higher: true, minN: 6, chance: true },
+	jaccard_at_3_cc: { key: 'jaccard_at_3_cc', label: 'Mean Jaccard @ 3, chance-corrected', menu: 'Jaccard @ 3 (cc)', short: 'Jaccard@3 (corrected)', higher: true, minN: 6, chance: true },
+	overlap_at_3: { key: 'overlap_at_3', label: 'Mean overlap @ 3', menu: 'Overlap @ 3', short: 'overlap@3', higher: true, minN: 6, hidden: true },
+	jaccard_at_3: { key: 'jaccard_at_3', label: 'Mean Jaccard @ 3', menu: 'Jaccard @ 3', short: 'Jaccard@3', higher: true, minN: 6, hidden: true },
+	mean_abs_rank_dev_median_norm: { key: 'mean_abs_rank_dev_median_norm', label: 'Mean normalised absolute deviation from median', menu: 'Absolute deviation', short: 'mean abs. deviation', higher: false },
+	sd_rank_norm: { key: 'sd_rank_norm', label: 'Mean normalised standard deviation of ranks', menu: 'Standard deviation', short: 'standard deviation', higher: false }
 };
 
 /**
