@@ -6,6 +6,9 @@
 	import 'katex/dist/katex.min.css';
 	import '../app.css';
 	import favicon from '#lib/assets/favicon.svg';
+	import faviconIco from '#lib/assets/favicon.ico';
+	import faviconPng from '#lib/assets/favicon-96x96.png';
+	import appleTouchIcon from '#lib/assets/apple-touch-icon.png';
 	import { DRAFT } from '#lib/config.js';
 	import { explorer } from '#lib/explorer.js';
 	import { link } from '#lib/format.js';
@@ -27,7 +30,10 @@
 </script>
 
 <svelte:head>
+	<link rel="icon" href={faviconPng} type="image/png" sizes="96x96" />
 	<link rel="icon" href={favicon} type="image/svg+xml" />
+	<link rel="shortcut icon" href={faviconIco} />
+	<link rel="apple-touch-icon" href={appleTouchIcon} sizes="180x180" />
 	{#if DRAFT}<meta name="robots" content="noindex, nofollow" />{/if}
 </svelte:head>
 
