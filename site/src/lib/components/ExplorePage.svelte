@@ -16,6 +16,7 @@
 	import Modal from './Modal.svelte';
 	import MetricsTable from './MetricsTable.svelte';
 	import RankMatrix from './RankMatrix.svelte';
+	import Scale from './Scale.svelte';
 	import SheetMeta from './SheetMeta.svelte';
 	import SheetPicker from './SheetPicker.svelte';
 	import Standing from './Standing.svelte';
@@ -25,6 +26,7 @@
 	import WorkedGaps from './WorkedGaps.svelte';
 	import { FAMILIES, FAMILY_OF, METRICS, METRIC_KEYS } from '#lib/families.js';
 	import { anyFilters, matches, noFilters, queryString, setFilterParams } from '#lib/dimensions.js';
+	import logo from '#lib/assets/favicon.svg';
 	import { ABOUT } from '#lib/about.js';
 	import { FORMATS } from '#lib/levels.js';
 	import { DRAFT } from '#lib/config.js';
@@ -49,6 +51,8 @@
 	const meta = $derived(METRICS[key]);
 	const family = $derived(FAMILY_OF[key]);
 	const about = $derived(ABOUT[key]);
+	// The metric's full name in a question: lower case unless it begins with a name (Kendall, Spearman).
+	const asked = $derived(/^(Kendall|Spearman)/.test(meta.label) ? meta.label : meta.label[0].toLowerCase() + meta.label.slice(1));
 	const Worked = $derived(WORKED[/** @type {keyof typeof WORKED} */ (family.id)]);
 
 	let filters = $state.raw(noFilters());
@@ -278,7 +282,7 @@
 
 <div class="explorer" class:app>
 	<header class="topbar">
-		<a class="brand" href={link('/')}>WCS judge agreement{#if DRAFT}<span class="draft-tag">DRAFT</span>{/if}</a>
+		<a class="brand" href={link('/')}><img src={logo} alt="" width="22" height="22" />WCS judge agreement{#if DRAFT}<span class="draft-tag">DRAFT</span>{/if}</a>
 		<div class="formats" role="group" aria-label="Dance format">
 			{#each Object.values(FORMATS) as f (f.id)}
 				<a href="{link(f.path)}?{query}" aria-current={f.id === data.format ? 'page' : undefined}
@@ -320,7 +324,7 @@
 						<button type="button" class="btn primary" onclick={() => open('working')}>How is this calculated?</button>
 					</div>
 					<p class="direction small">
-						<span class="dot" class:ok={meta.higher} class:bad={!meta.higher}></span>
+						<span class="dot" class:flip={!meta.higher} aria-hidden="true"></span>
 						{meta.higher ? 'Higher' : 'Lower'} means more agreement{#if meta.minN}{' · '}finals of {meta.minN} or more competitors{/if}
 					</p>
 					<div class="filters"><FilterBar bind:filters /></div>
@@ -337,12 +341,9 @@
 
 			<div class="panels">
 				<div class="panel">
-					<h2>What it measures</h2>
-					<p><Linked text={about.what} /></p>
-					<p>
-						<Linked text={about.reading} />
-						<button type="button" class="link-btn" onclick={() => open('working')}>Learn more</button>
-					</p>
+					<h2>What is {asked}? <span class="more">(<button type="button" class="link-btn" onclick={() => open('working')}>Learn more</button>)</span></h2>
+					<p><Linked text={about.sentence} /></p>
+					<Scale ends={about.scale} higher={meta.higher} />
 				</div>
 				<div class="panel">
 					<h2>Caveats for this metric</h2>
@@ -446,7 +447,8 @@
 <style>
 	/* ---- Shared (both the app and the scrolling fallback) ---- */
 	.topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em 1em; padding: 0.55em 0; border-bottom: 1px solid var(--border); }
-	.brand { color: var(--text); font-weight: 700; text-decoration: none; }
+	.brand { display: inline-flex; align-items: center; color: var(--text); font-weight: 700; text-decoration: none; }
+	.brand img { display: block; margin-right: 0.45em; }
 	.draft-tag {
 		font-size: 0.65rem; font-weight: 700; letter-spacing: 0.05em; vertical-align: 0.2em; margin-left: 0.5em;
 		padding: 0.1em 0.4em; border-radius: 3px; background: #fab219; color: #1a1a19;
@@ -488,9 +490,12 @@
 	.head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: start; gap: 0.6em 1.5em; margin-bottom: 0.6em; padding-bottom: 0.6em; border-bottom: 1px solid var(--border); }
 	h1.metric { margin: 0 0 0.1em; font-size: 1.5rem; }
 	.direction { margin: 0; color: var(--text-2); }
-	.dot { display: inline-block; width: 0.6em; height: 0.6em; border-radius: 50%; margin-right: 0.2em; }
-	.dot.ok { background: var(--ok); }
-	.dot.bad { background: var(--bad); }
+	/* A short version of the scale under "What it measures": low values on the left, red to green (green to red where lower is better). */
+	.dot {
+		display: inline-block; width: 2.2em; height: 0.6em; border-radius: 999px; margin-right: 0.3em; vertical-align: baseline;
+		background: linear-gradient(to right, color-mix(in srgb, var(--bad) 70%, transparent), transparent, color-mix(in srgb, var(--ok) 70%, transparent));
+	}
+	.dot.flip { background: linear-gradient(to right, color-mix(in srgb, var(--ok) 70%, transparent), transparent, color-mix(in srgb, var(--bad) 70%, transparent)); }
 	/* The title wraps before the scoresheet box is pushed under it. */
 	.heading { flex: 1 1 18em; }
 	.title { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2em 0.9em; }
@@ -500,6 +505,7 @@
 
 	.panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.8em; margin-top: 0.8em; }
 	.panel { border: 1px solid var(--border); border-radius: 6px; padding: 0.35em 0.8em 0.4em; font-size: 0.82rem; line-height: 1.45; }
+	.panel h2 .more { font-weight: 400; }
 	.panel h2 { margin: 0.15em 0 0.25em; font-size: 0.85rem; }
 	.panel p, .panel li { margin: 0.3em 0; max-width: none; }
 	.panel .small { font-size: 0.78rem; }
@@ -524,7 +530,7 @@
 	.app .rail { overflow-y: auto; min-height: 0; padding-bottom: 0.8em; }
 	.app .view { display: flex; flex-direction: column; min-height: 0; }
 	.app .charts { flex: 1; min-height: 240px; }
-	.app .panels { flex: none; max-height: 11em; padding-bottom: 0.6em; }
+	.app .panels { flex: none; max-height: 12em; padding-bottom: 0.6em; }
 	.app .panel { overflow-y: auto; }
 
 	/* ---- Narrow screens (to be redesigned): a scrolling page with a dropdown ---- */

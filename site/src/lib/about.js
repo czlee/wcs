@@ -1,85 +1,87 @@
+/** @typedef {{v: string, t: string, at?: number}} End `at` is where the middle one sits along the scale (0 to 1; the middle if omitted) */
+
 /**
- * What the explorer says about each metric: what it measures, how to read its
- * values, and the caveats that apply to it in particular (the general ones are in
+ * What the explorer says about each metric: one sentence on what it measures, a `scale` of its values
+ * (lowest value, an optional chance level, highest value: always in numeric order, coloured by which end is better), and the caveats that apply to it in particular (the general ones are in
  * Limitations.svelte). Plain text: the worked example has the formulas.
- * @type {Record<string, {what: string, reading: string, caveats: string[]}>}
+ * @type {Record<string, {sentence: string, scale: [End, End | null, End], caveats: string[]}>}
  */
 export const ABOUT = {
 	kendall_w: {
-		what: 'How much the panel as a whole agrees on one order. Add up the ranks each competitor got; the more the judges agree, the further apart these rank sums are. W compares their spread with the largest spread possible.',
-		reading: '0 means no common ordering at all; 1 means every judge gave the same ranking. Higher is more agreement.',
+		sentence: 'How spread out the competitors’ rank sums are, compared with the most they could be.',
+		scale: [{v:'0',t:'max disagreement'}, {v:'1/m',t:'random ranks',at:0.2}, {v:'1',t:'fully unanimous'}],
 		caveats: [
 			'If the judges ranked at random, W would still average 1/m for a panel of m judges, so a bigger panel gets a lower W from chance alone. W isn’t directly comparable across panel sizes; the [[mean_pairwise_rho|mean pairwise Spearman ρ]] is the fairer of the two for that.'
 		]
 	},
 	mean_pairwise_rho: {
-		what: 'Spearman’s rank correlation between two judges’ rankings, averaged over every pair of judges on the panel. It’s based on the squared differences between the ranks the two judges gave each competitor.',
-		reading: '1 means identical rankings, −1 means one is the reverse of the other, and random judging averages 0, whatever the panel size. Higher is more agreement.',
+		sentence: 'How closely pairs of judges’ rankings track each other, from the squared gaps between their ranks, averaged over every pair.',
+		scale: [{v:'−1/(m−1)',t:'max disagreement'}, {v:'0',t:'random ranks',at:0.2}, {v:'1',t:'fully unanimous'}],
 		caveats: [
 			'For any one scoresheet it carries the same information as [[kendall_w|Kendall’s W]] (with m judges, ρ̄ = (mW − 1)/(m − 1)), rescaled so that chance is 0 for every panel size.'
 		]
 	},
 	tau_distance: {
-		what: 'The mean pairwise normalised Kendall τ distance. For two judges, the Kendall τ distance counts the head-to-heads (pairs of competitors) that they put in opposite orders; here it’s normalised to a share of all pairs. It’s averaged over every pair of judges.',
-		reading: '0 means identical rankings, 1 means one is the reverse of the other, and random judging averages 0.5. Lower is more agreement.',
+		sentence: 'The share of head-to-heads (pairs of competitors) that two judges put in opposite orders, averaged over every pair of judges.',
+		scale: [{v:'0',t:'fully unanimous'}, {v:'0.5',t:'random ranks',at:0.62}, {v:'(m+1)/(2m)',t:'max disagreement'}],
 		caveats: [
 			'Random judging averages 0.5 for any field size, but in a smaller final the value varies more from one final to the next, by chance alone.'
 		]
 	},
 	mean_pairwise_tau: {
-		what: 'The mean pairwise Kendall rank correlation coefficient. It counts the same pairs of competitors as the [[tau_distance|normalised Kendall τ distance]], but scores them as (agreeing pairs − disagreeing pairs) ÷ all pairs, which runs from −1 to 1, and averages that over every pair of judges.',
-		reading: '1 means identical rankings, −1 means one is the reverse of the other, and random judging averages 0. Higher is more agreement.',
+		sentence: 'Agreeing minus disagreeing head-to-heads between two judges, as a share of all of them, averaged over every pair of judges.',
+		scale: [{v:'−1/m',t:'max disagreement'}, {v:'0',t:'random ranks',at:0.2}, {v:'1',t:'fully unanimous'}],
 		caveats: [
 			'Random judging averages 0 for any field size, but in a smaller final the value varies more from one final to the next, by chance alone.'
 		]
 	},
 	footrule_mean: {
-		what: 'For two judges, add up how many places apart they put each competitor, and divide by the largest total possible (when one ranking is the reverse of the other). Averaged over every pair of judges.',
-		reading: '0 means identical rankings, 1 means as different as possible. Random judging averages about 0.65 to 0.67, depending a little on the field size. Lower is more agreement.',
+		sentence: 'How many places apart two judges put each competitor, added up, as a share of the most possible, averaged over every pair.',
+		scale: [{v:'0',t:'fully unanimous'}, {v:'≈0.66',t:'random ranks',at:0.66}, {v:'1',t:'max disagreement'}],
 		caveats: []
 	},
 	overlap_at_3_cc: {
-		what: 'Who made two judges’ top 3, whatever the order: the number of competitors in both judges’ top 3, out of 3, averaged over every pair of judges. It’s then rescaled so that 0 is what top 3s picked at random would share.',
-		reading: '1 means every judge had the same top 3; 0 is chance level; below 0 is less overlap than chance. Higher is more agreement.',
+		sentence: 'How many of the same competitors two judges put in their top 3, averaged over every pair, with chance-level overlap set to 0.',
+		scale: [{v:'below 0',t:'less overlap than random'}, {v:'0',t:'random top 3s',at:0.25}, {v:'1',t:'same top 3s'}],
 		caveats: [
 			'Only finals of 6 or more are charted: in a final of 5, any two top 3s must share someone.',
 			'The chance correction is a naive first pass. Real judges’ top 3s aren’t random: they’re drawn towards the same strong competitors, more so in some fields than others. So it removes the chance level but not every way field size affects this metric.'
 		]
 	},
 	jaccard_at_3_cc: {
-		what: 'Who made two judges’ top 3, whatever the order: the number of competitors in both top 3s, divided by the number in either (the Jaccard index), averaged over every pair of judges. It’s then rescaled so that 0 is what top 3s picked at random would give.',
-		reading: '1 means every judge had the same top 3; 0 is chance level; below 0 is less overlap than chance. Higher is more agreement.',
+		sentence: 'The share of competitors in either judge’s top 3 that are in both, averaged over every pair, with chance-level overlap set to 0.',
+		scale: [{v:'below 0',t:'less overlap than random'}, {v:'0',t:'random top 3s',at:0.25}, {v:'1',t:'same top 3s'}],
 		caveats: [
 			'Only finals of 6 or more are charted: in a final of 5, any two top 3s must share someone.',
 			'The chance correction is a naive first pass. Real judges’ top 3s aren’t random: they’re drawn towards the same strong competitors, more so in some fields than others. So it removes the chance level but not every way field size affects this metric.'
 		]
 	},
 	overlap_at_3: {
-		what: 'Who made two judges’ top 3, whatever the order: the number of competitors in both judges’ top 3, out of 3, averaged over every pair of judges.',
-		reading: '1 means every judge had the same top 3; 0 means no two judges’ top 3s shared anyone. Higher is more agreement.',
+		sentence: 'How many of the same competitors two judges put in their top 3, averaged over every pair of judges.',
+		scale: [{v:'0',t:'no overlap at all'}, {v:'3/n',t:'random top 3s',at:0.25}, {v:'1',t:'same top 3s'}],
 		caveats: [
 			'Not corrected for chance. Top 3s picked at random would share 3/n on average in a final of n, so this metric is higher in smaller finals regardless of how the judges agree, and field sizes differ between levels. The [[overlap_at_3_cc|chance-corrected version]] subtracts this.',
 			'Only finals of 6 or more are charted: in a final of 5, any two top 3s must share someone.'
 		]
 	},
 	jaccard_at_3: {
-		what: 'Who made two judges’ top 3, whatever the order: the number of competitors in both top 3s, divided by the number in either (the Jaccard index), averaged over every pair of judges.',
-		reading: '1 means every judge had the same top 3; 0 means no two judges’ top 3s shared anyone. Higher is more agreement.',
+		sentence: 'The share of competitors in either judge’s top 3 that are in both, averaged over every pair of judges.',
+		scale: [{v:'0',t:'no overlap at all'}, null, {v:'1',t:'same top 3s'}],
 		caveats: [
 			'Not corrected for chance. Random top 3s overlap more in a smaller final, so this metric is higher in smaller finals regardless of how the judges agree, and field sizes differ between levels. The [[jaccard_at_3_cc|chance-corrected version]] subtracts this.',
 			'Only finals of 6 or more are charted: in a final of 5, any two top 3s must share someone.'
 		]
 	},
 	mean_abs_rank_dev_median_norm: {
-		what: 'For each competitor, the average distance (in places) between each judge’s rank and the median of the ranks they got. Averaged over competitors, then normalised: divided by n/4 (n is the number of competitors) so that finals of different sizes can be compared.',
-		reading: '0 means every judge gave every competitor the same rank, and 1 is the most it can be, reached when half the panel ranks in order and half in exact reverse (a little under 1 for an odd number of finalists or judges). Lower is more agreement.',
+		sentence: 'How far each judge’s rank for a competitor is from the median, averaged over judges and competitors and scaled by the field size.',
+		scale: [{v:'0',t:'fully unanimous'}, null, {v:'1',t:'panel split in two'}],
 		caveats: [
 			'Normalised for field size only roughly, by dividing by n/4, the most the average can be: it’s what the average is when half the panel ranks in order and half in exact reverse. Some panels (an odd number of finalists or of judges) can’t quite reach it, so a maximally split panel reads a little under 1 there. That removes the main effect of field size, but random rankings don’t land at the same value for every field and panel size, so some of it remains. A proper chance correction is planned.'
 		]
 	},
 	sd_rank_norm: {
-		what: 'For each competitor, the standard deviation of the ranks they got (dividing by the number of judges). Averaged over competitors, then normalised: divided by √((n² − 1)/12) (n is the number of competitors; it’s the most the average can be) so that finals of different sizes can be compared. It gives more weight than the [[mean_abs_rank_dev_median_norm|mean absolute deviation]] does to one judge who is far from the rest.',
-		reading: '0 means every judge gave every competitor the same rank, and 1 is the most it can be (the spread of ranks a single judge’s ranking has). Lower is more agreement.',
+		sentence: 'How much the judges’ ranks for each competitor vary, averaged over competitors and scaled by the field size.',
+		scale: [{v:'0',t:'fully unanimous'}, null, {v:'1',t:'max disagreement'}],
 		caveats: [
 			'Normalised for field size only roughly. That removes the main effect of field size, but random rankings don’t land at the same value for every panel size (a bit under 1, and further under for small panels), and a panel of two judges can’t reach 1. A proper chance correction is planned.'
 		]
